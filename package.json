@@ -4,12 +4,17 @@
   "description": "Dubalu Framework",
   "main": "index.js",
   "scripts": {
-    "start": "webpack-dev-server --mode development",
+    "start": "webpack-dev-server --mode development --verbose",
+    "build": "webpack --mode development --verbose",
+    "debug": "node --inspect-brk $(npm bin)/webpack --mode development --verbose",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "escape-html": "^1.0.3",
+    "isomorphic-fetch": "^2.2.1",
+    "lru-cache": "^4.1.3",
     "react": "^16.3.2",
     "react-dom": "^16.3.2"
   },
@@ -21,6 +26,8 @@
     "typescript": "^2.8.3",
     "webpack": "^4.8.2",
     "webpack-cli": "^2.1.3",
-    "webpack-dev-server": "^3.1.4"
+    "webpack-core": "^0.6.9",
+    "webpack-dev-server": "^3.1.4",
+    "webpack-node-externals": "^1.7.2"
   }
 }
