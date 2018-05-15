@@ -39,27 +39,6 @@ class UniversalChunkTemplatePlugin {
 			hash.update(`${chunkTemplate.outputOptions.jsonpFunction}`);
 			hash.update("global");
 		});
-		chunkTemplate.hooks.renderWithEntry.tap(
-			"UniversalChunkTemplatePlugin",
-			(source, chunk) => {
-				const library = chunk.name
-					.replace(/\b\w/g, l => l.toUpperCase())
-					.replace(/\//g, '');
-				const request = mainTemplate.getAssetPath(
-					runtimeTemplate.outputOptions.publicPath + runtimeTemplate.outputOptions.chunkFilename,
-					{ chunk }
-				);
-				const varExpression = mainTemplate.getAssetPath(
-					library,
-					{ chunk }
-				);
-				return new ConcatSource(
-					source,
-					`;\nif (typeof global.imports === "object") global.imports["${request}"] = ${varExpression}`,
-					`;\nif (typeof module !== "undefined") module.exports = ${varExpression}`
-				);
-			}
-		);
 	}
 }
 module.exports = UniversalChunkTemplatePlugin;

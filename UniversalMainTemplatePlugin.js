@@ -6,6 +6,7 @@
 "use strict";
 
 const { SyncWaterfallHook } = require("tapable");
+const { ConcatSource } = require("webpack-sources");
 const Template = require("webpack/lib/Template");
 
 class UniversalMainTemplatePlugin {
@@ -144,7 +145,28 @@ class UniversalMainTemplatePlugin {
 				return Template.asString([source, ...extraCode]);
 			}
 		);
-
+		mainTemplate.hooks.renderWithEntry.tap(
+			"UniversalMainTemplatePlugin",
+			(source, chunk) => {
+				debugger
+				const library = chunk.name
+					.replace(/\b\w/g, l => l.toUpperCase())
+					.replace(/\//g, '');
+				const request = mainTemplate.getAssetPath(
+					mainTemplate.outputOptions.publicPath + mainTemplate.outputOptions.chunkFilename,
+					{ chunk }
+				);
+				const varExpression = mainTemplate.getAssetPath(
+					library,
+					{ chunk }
+				);
+				return new ConcatSource(
+					source,
+					`;\nif (typeof global.imports === "object") global.imports["${request}"] = ${varExpression}`,
+					`;\nif (typeof module !== "undefined") module.exports = ${varExpression}`
+				);
+			}
+		);
 		mainTemplate.hooks.jsonpScript.tap(
 			"UniversalMainTemplatePlugin",
 			(_, chunk, hash) => {
