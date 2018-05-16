@@ -11,13 +11,18 @@
 const UniversalMainTemplatePlugin = require("./UniversalMainTemplatePlugin");
 const UniversalChunkTemplatePlugin = require("./UniversalChunkTemplatePlugin");
 const JsonpHotUpdateChunkTemplatePlugin = require("webpack/lib/web/JsonpHotUpdateChunkTemplatePlugin");
+const Template = require("webpack/lib/Template");
 
 
 class UniversalTemplatePlugin {
 	apply(compiler) {
+		const universal = "webpackUniversal" +
+		Template.toIdentifier(compiler.options.name)
+			.replace(/\b\w/g, l => l.toUpperCase())
+			.replace(/\//g, '');
 		compiler.hooks.thisCompilation.tap("UniversalTemplatePlugin", compilation => {
-			new UniversalMainTemplatePlugin().apply(compilation.mainTemplate);
-			new UniversalChunkTemplatePlugin().apply(compilation.chunkTemplate);
+			new UniversalMainTemplatePlugin(universal).apply(compilation.mainTemplate);
+			new UniversalChunkTemplatePlugin(universal).apply(compilation.chunkTemplate);
 			new JsonpHotUpdateChunkTemplatePlugin().apply(
 				compilation.hotUpdateChunkTemplate
 			);

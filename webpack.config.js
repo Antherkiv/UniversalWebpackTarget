@@ -11,7 +11,6 @@ function factory(name, entry, target) {
       [name]: entry
     },
     output: {
-      library: name,
       filename: '[name].js',
       // filename: '[name].[chunkhash].js',
       publicPath: 'libs/' + name + '/',

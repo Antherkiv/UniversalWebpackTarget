@@ -14,6 +14,10 @@ const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
 
 class UniversalMainTemplatePlugin {
+	constructor(universal) {
+		this.universal = universal;
+	}
+
 	apply(mainTemplate) {
 		const needChunkOnDemandLoadingCode = chunk => {
 			for (const chunkGroup of chunk.groupsIterable) {
@@ -156,14 +160,20 @@ class UniversalMainTemplatePlugin {
 					mainTemplate.outputOptions.publicPath + mainTemplate.outputOptions.chunkFilename,
 					{ chunk }
 				);
-				const varExpression = mainTemplate.outputOptions.library;
 				return new ConcatSource(
+					'if (typeof window !== "undefined") window.global = window.global || window;\n',
+					"global.webpackRequests = global.webpackRequests || {};\n",
+					"global.require = global.require || function require(request) { return global.webpackRequests[request] };\n",
+					"(function(__webpackUniversal__) {\n",
+					`__webpackUniversal__.entry =\n`,
 					source,
-					`;\nif (typeof global.imports === "object") global.imports["${request}"] = ${varExpression}`,
-					`;\nif (typeof module !== "undefined") module.exports = ${varExpression}`
+					`;\nglobal.webpackRequests[${JSON.stringify(request)}] = __webpackUniversal__.entry`,
+					';\nif (typeof module !== "undefined") module.exports = __webpackUniversal__.entry',
+					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
 				);
 			}
 		);
+
 		mainTemplate.hooks.jsonpScript.tap(
 			"UniversalMainTemplatePlugin",
 			(_, chunk, hash) => {
@@ -260,7 +270,6 @@ class UniversalMainTemplatePlugin {
 		mainTemplate.hooks.requireEnsure.tap(
 			"UniversalMainTemplatePlugin load require()",
 			(source, chunk, hash) => {
-				const jsonpFunction = mainTemplate.outputOptions.jsonpFunction;
 				return Template.asString([
 					source,
 					"",
@@ -276,10 +285,8 @@ class UniversalMainTemplatePlugin {
 								chunk,
 								"chunkId"
 							)});`,
-							`var jsonpArray = global[${JSON.stringify(
-								jsonpFunction
-							)}] = global[${JSON.stringify(jsonpFunction)}] || [];`,
-							"jsonpArray.push(chunk);"
+							"__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || [];",
+							"__webpackUniversal__.jsonp.push(chunk);"
 						]),
 						"}",
 						"return Promise.all(promises);"
@@ -431,23 +438,6 @@ class UniversalMainTemplatePlugin {
 		mainTemplate.hooks.bootstrap.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
-				var globalObject = mainTemplate.outputOptions.globalObject;
-				source = Template.asString([
-					'if (typeof window !== "undefined" && typeof window.global === "undefined") {',
-						Template.indent(["window.global = window;"]),
-					"}",
-					'if (typeof global.imports === "undefined") {',
-						Template.indent(["global.imports = {};"]),
-					'}',
-					'if (typeof global.require === "undefined") {',
-						Template.indent([
-						"global.require = function (request) {",
-							Template.indent(["return global.imports[request];"]),
-						"};",
-						]),
-					"}",
-					source
-				]);
 				if (needChunkLoadingCode(chunk)) {
 					const withDefer = needEntryDeferringCode(chunk);
 					return Template.asString([
@@ -542,14 +532,11 @@ class UniversalMainTemplatePlugin {
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
 				if (needChunkLoadingCode(chunk)) {
-					var jsonpFunction = mainTemplate.outputOptions.jsonpFunction;
 					return Template.asString([
-						`var jsonpArray = global[${JSON.stringify(
-							jsonpFunction
-						)}] = global[${JSON.stringify(jsonpFunction)}] || [];`,
-						"var oldJsonpFunction = jsonpArray.push.bind(jsonpArray);",
-						"jsonpArray.push = webpackJsonpCallback;",
-						"jsonpArray = jsonpArray.slice();",
+						"__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || [];",
+						"var oldJsonpFunction = __webpackUniversal__.jsonp.push.bind(__webpackUniversal__.jsonp);",
+						"__webpackUniversal__.jsonp.push = webpackJsonpCallback;",
+						"var jsonpArray = __webpackUniversal__.jsonp.slice();",
 						"for(var i = 0; i < jsonpArray.length; i++) webpackJsonpCallback(jsonpArray[i]);",
 						"var parentJsonpFunction = oldJsonpFunction;",
 						"",
@@ -645,8 +632,8 @@ global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}`;
 		mainTemplate.hooks.hash.tap("UniversalMainTemplatePlugin", hash => {
 			hash.update("universal");
 			hash.update("1");
+			hash.update(this.universal);
 			hash.update(`${mainTemplate.outputOptions.chunkFilename}`);
-			hash.update(`${mainTemplate.outputOptions.jsonpFunction}`);
 			hash.update(`${mainTemplate.outputOptions.hotUpdateFunction}`);
 		});
 	}

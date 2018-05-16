@@ -12,14 +12,16 @@
 const { ConcatSource } = require("webpack-sources");
 
 class UniversalChunkTemplatePlugin {
+	constructor(universal) {
+		this.universal = universal;
+	}
+
 	apply(chunkTemplate) {
 		chunkTemplate.hooks.render.tap(
 			"UniversalChunkTemplatePlugin",
 			(modules, chunk) => {
-				const jsonpFunction = chunkTemplate.outputOptions.jsonpFunction;
 				const source = new ConcatSource();
-				source.add("(function(data) {\n");
-				source.add(`data.push([${JSON.stringify(chunk.ids)},`);
+				source.add(`__webpackUniversal__.jsonp.push([${JSON.stringify(chunk.ids)},`);
 				source.add(modules);
 				const entries = [chunk.entryModule].filter(Boolean).map(m =>
 					[m.id].concat(
@@ -32,15 +34,22 @@ class UniversalChunkTemplatePlugin {
 					source.add(`,${JSON.stringify(entries)}`);
 				}
 				source.add("])");
-				source.add(';\nif (typeof module !== "undefined") module.exports = data');
-				source.add(`;\n})(global[${JSON.stringify(jsonpFunction)}] = global[${JSON.stringify(jsonpFunction)}] || [])`);
-				return source;
+				return new ConcatSource(
+					'if (typeof window !== "undefined") window.global = window.global || window;\n',
+					"global.webpackRequests = global.webpackRequests || {};\n",
+					"global.require = global.require || function require(request) { return global.webpackRequests[request] };\n",
+					"(function(__webpackUniversal__) {\n",
+					"__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || [];\n",
+					source,
+					';\nif (typeof module !== "undefined") module.exports = __webpackUniversal__.jsonp',
+					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
+				);
 			}
 		);
 		chunkTemplate.hooks.hash.tap("UniversalChunkTemplatePlugin", hash => {
 			hash.update("UniversalChunkTemplatePlugin");
 			hash.update("1");
-			hash.update(`${chunkTemplate.outputOptions.jsonpFunction}`);
+			hash.update(this.universal);
 		});
 	}
 }
