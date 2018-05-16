@@ -48,7 +48,7 @@ function universalTarget(options) {
 				const lib = JSON.parse(fs.readFileSync(libFile, "utf8"));
 				new DllReferencePlugin({
 					manifest: lib,
-					sourceType: "commonjs2",
+					sourceType: "commonjs",
 				}).apply(compiler);
 			});
 		}
