@@ -1,7 +1,10 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Authors Tobias Koppers @sokra
-			Germán Méndez Bravo (Kronuz)
+	        Germán Méndez Bravo (Kronuz)
+
+	This comes mainly from webpack/lib/web/JsonpTemplatePlugin.js
+	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
 */
 "use strict";
 

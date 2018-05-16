@@ -1,6 +1,11 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
-	Authors Germán Méndez Bravo (Kronuz)
+	Authors Tobias Koppers @sokra
+	        Germán Méndez Bravo (Kronuz)
+
+	This comes mainly from webpack/lib/WebpackOptionsApply.js
+	from processing "web" target
+	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
 */
 "use strict";
 

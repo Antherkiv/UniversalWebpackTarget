@@ -1,7 +1,11 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
 	Authors Tobias Koppers @sokra
-			Germán Méndez Bravo (Kronuz)
+	        Germán Méndez Bravo (Kronuz)
+
+	This comes mainly from webpack/lib/web/JsonpMainTemplatePlugin.js
+	and partially from webpack/lib/node/NodeMainTemplatePlugin.js
+	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
 */
 "use strict";
 
@@ -640,8 +644,7 @@ global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}`;
 		);
 		mainTemplate.hooks.hash.tap("UniversalMainTemplatePlugin", hash => {
 			hash.update("universal");
-			hash.update("5");
-			hash.update("global");
+			hash.update("1");
 			hash.update(`${mainTemplate.outputOptions.chunkFilename}`);
 			hash.update(`${mainTemplate.outputOptions.jsonpFunction}`);
 			hash.update(`${mainTemplate.outputOptions.hotUpdateFunction}`);
