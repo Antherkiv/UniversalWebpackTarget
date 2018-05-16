@@ -33,7 +33,7 @@ module.exports = [
         {
           test: /\.tsx?$/,
           use: [
-            'cache-loader',
+            // 'cache-loader',
             'ts-loader',
           ],
         },
@@ -87,7 +87,7 @@ module.exports = [
         {
           test: /\.tsx?$/,
           use: [
-            'cache-loader',
+            // 'cache-loader',
             'ts-loader',
           ],
         },
