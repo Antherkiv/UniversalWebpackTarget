@@ -11,6 +11,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const glob = require("glob");
 
 const FetchCompileWasmTemplatePlugin = require("webpack/lib/web/FetchCompileWasmTemplatePlugin");
 const FunctionModulePlugin = require("webpack/lib/FunctionModulePlugin");
@@ -38,18 +39,20 @@ function universalTarget(options) {
 		if (options.imports) {
 			const libsPath = options.libsPath || compiler.options.output.path;
 			options.imports.forEach(function(name) {
-				const libFile = path.resolve(libsPath, name, `${name}.json`);
-				if (!fs.existsSync(libFile)) {
-				console.error(
-					`Skip imported library ${name}: path not found: ${libFile}`
-				);
-				process.exit(1);
+				const plugins = [];
+				for (const file of glob.sync(path.resolve(libsPath, name, "*.json"))) {
+					if (path.basename(file) !== "manifest.json") {
+						const lib = JSON.parse(fs.readFileSync(file, "utf8"));
+						plugins.push(new DllReferencePlugin({
+							manifest: lib,
+							sourceType: "commonjs",
+						}).apply(compiler));
+					}
 				}
-				const lib = JSON.parse(fs.readFileSync(libFile, "utf8"));
-				new DllReferencePlugin({
-					manifest: lib,
-					sourceType: "commonjs",
-				}).apply(compiler);
+				if (!plugins.length) {
+					console.error(`Invalid imported library ${name}: not manifests found!`);
+					process.exit(1);
+				}
 			});
 		}
 	}

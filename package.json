@@ -20,6 +20,7 @@
     "@types/react": "^16.3.14",
     "@types/react-dom": "^16.0.5",
     "cache-loader": "^1.2.2",
+    "glob": "^7.1.2",
     "prettier": "^1.12.1",
     "ts-loader": "^4.3.0",
     "tslint": "^5.10.0",
