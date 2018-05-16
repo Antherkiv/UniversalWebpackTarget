@@ -1,7 +1,6 @@
 const path = require('path');
 
 const webpack = require('webpack');
-var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const universalTarget = require('./universal-webpack');
 
 module.exports = [
@@ -37,7 +36,6 @@ module.exports = [
             'cache-loader',
             {
               loader: 'ts-loader',
-              options: { transpileOnly: true },
             },
           ],
         },
@@ -46,7 +44,6 @@ module.exports = [
 
     plugins: [
       // new webpack.NamedModulesPlugin(),
-      new ForkTsCheckerWebpackPlugin(),
     ],
 
     externals: {
@@ -88,7 +85,6 @@ module.exports = [
             'cache-loader',
             {
               loader: 'ts-loader',
-              options: { transpileOnly: true },
             },
           ],
         },
@@ -97,7 +93,6 @@ module.exports = [
 
     plugins: [
       // new webpack.NamedModulesPlugin(),
-      new ForkTsCheckerWebpackPlugin(),
     ],
 
     externals: {
