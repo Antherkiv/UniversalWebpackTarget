@@ -43,7 +43,8 @@ module.exports = [
     },
 
     plugins: [
-      // new webpack.NamedModulesPlugin(),
+      new webpack.NamedModulesPlugin(),
+      // new webpack.NamedChunksPlugin(),
     ],
 
     externals: {
@@ -92,7 +93,8 @@ module.exports = [
     },
 
     plugins: [
-      // new webpack.NamedModulesPlugin(),
+      new webpack.NamedModulesPlugin(),
+      // new webpack.NamedChunksPlugin(),
     ],
 
     externals: {
