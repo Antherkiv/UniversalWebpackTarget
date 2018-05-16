@@ -7,9 +7,7 @@ function factory(name, entry, target) {
   return {
     name: name,
     devtool: 'source-map',
-    entry: {
-      [name]: entry
-    },
+    entry: entry,
     output: {
       filename: '[name].js',
       // filename: '[name].[chunkhash].js',
@@ -49,20 +47,35 @@ function factory(name, entry, target) {
 
 module.exports = [
 
-  factory('Base', [
-    'react',
-    'react-dom',
-  ], universalTarget({
-    dll: true,
-  })),
+  factory(
+    'Base',
+    {
+      'Base': [
+        'react',
+        'react-dom',
+      ],
+    },
+    universalTarget({
+      dll: true,
+    })
+  ),
 
-  factory('main', [
-    './src/index.tsx',
-  ], universalTarget({
-    libsPath: path.resolve(__dirname, 'libs'),
-    imports: [
-      'Base'
-    ],
-  })),
+  factory(
+    'main',
+    {
+      'main': [
+        './src/main.tsx',
+      ],
+      'other': [
+        './src/other.tsx',
+      ],
+    },
+    universalTarget({
+      libsPath: path.resolve(__dirname, 'libs'),
+      imports: [
+        'Base'
+      ],
+    })
+  ),
 
 ]
