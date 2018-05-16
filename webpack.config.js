@@ -13,6 +13,7 @@ function factory(name, entry, target) {
     output: {
       library: name,
       filename: '[name].js',
+      // filename: '[name].[chunkhash].js',
       publicPath: 'libs/' + name + '/',
       path: path.resolve(__dirname, 'libs', name),
     },
