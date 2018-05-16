@@ -149,17 +149,11 @@ class UniversalMainTemplatePlugin {
 			"UniversalMainTemplatePlugin",
 			(source, chunk) => {
 				debugger
-				const library = chunk.name
-					.replace(/\b\w/g, l => l.toUpperCase())
-					.replace(/\//g, '');
 				const request = mainTemplate.getAssetPath(
 					mainTemplate.outputOptions.publicPath + mainTemplate.outputOptions.chunkFilename,
 					{ chunk }
 				);
-				const varExpression = mainTemplate.getAssetPath(
-					library,
-					{ chunk }
-				);
+				const varExpression = mainTemplate.outputOptions.library;
 				return new ConcatSource(
 					source,
 					`;\nif (typeof global.imports === "object") global.imports["${request}"] = ${varExpression}`,

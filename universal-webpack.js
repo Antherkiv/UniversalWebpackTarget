@@ -10,7 +10,7 @@ const path = require("path");
 const FetchCompileWasmTemplatePlugin = require("webpack/lib/web/FetchCompileWasmTemplatePlugin");
 const FunctionModulePlugin = require("webpack/lib/FunctionModulePlugin");
 const LoaderTargetPlugin = require("webpack/lib/LoaderTargetPlugin");
-const NodeTargetPlugin = require("webpack/lib/node/NodeTargetPlugin");
+const NodeSourcePlugin = require("webpack/lib/node/NodeSourcePlugin");
 const UniversalTemplatePlugin = require("./UniversalTemplatePlugin");
 const DllPlugin = require("webpack/lib/DllPlugin");
 const DllReferencePlugin = require("webpack/lib/DllReferencePlugin");
@@ -20,12 +20,12 @@ function universalTarget(options) {
 		new UniversalTemplatePlugin().apply(compiler);
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
 		new FunctionModulePlugin().apply(compiler);
-		new NodeTargetPlugin().apply(compiler);
-		new LoaderTargetPlugin('node').apply(compiler);
+		new NodeSourcePlugin(compiler.options.node).apply(compiler);
+		new LoaderTargetPlugin(options.target || 'node').apply(compiler);
 
 		if (options.dll) {
 			new DllPlugin({
-				name: path.resolve(compiler.options.output.publicPath, compiler.options.output.filename),
+				name: `${compiler.options.output.publicPath}${compiler.options.output.filename}`,
 				path: path.resolve(compiler.options.output.path, '[name].json'),
 			}).apply(compiler);
 		}
