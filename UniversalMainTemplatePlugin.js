@@ -165,10 +165,9 @@ class UniversalMainTemplatePlugin {
 					"global.webpackRequests = global.webpackRequests || {};\n",
 					"global.require = global.require || function require(request) { return global.webpackRequests[request] };\n",
 					"(function(__webpackUniversal__) {\n",
-					`__webpackUniversal__.entry =\n`,
+					`global.webpackRequests[${JSON.stringify(request)}] = global.webpackRequests[${JSON.stringify(request)}] ||\n`,
 					source,
-					`;\nglobal.webpackRequests[${JSON.stringify(request)}] = __webpackUniversal__.entry`,
-					';\nif (typeof module !== "undefined") module.exports = __webpackUniversal__.entry',
+					`;\nif (typeof module !== "undefined") module.exports = global.webpackRequests[${JSON.stringify(request)}]`,
 					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
 				);
 			}
