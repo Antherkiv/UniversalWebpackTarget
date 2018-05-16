@@ -1,7 +1,6 @@
 const path = require('path');
 
 const webpack = require('webpack');
-var HappyPack = require('happypack');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const universalTarget = require('./universal-webpack');
 
@@ -34,33 +33,20 @@ module.exports = [
       rules: [
         {
           test: /\.tsx?$/,
-          loader: 'happypack/loader',
-        },
-        {
-          enforce: 'pre',
-          test: /\.js$/,
           use: [
-            'source-map-loader',
+            'cache-loader',
+            {
+              loader: 'ts-loader',
+              options: { transpileOnly: true },
+            },
           ],
-        }
+        },
       ]
     },
 
     plugins: [
       // new webpack.NamedModulesPlugin(),
-      new HappyPack({
-        threads: 2,
-        use: [
-          'cache-loader',
-          {
-            loader: 'ts-loader',
-            query: { happyPackMode: true }
-          }
-        ]
-      }),
-      new ForkTsCheckerWebpackPlugin({
-        checkSyntacticErrors: true,
-      })
+      new ForkTsCheckerWebpackPlugin(),
     ],
 
     externals: {
@@ -98,33 +84,20 @@ module.exports = [
       rules: [
         {
           test: /\.tsx?$/,
-          loader: 'happypack/loader',
-        },
-        {
-          enforce: 'pre',
-          test: /\.js$/,
           use: [
-            'source-map-loader',
+            'cache-loader',
+            {
+              loader: 'ts-loader',
+              options: { transpileOnly: true },
+            },
           ],
-        }
+        },
       ]
     },
 
     plugins: [
       // new webpack.NamedModulesPlugin(),
-      new HappyPack({
-        threads: 2,
-        use: [
-          'cache-loader',
-          {
-            loader: 'ts-loader',
-            query: { happyPackMode: true }
-          }
-        ]
-      }),
-      new ForkTsCheckerWebpackPlugin({
-        checkSyntacticErrors: true,
-      })
+      new ForkTsCheckerWebpackPlugin(),
     ],
 
     externals: {
