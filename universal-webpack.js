@@ -26,12 +26,12 @@ function universalTarget(options) {
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
 		new FunctionModulePlugin().apply(compiler);
 		new NodeSourcePlugin(compiler.options.node).apply(compiler);
-		new LoaderTargetPlugin(options.target || 'node').apply(compiler);
+		new LoaderTargetPlugin(options.target || "node").apply(compiler);
 
 		if (options.dll) {
 			new DllPlugin({
 				name: `${compiler.options.output.publicPath}${compiler.options.output.filename}`,
-				path: path.resolve(compiler.options.output.path, '[name].json'),
+				path: path.resolve(compiler.options.output.path, "[name].json"),
 			}).apply(compiler);
 		}
 
@@ -45,10 +45,10 @@ function universalTarget(options) {
 				);
 				process.exit(1);
 				}
-				const lib = JSON.parse(fs.readFileSync(libFile, 'utf8'));
+				const lib = JSON.parse(fs.readFileSync(libFile, "utf8"));
 				new DllReferencePlugin({
 					manifest: lib,
-					sourceType: 'commonjs2',
+					sourceType: "commonjs2",
 				}).apply(compiler);
 			});
 		}
