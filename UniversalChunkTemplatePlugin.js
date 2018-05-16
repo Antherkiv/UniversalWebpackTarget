@@ -1,7 +1,7 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
-    Authors Tobias Koppers @sokra
-            Germán Méndez Bravo (Kronuz)
+	Authors Tobias Koppers @sokra
+			Germán Méndez Bravo (Kronuz)
 */
 "use strict";
 
@@ -35,9 +35,8 @@ class UniversalChunkTemplatePlugin {
 		);
 		chunkTemplate.hooks.hash.tap("UniversalChunkTemplatePlugin", hash => {
 			hash.update("UniversalChunkTemplatePlugin");
-			hash.update("4");
+			hash.update("1");
 			hash.update(`${chunkTemplate.outputOptions.jsonpFunction}`);
-			hash.update("global");
 		});
 	}
 }

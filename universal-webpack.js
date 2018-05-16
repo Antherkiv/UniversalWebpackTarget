@@ -1,6 +1,6 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
-    Authors Germán Méndez Bravo (Kronuz)
+	Authors Germán Méndez Bravo (Kronuz)
 */
 "use strict";
 

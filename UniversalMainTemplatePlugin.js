@@ -1,13 +1,13 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
-    Authors Tobias Koppers @sokra
-            Germán Méndez Bravo (Kronuz)
+	Authors Tobias Koppers @sokra
+			Germán Méndez Bravo (Kronuz)
 */
 "use strict";
 
 const { SyncWaterfallHook } = require("tapable");
-const { ConcatSource } = require("webpack-sources");
 const Template = require("webpack/lib/Template");
+const { ConcatSource } = require("webpack-sources");
 
 class UniversalMainTemplatePlugin {
 	apply(mainTemplate) {
@@ -66,7 +66,7 @@ class UniversalMainTemplatePlugin {
 						chunkMaps.hash
 					)}[${chunkIdExpression}] + "`,
 					hashWithLength(length) {
-						const shortChunkHashMap = {};
+						const shortChunkHashMap = Object.create(null);
 						for (const chunkId of Object.keys(chunkMaps.hash)) {
 							if (typeof chunkMaps.hash[chunkId] === "string")
 								shortChunkHashMap[chunkId] = chunkMaps.hash[chunkId].substr(
@@ -639,7 +639,7 @@ global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}`;
 			}
 		);
 		mainTemplate.hooks.hash.tap("UniversalMainTemplatePlugin", hash => {
-			hash.update("jsonp");
+			hash.update("universal");
 			hash.update("5");
 			hash.update("global");
 			hash.update(`${mainTemplate.outputOptions.chunkFilename}`);

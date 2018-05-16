@@ -1,7 +1,7 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
-    Authors Tobias Koppers @sokra
-            Germán Méndez Bravo (Kronuz)
+	Authors Tobias Koppers @sokra
+			Germán Méndez Bravo (Kronuz)
 */
 "use strict";
 
