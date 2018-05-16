@@ -148,7 +148,6 @@ class UniversalMainTemplatePlugin {
 		mainTemplate.hooks.renderWithEntry.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk) => {
-				debugger
 				const request = mainTemplate.getAssetPath(
 					mainTemplate.outputOptions.publicPath + mainTemplate.outputOptions.chunkFilename,
 					{ chunk }

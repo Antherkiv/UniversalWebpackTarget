@@ -1,5 +1,6 @@
 const path = require('path');
 
+const webpack = require('webpack');
 const universalTarget = require('./universal-webpack');
 
 module.exports = [
@@ -29,10 +30,26 @@ module.exports = [
 
     module: {
       rules: [
-        { test: /\.tsx?$/, loader: 'ts-loader' },
-        { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
+        {
+          test: /\.tsx?$/,
+          use: [
+            'cache-loader',
+            'ts-loader',
+          ],
+        },
+        {
+          enforce: 'pre',
+          test: /\.js$/,
+          use: [
+            'source-map-loader',
+          ],
+        }
       ]
     },
+
+    plugins: [
+      // new webpack.NamedModulesPlugin(),
+    ],
 
     externals: {
       'unicode/category/So': '{}', // Ignore unicode/category/So used (only in the server side) by node-slug.
@@ -67,10 +84,26 @@ module.exports = [
 
     module: {
       rules: [
-        { test: /\.tsx?$/, loader: 'ts-loader' },
-        { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
+        {
+          test: /\.tsx?$/,
+          use: [
+            'cache-loader',
+            'ts-loader',
+          ],
+        },
+        {
+          enforce: 'pre',
+          test: /\.js$/,
+          use: [
+            'source-map-loader',
+          ],
+        }
       ]
     },
+
+    plugins: [
+      // new webpack.NamedModulesPlugin(),
+    ],
 
     externals: {
       'unicode/category/So': '{}', // Ignore unicode/category/So used (only in the server side) by node-slug.
