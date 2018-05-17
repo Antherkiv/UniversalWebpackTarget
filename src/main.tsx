@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 
 import { Hello } from './components/Hello';
 
@@ -13,7 +12,5 @@ import(/* webpackChunkName: "test1" */ './test1').then(({ test1 }) => {
   });
 });
 
-ReactDOM.render(
-  <Hello name="main" compiler="TypeScript" framework="React" />,
-  document.getElementById('main'),
-);
+export const Main = () =>
+  <Hello name="main" compiler="TypeScript" framework="React" />;

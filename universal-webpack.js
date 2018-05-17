@@ -61,8 +61,8 @@ function universalTarget(options) {
 					}
 				}
 				if (!plugins.length) {
-					console.error(`Invalid imported library ${name}: not manifests found!`);
-					process.exit(1);
+					console.warning(`Invalid imported library ${name}: not manifests found!`);
+					// process.exit(1);
 				}
 			});
 		}

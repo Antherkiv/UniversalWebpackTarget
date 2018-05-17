@@ -1,3 +1,5 @@
+/* eslint prettier/prettier:0 */
+
 const path = require('path');
 
 const webpack = require('webpack');
@@ -67,16 +69,50 @@ module.exports = [
     'main',
     {
       'main': [
-        './src/main.tsx',
+        './src/main',
       ],
       'other': [
-        './src/other.tsx',
+        './src/other',
+      ],
+    },
+    universalTarget({
+      dll: true,
+      libsPath: path.resolve(__dirname, 'libs'),
+      imports: [
+        'Base'
+      ],
+    })
+  ),
+
+  factory(
+    'client',
+    {
+      'client': [
+        './src/client',
       ],
     },
     universalTarget({
       libsPath: path.resolve(__dirname, 'libs'),
       imports: [
-        'Base'
+        'Base',
+        'main'
+      ],
+    })
+  ),
+
+  factory(
+    'server',
+    {
+      'server': [
+        './src/server',
+      ],
+    },
+    universalTarget({
+      target: 'node',
+      libsPath: path.resolve(__dirname, 'libs'),
+      imports: [
+        'Base',
+        'main'
       ],
     })
   ),
