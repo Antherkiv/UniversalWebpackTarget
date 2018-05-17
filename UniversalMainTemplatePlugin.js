@@ -19,49 +19,7 @@ class UniversalMainTemplatePlugin {
 	}
 
 	apply(mainTemplate) {
-		const needChunkOnDemandLoadingCode = chunk => {
-			for (const chunkGroup of chunk.groupsIterable) {
-				if (chunkGroup.getNumberOfChildren() > 0) return true;
-			}
-			return false;
-		};
-		const needChunkLoadingCode = chunk => {
-			for (const chunkGroup of chunk.groupsIterable) {
-				if (chunkGroup.chunks.length > 1) return true;
-				if (chunkGroup.getNumberOfChildren() > 0) return true;
-			}
-			return false;
-		};
-		const needEntryDeferringCode = chunk => {
-			for (const chunkGroup of chunk.groupsIterable) {
-				if (chunkGroup.chunks.length > 1) return true;
-			}
-			return false;
-		};
-		// TODO refactor this
-		if (!mainTemplate.hooks.jsonpScript) {
-			mainTemplate.hooks.jsonpScript = new SyncWaterfallHook([
-				"source",
-				"chunk",
-				"hash"
-			]);
-		}
-		if (!mainTemplate.hooks.linkPreload) {
-			mainTemplate.hooks.linkPreload = new SyncWaterfallHook([
-				"source",
-				"chunk",
-				"hash"
-			]);
-		}
-		if (!mainTemplate.hooks.linkPrefetch) {
-			mainTemplate.hooks.linkPrefetch = new SyncWaterfallHook([
-				"source",
-				"chunk",
-				"hash"
-			]);
-		}
-
-		const getScriptSrcPath = (hash, chunk, chunkIdExpression) => {
+		const getScriptSrc = (hash, chunk, chunkIdExpression) => {
 			const chunkFilename = mainTemplate.outputOptions.chunkFilename;
 			const chunkMaps = chunk.getChunkMaps();
 			return mainTemplate.getAssetPath(JSON.stringify(chunkFilename), {
@@ -118,461 +76,129 @@ class UniversalMainTemplatePlugin {
 		mainTemplate.hooks.localVars.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
-				const extraCode = [];
-				if (needChunkLoadingCode(chunk)) {
-					extraCode.push(
-						"",
-						"// object to store loaded and loading chunks",
-						"// undefined = chunk not loaded, null = chunk preloaded/prefetched",
-						"// Promise = chunk loading, 0 = chunk loaded",
-						"var installedChunks = {",
-						Template.indent(
-							chunk.ids.map(id => `${JSON.stringify(id)}: 0`).join(",\n")
-						),
-						"};",
-						"",
-						needEntryDeferringCode(chunk) ? "var deferredModules = [];" : ""
+				const dependencies = new Set();
+				for (const chunkModule of chunk.modulesIterable) {
+					if (chunkModule.issuer && chunkModule.issuer.dependencies) {
+						const dep = chunkModule.issuer.dependencies[0];
+						const sourceModule = dep.module;
+						if (
+							sourceModule &&
+							sourceModule.external &&
+							sourceModule.externalType
+						) {
+							dependencies.add(sourceModule.request);
+						}
+					}
+				}
+				let entries = [];
+				if (chunk.hasEntryModule()) {
+					entries = [chunk.entryModule].filter(Boolean).map(m =>
+						[m.id].concat(
+							Array.from(chunk.groupsIterable)[0]
+								.chunks.filter(c => c !== chunk)
+								.map(c => c.id)
+						)
 					);
 				}
-				if (needChunkOnDemandLoadingCode(chunk)) {
-					extraCode.push(
-						"",
-						"// script path function",
-						"function jsonpScriptSrc(chunkId) {",
-						Template.indent([
-							`return "/" + ${mainTemplate.requireFn}.p + ${getScriptSrcPath(
-								hash,
-								chunk,
-								"chunkId"
-							)}`
-						]),
-						"}"
-					);
-				}
-				if (extraCode.length === 0) return source;
-				return Template.asString([source, ...extraCode]);
-			}
-		);
-		mainTemplate.hooks.renderWithEntry.tap(
-			"UniversalMainTemplatePlugin",
-			(source, chunk) => {
-				const request = mainTemplate.getAssetPath(
-					mainTemplate.outputOptions.publicPath + mainTemplate.outputOptions.chunkFilename,
-					{ chunk }
-				);
-				return new ConcatSource(
-					'if (typeof window !== "undefined") window.global = window.global || window;\n',
-					"global.webpackRequests = global.webpackRequests || {};\n",
-					"global.require = global.require || function require(request) { return global.webpackRequests[request] };\n",
-					"(function(__webpackUniversal__) {\n",
-					`global.webpackRequests[${JSON.stringify(request)}] = global.webpackRequests[${JSON.stringify(request)}] ||\n`,
-					source,
-					`;\nif (typeof module !== "undefined") module.exports = global.webpackRequests[${JSON.stringify(request)}]`,
-					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
-				);
-			}
-		);
-
-		mainTemplate.hooks.jsonpScript.tap(
-			"UniversalMainTemplatePlugin",
-			(_, chunk, hash) => {
-				const crossOriginLoading =
-					mainTemplate.outputOptions.crossOriginLoading;
-				const chunkLoadTimeout = mainTemplate.outputOptions.chunkLoadTimeout;
-				const jsonpScriptType = mainTemplate.outputOptions.jsonpScriptType;
-
 				return Template.asString([
-					"var script = document.createElement('script');",
-					jsonpScriptType
-						? `script.type = ${JSON.stringify(jsonpScriptType)};`
-						: "",
-					"script.charset = 'utf-8';",
-					`script.timeout = ${chunkLoadTimeout / 1000};`,
-					crossOriginLoading
-						? `script.crossOrigin = ${JSON.stringify(crossOriginLoading)};`
-						: "",
-					`if (${mainTemplate.requireFn}.nc) {`,
-					Template.indent(
-						`script.setAttribute("nonce", ${mainTemplate.requireFn}.nc);`
-					),
+					source,
+					"",
+					"// script path function",
+					"function scriptSrc(chunkId) {",
+					Template.indent([`return ${getScriptSrc(hash, chunk, "chunkId")}`]),
 					"}",
-					"script.src = jsonpScriptSrc(chunkId);",
-					"var timeout = setTimeout(function(){",
-					Template.indent([
-						"onScriptComplete({ type: 'timeout', target: script });"
-					]),
-					`}, ${chunkLoadTimeout});`,
-					"script.onerror = script.onload = onScriptComplete;",
-					"function onScriptComplete(event) {",
-					Template.indent([
-						"// avoid mem leaks in IE.",
-						"script.onerror = script.onload = null;",
-						"clearTimeout(timeout);",
-						"var chunk = installedChunks[chunkId];",
-						"if(chunk !== 0) {",
-						Template.indent([
-							"if(chunk) {",
-							Template.indent([
-								"var errorType = event && (event.type === 'load' ? 'missing' : event.type);",
-								"var realSrc = event && event.target && event.target.src;",
-								"var error = new Error('Loading chunk ' + chunkId + ' failed.\\n(' + errorType + ': ' + realSrc + ')');",
-								"error.type = errorType;",
-								"error.request = realSrc;",
-								"chunk[1](error);"
-							]),
-							"}",
-							"installedChunks[chunkId] = undefined;"
-						]),
-						"}"
-					]),
-					"};"
-				]);
-			}
-		);
-		mainTemplate.hooks.linkPreload.tap(
-			"UniversalMainTemplatePlugin",
-			(_, chunk, hash) => {
-				const crossOriginLoading =
-					mainTemplate.outputOptions.crossOriginLoading;
-				const jsonpScriptType = mainTemplate.outputOptions.jsonpScriptType;
-
-				return Template.asString([
-					"var link = document.createElement('link');",
-					jsonpScriptType
-						? `link.type = ${JSON.stringify(jsonpScriptType)};`
-						: "",
-					"link.charset = 'utf-8';",
-					crossOriginLoading
-						? `link.crossOrigin = ${JSON.stringify(crossOriginLoading)};`
-						: "",
-					`if (${mainTemplate.requireFn}.nc) {`,
+					"",
+					"// object to store loaded and loading chunks",
+					"// undefined = chunk not loaded, null = chunk preloaded/prefetched",
+					"// Promise = chunk loading, 0 = chunk loaded",
+					"var installedChunks = {",
 					Template.indent(
-						`link.setAttribute("nonce", ${mainTemplate.requireFn}.nc);`
+						chunk.ids.map(id => `${JSON.stringify(id)}: 0`).join(",\n")
 					),
-					"}",
-					'link.rel = "preload";',
-					'link.as = "script";',
-					"link.href = jsonpScriptSrc(chunkId);"
-				]);
-			}
-		);
-		mainTemplate.hooks.linkPrefetch.tap(
-			"UniversalMainTemplatePlugin",
-			(_, chunk, hash) => {
-				return Template.asString([
-					"var link = document.createElement('link');",
-					'link.rel = "prefetch";',
-					"link.href = jsonpScriptSrc(chunkId);"
-				]);
-			}
-		);
-		mainTemplate.hooks.requireEnsure.tap(
-			"UniversalMainTemplatePlugin load require()",
-			(source, chunk, hash) => {
-				return Template.asString([
-					source,
+					"};",
 					"",
-					"// require() chunk loading for javascript",
-					"",
-					'if(typeof window === "undefined") {',
-					Template.indent([
-						"var installedChunkData = installedChunks[chunkId];",
-						'if(installedChunkData !== 0) { // 0 means "already installed".',
-						Template.indent([
-							`var chunk = require(${getScriptSrcPath(
-								hash,
-								chunk,
-								"chunkId"
-							)});`,
-							"__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || [];",
-							"__webpackUniversal__.jsonp.push(chunk);"
-						]),
-						"}",
-						"return Promise.all(promises);"
-					]),
-					"}"
-				]);
-			}
-		);
-		mainTemplate.hooks.requireEnsure.tap(
-			"UniversalMainTemplatePlugin load JSONP",
-			(source, chunk, hash) => {
-				return Template.asString([
-					source,
-					"",
-					"// JSONP chunk loading for javascript",
-					"",
-					"var installedChunkData = installedChunks[chunkId];",
-					'if(installedChunkData !== 0) { // 0 means "already installed".',
-					Template.indent([
-						"",
-						'// a Promise means "currently loading".',
-						"if(installedChunkData) {",
-						Template.indent(["promises.push(installedChunkData[2]);"]),
-						"} else {",
-						Template.indent([
-							"// setup Promise in chunk cache",
-							"var promise = new Promise(function(resolve, reject) {",
-							Template.indent([
-								"installedChunkData = installedChunks[chunkId] = [resolve, reject];"
-							]),
-							"});",
-							"promises.push(installedChunkData[2] = promise);",
-							"",
-							"// start chunk loading",
-							"var head = document.getElementsByTagName('head')[0];",
-							mainTemplate.hooks.jsonpScript.call("", chunk, hash),
-							"head.appendChild(script);"
-						]),
-						"}"
-					]),
-					"}"
-				]);
-			}
-		);
-		mainTemplate.hooks.requireEnsure.tap(
-			{
-				name: "UniversalMainTemplatePlugin preload JSONP",
-				stage: 10
-			},
-			(source, chunk, hash) => {
-				const chunkMap = chunk.getChildIdsByOrdersMap().preload;
-				if (!chunkMap || Object.keys(chunkMap).length === 0) return source;
-				return Template.asString([
-					source,
+					"var deferredModules = [",
+					Template.indent([entries.map(e => JSON.stringify(e)).join(", ")]),
+					"];",
 					"",
 					"// chunk preloadng for javascript",
 					"",
-					`var chunkPreloadMap = ${JSON.stringify(chunkMap, null, "\t")}`,
-					"",
-					"var chunkPreloadData = chunkPreloadMap[chunkId];",
-					"if(chunkPreloadData) {",
-					Template.indent([
-						"var head = document.getElementsByTagName('head')[0];",
-						"chunkPreloadData.forEach(function(chunkId) {",
-						Template.indent([
-							"if(installedChunks[chunkId] === undefined) {",
-							Template.indent([
-								"installedChunks[chunkId] = null;",
-								mainTemplate.hooks.linkPreload.call("", chunk, hash),
-								"head.appendChild(link);"
-							]),
-							"}"
-						]),
-						"});"
-					]),
-					"}"
-				]);
-			}
-		);
-		mainTemplate.hooks.requireEnsure.tap(
-			{
-				name: "UniversalMainTemplatePlugin prefetch JSONP",
-				stage: 20
-			},
-			(source, chunk, hash) => {
-				const chunkMap = chunk.getChildIdsByOrdersMap().prefetch;
-				if (!chunkMap || Object.keys(chunkMap).length === 0) return source;
-				return Template.asString([
-					source,
+					`var chunkPreloadMap = ${JSON.stringify(
+						chunk.getChildIdsByOrdersMap().preload || {},
+						null,
+						"\t"
+					)}`,
 					"",
 					"// chunk prefetching for javascript",
 					"",
-					`var chunkPrefetchMap = ${JSON.stringify(chunkMap, null, "\t")}`,
+					`var chunkPrefetchMap = ${JSON.stringify(
+						chunk.getChildIdsByOrdersMap().prefetch || {},
+						null,
+						"\t"
+					)}`,
 					"",
-					"var chunkPrefetchData = chunkPrefetchMap[chunkId];",
-					"if(chunkPrefetchData) {",
-					Template.indent([
-						"Promise.all(promises).then(function() {",
-						Template.indent([
-							"var head = document.getElementsByTagName('head')[0];",
-							"chunkPrefetchData.forEach(function(chunkId) {",
-							Template.indent([
-								"if(installedChunks[chunkId] === undefined) {",
-								Template.indent([
-									"installedChunks[chunkId] = null;",
-									mainTemplate.hooks.linkPrefetch.call("", chunk, hash),
-									"head.appendChild(link);"
-								]),
-								"}"
-							]),
-							"});"
-						]),
-						"})"
-					]),
-					"}"
+					"// object to store dependencies",
+					"var dependencies = [",
+					Template.indent(
+						Array.from(dependencies)
+							.map(request => JSON.stringify(request))
+							.join(",\n")
+					),
+					"];",
 				]);
 			}
 		);
 		mainTemplate.hooks.requireExtensions.tap(
 			"UniversalMainTemplatePlugin",
-			(source, chunk) => {
-				if (!needChunkOnDemandLoadingCode(chunk)) return source;
-
+			(source, chunk, hash) => {
 				return Template.asString([
 					source,
 					"",
-					"// on error function for async loading",
-					`${mainTemplate.requireFn}.oe = function(err) {`,
-					Template.indent([
-						"if (process && process.nextTick) {",
-						Template.indent([
-							"process.nextTick(function() {",
-							Template.indent(
-								"throw err; // catch this error by using import().catch()"
-							),
-							"});"
-						]),
-						"} else {",
-						Template.indent([
-							"console.error(err);",
-							"throw err; // catch this error by using import().catch()"
-						]),
-						"}"
-					]),
-					"};"
+					"// chunk path",
+					`${mainTemplate.requireFn}.cp = ${JSON.stringify(
+						mainTemplate.getAssetPath(
+							mainTemplate.outputOptions.publicPath +
+								mainTemplate.outputOptions.chunkFilename,
+							{ chunk }
+						)
+					)}`
 				]);
-			}
-		);
-		mainTemplate.hooks.bootstrap.tap(
-			"UniversalMainTemplatePlugin",
-			(source, chunk, hash) => {
-				if (needChunkLoadingCode(chunk)) {
-					const withDefer = needEntryDeferringCode(chunk);
-					return Template.asString([
-						source,
-						"",
-						"// install a JSONP callback for chunk loading",
-						"function webpackJsonpCallback(data) {",
-						Template.indent([
-							"var chunkIds = data[0];",
-							"var moreModules = data[1];",
-							withDefer ? "var executeModules = data[2];" : "",
-							'// add "moreModules" to the modules object,',
-							'// then flag all "chunkIds" as loaded and fire callback',
-							"var moduleId, chunkId, i = 0, resolves = [];",
-							"for(;i < chunkIds.length; i++) {",
-							Template.indent([
-								"chunkId = chunkIds[i];",
-								"if(installedChunks[chunkId]) {",
-								Template.indent("resolves.push(installedChunks[chunkId][0]);"),
-								"}",
-								"installedChunks[chunkId] = 0;"
-							]),
-							"}",
-							"for(moduleId in moreModules) {",
-							Template.indent([
-								"if(Object.prototype.hasOwnProperty.call(moreModules, moduleId)) {",
-								Template.indent(
-									mainTemplate.renderAddModule(
-										hash,
-										chunk,
-										"moduleId",
-										"moreModules[moduleId]"
-									)
-								),
-								"}"
-							]),
-							"}",
-							"if(parentJsonpFunction) parentJsonpFunction(data);",
-							"while(resolves.length) {",
-							Template.indent("resolves.shift()();"),
-							"}",
-							withDefer
-								? Template.asString([
-										"",
-										"// add entry modules from loaded chunk to deferred list",
-										"deferredModules.push.apply(deferredModules, executeModules || []);",
-										"",
-										"// run deferred modules when all chunks ready",
-										"return checkDeferredModules();"
-								  ])
-								: ""
-						]),
-						"};",
-						withDefer
-							? Template.asString([
-									"function checkDeferredModules() {",
-									Template.indent([
-										"var result;",
-										"for(var i = 0; i < deferredModules.length; i++) {",
-										Template.indent([
-											"var deferredModule = deferredModules[i];",
-											"var fulfilled = true;",
-											"for(var j = 1; j < deferredModule.length; j++) {",
-											Template.indent([
-												"var depId = deferredModule[j];",
-												"if(installedChunks[depId] !== 0) fulfilled = false;"
-											]),
-											"}",
-											"if(fulfilled) {",
-											Template.indent([
-												"deferredModules.splice(i--, 1);",
-												"result = " +
-													mainTemplate.requireFn +
-													"(" +
-													mainTemplate.requireFn +
-													".s = deferredModule[0]);"
-											]),
-											"}"
-										]),
-										"}",
-										"return result;"
-									]),
-									"}"
-							  ])
-							: ""
-					]);
-				}
-				return source;
-			}
-		);
-		mainTemplate.hooks.beforeStartup.tap(
-			"UniversalMainTemplatePlugin",
-			(source, chunk, hash) => {
-				if (needChunkLoadingCode(chunk)) {
-					return Template.asString([
-						"__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || [];",
-						"var oldJsonpFunction = __webpackUniversal__.jsonp.push.bind(__webpackUniversal__.jsonp);",
-						"__webpackUniversal__.jsonp.push = webpackJsonpCallback;",
-						"var jsonpArray = __webpackUniversal__.jsonp.slice();",
-						"for(var i = 0; i < jsonpArray.length; i++) webpackJsonpCallback(jsonpArray[i]);",
-						"var parentJsonpFunction = oldJsonpFunction;",
-						"",
-						source
-					]);
-				}
-				return source;
 			}
 		);
 		mainTemplate.hooks.startup.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
-				if (needEntryDeferringCode(chunk)) {
-					if (chunk.hasEntryModule()) {
-						const entries = [chunk.entryModule].filter(Boolean).map(m =>
-							[m.id].concat(
-								Array.from(chunk.groupsIterable)[0]
-									.chunks.filter(c => c !== chunk)
-									.map(c => c.id)
-							)
-						);
-						return Template.asString([
-							"// add entry module to deferred list",
-							`deferredModules.push(${entries
-								.map(e => JSON.stringify(e))
-								.join(", ")});`,
-							"// run deferred modules when ready",
-							"return checkDeferredModules();"
-						]);
-					} else {
-						return Template.asString([
-							"// run deferred modules from other chunks",
-							"checkDeferredModules();"
-						]);
-					}
-				}
-				return source;
+				return Template.asString([
+					"",
+					"return webpackUniversalFactory(",
+					Template.indent(
+						[
+							"__webpackUniversal__",
+							mainTemplate.requireFn,
+							"modules",
+							"scriptSrc",
+							"installedChunks",
+							"deferredModules",
+							"chunkPreloadMap",
+							"chunkPrefetchMap",
+							"dependencies",
+						].join(",\n")
+					),
+					");",
+				]);
+			}
+		);
+		mainTemplate.hooks.renderWithEntry.tap(
+			"UniversalMainTemplatePlugin",
+			(source, chunk) => {
+				return new ConcatSource(
+					'if (typeof window !== "undefined") window.global = window.global || window;\n',
+					"(function(__webpackUniversal__) {\n",
+					"var __module__exports =\n",
+					source,
+					`;\nif (typeof module !== "undefined") module.exports = __module__exports`,
+					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
+				);
 			}
 		);
 		mainTemplate.hooks.hotBootstrap.tap(
@@ -605,7 +231,7 @@ class UniversalMainTemplatePlugin {
 					}
 				);
 				const runtimeSource = Template.getFunctionContent(
-					require("./UniversalMainTemplate.runtime.js")
+					require("webpack/lib/web/JsonpMainTemplate.runtime.js")
 				)
 					.replace(/\/\/\$semicolon/g, ";")
 					.replace(/\$require\$/g, mainTemplate.requireFn)

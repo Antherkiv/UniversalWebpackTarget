@@ -54,6 +54,9 @@ module.exports = [
         'react',
         'react-dom',
       ],
+      'Logger': [
+        './src/logger',
+      ],
     },
     universalTarget({
       dll: true,
