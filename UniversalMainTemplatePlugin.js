@@ -171,21 +171,21 @@ class UniversalMainTemplatePlugin {
 				return Template.asString([
 					"",
 					"global.webpackUniversal = global.webpackUniversal || [];",
-					"return global.webpackUniversal.push([",
+					"return global.webpackUniversal.push({",
 					Template.indent(
 						[
-							"__webpackUniversal__",
-							mainTemplate.requireFn,
-							"modules",
-							"scriptSrc",
-							"installedChunks",
-							"deferredModules",
-							"chunkPreloadMap",
-							"chunkPrefetchMap",
-							"dependencies",
+							"u: __webpackUniversal__",
+							`r: ${mainTemplate.requireFn}`,
+							"m: modules",
+							"s: scriptSrc",
+							"i: installedChunks",
+							"e:  deferredModules",
+							"pl: chunkPreloadMap",
+							"pf: chunkPrefetchMap",
+							"d: dependencies",
 						].join(",\n")
 					),
-					"]);",
+					"});",
 				]);
 			}
 		);

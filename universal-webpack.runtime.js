@@ -98,17 +98,22 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		return require;
 	}
 
-	function webpackUniversalFactory(opts) {
-		var __webpackUniversal__ = opts[0];
-		var __webpack_require__ = opts[1];
-		var modules = opts[2];
-		var scriptSrc = opts[3];
-		var installedChunks = opts[4];
-		var deferredModules = opts[5];
-		var chunkPreloadMap = opts[6];
-		var chunkPrefetchMap = opts[7];
-		var dependencies = opts[8];
-
+	/**
+	 * webpackUniversal factory
+	 *
+	 * @param {Object} options Receives options
+	 *     options.u  -> __webpackUniversal__
+	 *     options.r  -> __webpack_require__
+	 *     options.m  -> modules
+	 *     options.s  -> scriptSrc
+	 *     options.i  -> installedChunks
+	 *     options.e  -> deferredModules
+	 *     options.pl -> chunkPreloadMap
+	 *     options.pf -> chunkPrefetchMap
+	 *     options.d  -> dependencies
+	 * @returns {Promise} Promise for signaling load
+	 */
+	function webpackUniversalFactory(options) {
 		// install a JSONP callback for chunk loading
 		function webpackJsonpCallback(data) {
 			var chunkIds = data[0];
@@ -121,14 +126,14 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				resolves = [];
 			for (var i = 0; i < chunkIds.length; i++) {
 				chunkId = chunkIds[i];
-				if (installedChunks[chunkId]) {
-					resolves.push(installedChunks[chunkId][0]);
+				if (options.i[chunkId]) {
+					resolves.push(options.i[chunkId][0]);
 				}
-				installedChunks[chunkId] = 0;
+				options.i[chunkId] = 0;
 			}
 			for (moduleId in moreModules) {
 				if (Object.prototype.hasOwnProperty.call(moreModules, moduleId)) {
-					modules[moduleId] = moreModules[moduleId];
+					options.m[moduleId] = moreModules[moduleId];
 				}
 			}
 			if (parentJsonpFunction) parentJsonpFunction(data);
@@ -137,7 +142,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			}
 
 			// add entry modules from loaded chunk to deferred list
-			deferredModules.push.apply(deferredModules, executeModules || []);
+			options.e.push.apply(options.e, executeModules || []);
 
 			// run deferred modules when all chunks ready
 			return checkDeferredModules();
@@ -145,18 +150,16 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 		function checkDeferredModules() {
 			var result;
-			for (var i = 0; i < deferredModules.length; i++) {
-				var deferredModule = deferredModules[i];
+			for (var i = 0; i < options.e.length; i++) {
+				var deferredModule = options.e[i];
 				var fulfilled = true;
 				for (var j = 1; j < deferredModule.length; j++) {
 					var depId = deferredModule[j];
-					if (installedChunks[depId] !== 0) fulfilled = false;
+					if (options.i[depId] !== 0) fulfilled = false;
 				}
 				if (fulfilled) {
-					deferredModules.splice(i--, 1);
-					result = __webpack_require__(
-						(__webpack_require__.s = deferredModule[0])
-					);
+					options.e.splice(i--, 1);
+					result = options.r((options.r.s = deferredModule[0]));
 				}
 			}
 			return result;
@@ -169,10 +172,10 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			 * It also adds the final module to the require() cache.
 			 */
 			var promises = [];
-			for (i = 0; i < dependencies.length; i++) {
-				promises.push(global.require.load(dependencies[i]));
+			for (i = 0; i < options.d.length; i++) {
+				promises.push(global.require.load(options.d[i]));
 			}
-			var request = __webpack_require__.cp;
+			var request = options.r.cp;
 			var promise = Promise.all(promises);
 			var requiredModule = global.require.cache[request];
 			if (
@@ -209,19 +212,19 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 		// script path function
 		function requireScriptSrc(chunkId) {
-			return "./" + __webpack_require__.p + "" + scriptSrc(chunkId);
+			return "./" + options.r.p + "" + options.s(chunkId);
 		}
 
 		function jsonpScriptSrc(chunkId) {
-			return "/" + __webpack_require__.p + "" + scriptSrc(chunkId);
+			return "/" + options.r.p + "" + options.s(chunkId);
 		}
 
 		// This file contains only the entry chunk.
 		// The chunk loading function for additional chunks
-		__webpack_require__.e = function requireEnsure(chunkId) {
+		options.r.e = function requireEnsure(chunkId) {
 			var promises = [];
 
-			var installedChunkData = installedChunks[chunkId];
+			var installedChunkData = options.i[chunkId];
 			// 0 means "already installed".
 			// a Promise means "currently loading".
 
@@ -229,8 +232,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			if (typeof window === "undefined") {
 				if (installedChunkData !== 0) {
 					var chunk = require(requireScriptSrc(chunkId));
-					__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || [];
-					__webpackUniversal__.jsonp.push(chunk);
+					options.u.jsonp = options.u.jsonp || [];
+					options.u.jsonp.push(chunk);
 				}
 				return Promise.all(promises);
 			}
@@ -242,7 +245,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				} else {
 					// setup Promise in chunk cache
 					var promise = new Promise(function(resolve, reject) {
-						installedChunkData = installedChunks[chunkId] = [resolve, reject];
+						installedChunkData = options.i[chunkId] = [resolve, reject];
 					});
 					promises.push((installedChunkData[2] = promise));
 
@@ -253,8 +256,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					script.charset = "utf-8";
 					script.timeout = 120;
 
-					if (__webpack_require__.nc) {
-						script.setAttribute("nonce", __webpack_require__.nc);
+					if (options.r.nc) {
+						script.setAttribute("nonce", options.r.nc);
 					}
 					script.src = jsonpScriptSrc(chunkId);
 					var timeout = setTimeout(function() {
@@ -266,7 +269,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						// avoid mem leaks in IE.
 						script.onerror = script.onload = null;
 						clearTimeout(timeout);
-						var chunk = installedChunks[chunkId];
+						var chunk = options.i[chunkId];
 						if (chunk !== 0) {
 							if (chunk) {
 								var errorType =
@@ -285,25 +288,25 @@ if (typeof window !== "undefined") window.global = window.global || window;
 								error.request = realSrc;
 								chunk[1](error);
 							}
-							installedChunks[chunkId] = undefined;
+							options.i[chunkId] = undefined;
 						}
 					}
 					head.appendChild(script);
 				}
 
 				// chunk preloading for javascript
-				var chunkPreloadData = chunkPreloadMap[chunkId];
+				var chunkPreloadData = options.pl[chunkId];
 				if (chunkPreloadData) {
 					head = document.getElementsByTagName("head")[0];
 					chunkPreloadData.forEach(function(chunkId) {
-						if (installedChunks[chunkId] === undefined) {
-							installedChunks[chunkId] = null;
+						if (options.i[chunkId] === undefined) {
+							options.i[chunkId] = null;
 							var link = document.createElement("link");
 
 							link.charset = "utf-8";
 
-							if (__webpack_require__.nc) {
-								link.setAttribute("nonce", __webpack_require__.nc);
+							if (options.r.nc) {
+								link.setAttribute("nonce", options.r.nc);
 							}
 							link.rel = "preload";
 							link.as = "script";
@@ -315,13 +318,13 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 				// chunk prefetching for javascript
 
-				var chunkPrefetchData = chunkPrefetchMap[chunkId];
+				var chunkPrefetchData = options.pf[chunkId];
 				if (chunkPrefetchData) {
 					Promise.all(promises).then(function() {
 						var head = document.getElementsByTagName("head")[0];
 						chunkPrefetchData.forEach(function(chunkId) {
-							if (installedChunks[chunkId] === undefined) {
-								installedChunks[chunkId] = null;
+							if (options.i[chunkId] === undefined) {
+								options.i[chunkId] = null;
 								var link = document.createElement("link");
 								link.rel = "prefetch";
 								link.href = jsonpScriptSrc(chunkId);
@@ -336,7 +339,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		};
 
 		// on error function for async loading
-		__webpack_require__.oe = function onError(err) {
+		options.r.oe = function onError(err) {
 			if (process && process.nextTick) {
 				process.nextTick(function() {
 					throw err; // catch this error by using import().catch()
@@ -347,18 +350,16 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			}
 		};
 
-		__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || [];
-		var oldJsonpFunction = __webpackUniversal__.jsonp.push.bind(
-			__webpackUniversal__.jsonp
-		);
-		__webpackUniversal__.jsonp.push = webpackJsonpCallback;
-		var jsonpArray = __webpackUniversal__.jsonp.slice();
+		options.u.jsonp = options.u.jsonp || [];
+		var oldJsonpFunction = options.u.jsonp.push.bind(options.u.jsonp);
+		options.u.jsonp.push = webpackJsonpCallback;
+		var jsonpArray = options.u.jsonp.slice();
 		for (var i = 0; i < jsonpArray.length; i++) {
 			webpackJsonpCallback(jsonpArray[i]);
 		}
 		var parentJsonpFunction = oldJsonpFunction;
 
-		if (parentUniversalFunction) parentUniversalFunction(opts);
+		if (parentUniversalFunction) parentUniversalFunction(options);
 
 		// run deferred modules when all chunks ready
 		return loadDependencies();
