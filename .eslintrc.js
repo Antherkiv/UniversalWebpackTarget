@@ -43,7 +43,7 @@ module.exports = {
 			},
 			"requireReturnType": true
 		}],
-		"node/no-unsupported-features": "error",
+		"node/no-unsupported-features": 0,
 		"node/no-deprecated-api": "error",
 		"node/no-missing-import": "error",
 		"node/no-missing-require": ["error", { allowModules: ["webpack"] }],
@@ -53,7 +53,7 @@ module.exports = {
 	},
 	overrides: [
 		{
-			files: ["lib/**/*.runtime.js", "buildin/*.js", "hot/*.js"],
+			files: ["*.runtime.js", "buildin/*.js", "hot/*.js"],
 			env: {
 				es6: false,
 				browser: true
@@ -71,5 +71,5 @@ module.exports = {
 				"jest/globals": true
 			}
 		}
-	]
+	],
 };
