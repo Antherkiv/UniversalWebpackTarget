@@ -373,6 +373,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 	// install a global require()
 	global.require = global.require || requireFactory();
+	global.require.load = global.require.load || function() {};
 
 	// install a callback for universal modules loading
 	global.webpackUniversal = global.webpackUniversal || [];
