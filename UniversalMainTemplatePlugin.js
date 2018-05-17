@@ -170,7 +170,8 @@ class UniversalMainTemplatePlugin {
 			(source, chunk, hash) => {
 				return Template.asString([
 					"",
-					"return webpackUniversalFactory(",
+					"global.webpackUniversal = global.webpackUniversal || [];",
+					"return global.webpackUniversal.push([",
 					Template.indent(
 						[
 							"__webpackUniversal__",
@@ -184,7 +185,7 @@ class UniversalMainTemplatePlugin {
 							"dependencies",
 						].join(",\n")
 					),
-					");",
+					"]);",
 				]);
 			}
 		);

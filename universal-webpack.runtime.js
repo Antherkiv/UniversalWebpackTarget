@@ -98,17 +98,17 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		return require;
 	}
 
-	function webpackUniversalFactory(
-		__webpackUniversal__,
-		__webpack_require__,
-		modules,
-		scriptSrc,
-		installedChunks,
-		deferredModules,
-		chunkPreloadMap,
-		chunkPrefetchMap,
-		dependencies
-	) {
+	function webpackUniversalFactory(opts) {
+		var __webpackUniversal__ = opts[0];
+		var __webpack_require__ = opts[1];
+		var modules = opts[2];
+		var scriptSrc = opts[3];
+		var installedChunks = opts[4];
+		var deferredModules = opts[5];
+		var chunkPreloadMap = opts[6];
+		var chunkPrefetchMap = opts[7];
+		var dependencies = opts[8];
+
 		// install a JSONP callback for chunk loading
 		function webpackJsonpCallback(data) {
 			var chunkIds = data[0];
@@ -160,6 +160,51 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				}
 			}
 			return result;
+		}
+
+		function loadDependencies() {
+			/**
+			 * This function returns a promise which is resolved once the module
+			 * with all it's dependencies is loaded.
+			 * It also adds the final module to the require() cache.
+			 */
+			var promises = [];
+			for (i = 0; i < dependencies.length; i++) {
+				promises.push(global.require.load(dependencies[i]));
+			}
+			var request = __webpack_require__.cp;
+			var promise = Promise.all(promises);
+			var requiredModule = global.require.cache[request];
+			if (
+				typeof requiredModule === "object" &&
+				requiredModule.__webpackPromise
+			) {
+				promise.__webpackPromise = requiredModule.__webpackPromise;
+			} else {
+				promise.__webpackPromise = __emptyPromise;
+			}
+			global.require.cache[request] = promise;
+			promise.then(function() {
+				var requiredModule = global.require.cache[request];
+				try {
+					global.require.cache[request] = checkDeferredModules();
+					if (
+						typeof requiredModule === "object" &&
+						requiredModule.__webpackPromise
+					) {
+						requiredModule.__webpackPromise[0]();
+					}
+				} catch (error) {
+					global.require.cache[request] = undefined;
+					if (
+						typeof requiredModule === "object" &&
+						requiredModule.__webpackPromise
+					) {
+						requiredModule.__webpackPromise[1](error);
+					}
+				}
+			});
+			return global.require.cache[request];
 		}
 
 		// script path function
@@ -313,47 +358,26 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		}
 		var parentJsonpFunction = oldJsonpFunction;
 
-		var promises = [];
-		for (i = 0; i < dependencies.length; i++) {
-			promises.push(global.require.load(dependencies[i]));
-		}
+		if (parentUniversalFunction) parentUniversalFunction(opts);
 
-		var request = __webpack_require__.cp;
-		var promise = Promise.all(promises);
-		var requiredModule = global.require.cache[request];
-		if (typeof requiredModule === "object" && requiredModule.__webpackPromise) {
-			promise.__webpackPromise = requiredModule.__webpackPromise;
-		} else {
-			promise.__webpackPromise = __emptyPromise;
-		}
-		global.require.cache[request] = promise;
-		promise.then(function() {
-			var requiredModule = global.require.cache[request];
-			try {
-				global.require.cache[request] = checkDeferredModules();
-				if (
-					typeof requiredModule === "object" &&
-					requiredModule.__webpackPromise
-				) {
-					requiredModule.__webpackPromise[0]();
-				}
-			} catch (error) {
-				global.require.cache[request] = undefined;
-				if (
-					typeof requiredModule === "object" &&
-					requiredModule.__webpackPromise
-				) {
-					requiredModule.__webpackPromise[1](error);
-				}
-			}
-		});
-		return global.require.cache[request];
+		// run deferred modules when all chunks ready
+		return loadDependencies();
 	}
 
+	// install a global require()
 	global.require = global.require || requireFactory();
-	global.require.load = global.require.load || function() {};
-	global.require.cache = global.require.cache || {};
 
-	global.webpackUniversalFactory = webpackUniversalFactory;
-	if (typeof module !== "undefined") module.exports = webpackUniversalFactory;
+	// install a callback for universal modules loading
+	global.webpackUniversal = global.webpackUniversal || [];
+	var oldUniversalFunction = global.webpackUniversal.push.bind(
+		global.webpackUniversal
+	);
+	global.webpackUniversal.push = webpackUniversalFactory;
+	var universalArray = global.webpackUniversal.slice();
+	for (var i = 0; i < universalArray.length; i++) {
+		webpackUniversalFactory(universalArray[i]);
+	}
+	var parentUniversalFunction = oldUniversalFunction;
+
+	if (typeof module !== "undefined") module.exports = global.webpackUniversal;
 })();
