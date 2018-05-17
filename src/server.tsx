@@ -11,10 +11,8 @@ const app = express();
 app.set('view engine', 'html')
 app.set('views', './')
 app.engine('html', hogan);
-app.use('/', express.static('.'));
-app.set('port', (process.env.PORT || 3000));
 
-app.get('/xxx', (req:any, res:any) => {
+app.get('/', (req:any, res:any) => {
   res.locals.main = ReactDOMServer.renderToString(
     <Main />
   );
@@ -23,6 +21,9 @@ app.get('/xxx', (req:any, res:any) => {
   );
   res.status(200).render('index.html');
 })
+
+app.use('/', express.static('.'));
+app.set('port', (process.env.PORT || 3000));
 
 app.listen(app.get('port'))
 
