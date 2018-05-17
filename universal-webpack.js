@@ -13,13 +13,13 @@ const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 
+const DllPlugin = require("webpack/lib/DllPlugin");
+const DllReferencePlugin = require("webpack/lib/DllReferencePlugin");
 const FetchCompileWasmTemplatePlugin = require("webpack/lib/web/FetchCompileWasmTemplatePlugin");
 const FunctionModulePlugin = require("webpack/lib/FunctionModulePlugin");
 const LoaderTargetPlugin = require("webpack/lib/LoaderTargetPlugin");
 const NodeSourcePlugin = require("webpack/lib/node/NodeSourcePlugin");
 const UniversalTemplatePlugin = require("./UniversalTemplatePlugin");
-const DllPlugin = require("webpack/lib/DllPlugin");
-const DllReferencePlugin = require("webpack/lib/DllReferencePlugin");
 
 function universalTarget(options) {
 	function target(compiler) {
@@ -43,10 +43,12 @@ function universalTarget(options) {
 				for (const file of glob.sync(path.resolve(libsPath, name, "*.json"))) {
 					if (path.basename(file) !== "manifest.json") {
 						const lib = JSON.parse(fs.readFileSync(file, "utf8"));
-						plugins.push(new DllReferencePlugin({
-							manifest: lib,
-							sourceType: "commonjs",
-						}).apply(compiler));
+						plugins.push(
+							new DllReferencePlugin({
+								manifest: lib,
+								sourceType: "commonjs",
+							}).apply(compiler)
+						);
 					}
 				}
 				if (!plugins.length) {
