@@ -7,7 +7,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 	function requireFactory() {
 		function require(request) {
-			var requiredModule = require.cache[request];
+			var requiredModule = require.loaded[request];
 			if (
 				typeof requiredModule === "object" &&
 				requiredModule.__webpackPromise
@@ -19,9 +19,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			}
 			return requiredModule;
 		}
-		require.cache = {};
+		require.loaded = {};
 		require.load = function load(request) {
-			var requiredModule = require.cache[request];
+			var requiredModule = require.loaded[request];
 			// a Promise means "currently loading".
 			if (
 				typeof requiredModule === "object" &&
@@ -38,7 +38,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				});
 				__webpackPromise.push(promise);
 				promise.__webpackPromise = __webpackPromise;
-				require.cache[request] = promise;
+				require.loaded[request] = promise;
 
 				// start request loading
 				var head = document.getElementsByTagName("head")[0];
@@ -65,7 +65,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					// avoid mem leaks in IE.
 					script.onerror = script.onload = null;
 					clearTimeout(timeout);
-					var requiredModule = require.cache[request];
+					var requiredModule = require.loaded[request];
 					if (
 						typeof requiredModule === "object" &&
 						requiredModule.__webpackPromise
@@ -85,7 +85,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						error.type = errorType;
 						error.request = realSrc;
 						requiredModule.__webpackPromise[1](error);
-						require.cache[request] = undefined;
+						require.loaded[request] = undefined;
 					}
 				}
 				head.appendChild(script);
@@ -177,13 +177,17 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			 * with all it's dependencies is loaded.
 			 * It also adds the final module to the require() cache.
 			 */
+			if (typeof window === "undefined") {
+				return checkDeferredModules();
+			}
+
 			var promises = [];
 			for (i = 0; i < options.dp.length; i++) {
 				promises.push(global.require.load(options.dp[i]));
 			}
 			var request = options.r.cp;
 			var promise = Promise.all(promises);
-			var requiredModule = global.require.cache[request];
+			var requiredModule = global.require.loaded[request];
 			if (
 				typeof requiredModule === "object" &&
 				requiredModule.__webpackPromise
@@ -192,11 +196,11 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			} else {
 				promise.__webpackPromise = __emptyPromise;
 			}
-			global.require.cache[request] = promise;
+			global.require.loaded[request] = promise;
 			promise.then(function() {
-				var requiredModule = global.require.cache[request];
+				var requiredModule = global.require.loaded[request];
 				try {
-					global.require.cache[request] = checkDeferredModules();
+					global.require.loaded[request] = checkDeferredModules();
 					if (
 						typeof requiredModule === "object" &&
 						requiredModule.__webpackPromise
@@ -204,7 +208,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						requiredModule.__webpackPromise[0]();
 					}
 				} catch (error) {
-					global.require.cache[request] = undefined;
+					global.require.loaded[request] = undefined;
 					if (
 						typeof requiredModule === "object" &&
 						requiredModule.__webpackPromise
@@ -213,12 +217,12 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					}
 				}
 			});
-			return global.require.cache[request];
+			return global.require.loaded[request];
 		}
 
 		// script path function
 		function requireScriptSrc(chunkId) {
-			return "./" + options.r.p + "" + options.s(chunkId);
+			return options.r.p + "" + options.s(chunkId);
 		}
 
 		function jsonpScriptSrc(chunkId) {
@@ -372,8 +376,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 	}
 
 	// install a global require()
-	global.require = global.require || requireFactory();
-	global.require.load = global.require.load || function() {};
+	if (typeof window !== "undefined") {
+		global.require = global.require || requireFactory();
+	}
 
 	// install a callback for universal modules loading
 	global.webpackUniversal = global.webpackUniversal || [];
