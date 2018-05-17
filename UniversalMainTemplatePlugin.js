@@ -121,8 +121,7 @@ class UniversalMainTemplatePlugin {
 					Template.indent([entries.map(e => JSON.stringify(e)).join(", ")]),
 					"];",
 					"",
-					"// chunk preloadng for javascript",
-					"",
+					"// chunk preloading for javascript",
 					`var chunkPreloadMap = ${JSON.stringify(
 						chunk.getChildIdsByOrdersMap().preload || {},
 						null,
@@ -130,7 +129,6 @@ class UniversalMainTemplatePlugin {
 					)}`,
 					"",
 					"// chunk prefetching for javascript",
-					"",
 					`var chunkPrefetchMap = ${JSON.stringify(
 						chunk.getChildIdsByOrdersMap().prefetch || {},
 						null,
