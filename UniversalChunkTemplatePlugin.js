@@ -21,9 +21,9 @@ class UniversalChunkTemplatePlugin {
 			"UniversalChunkTemplatePlugin",
 			(modules, chunk) => {
 				const source = new ConcatSource();
-				source.add(
-					`__webpackUniversal__.jsonp.push([${JSON.stringify(chunk.ids)},`
-				);
+				source.add("__webpackUniversal__.jsonp.push({");
+				source.add(`\n\ti: ${JSON.stringify(chunk.ids)},`);
+				source.add("\n\tm: ");
 				source.add(modules);
 				const entries = [chunk.entryModule].filter(Boolean).map(m =>
 					[m.id].concat(
@@ -33,9 +33,10 @@ class UniversalChunkTemplatePlugin {
 					)
 				);
 				if (entries.length > 0) {
-					source.add(`,${JSON.stringify(entries)}`);
+					source.add(",");
+					source.add(`\n\te: ${JSON.stringify(entries)}`);
 				}
-				source.add("])");
+				source.add("\n})");
 				return new ConcatSource(
 					'if (typeof window !== "undefined") window.global = window.global || window;\n',
 					"(function(__webpackUniversal__) {\n",

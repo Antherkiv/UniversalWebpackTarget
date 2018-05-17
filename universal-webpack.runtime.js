@@ -107,33 +107,39 @@ if (typeof window !== "undefined") window.global = window.global || window;
 	 *     options.m  -> modules
 	 *     options.s  -> scriptSrc
 	 *     options.i  -> installedChunks
-	 *     options.e  -> deferredModules
+	 *     options.el -> deferredModules list
 	 *     options.pl -> chunkPreloadMap
 	 *     options.pf -> chunkPrefetchMap
-	 *     options.d  -> dependencies
+	 *     options.dp -> dependencies
 	 * @returns {Promise} Promise for signaling load
 	 */
 	function webpackUniversalFactory(options) {
+		/**
+		 * webpackJsonp callback
+		 *
+		 * @param {Object} data Receives options
+		 *     data.i  -> chunkIds
+		 *     data.m  -> moreModules
+		 *     data.e  -> executeModules
+		 * @returns {any} result
+		 */
 		// install a JSONP callback for chunk loading
 		function webpackJsonpCallback(data) {
-			var chunkIds = data[0];
-			var moreModules = data[1];
-			var executeModules = data[2];
 			// add "moreModules" to the modules object,
 			// then flag all "chunkIds" as loaded and fire callback
 			var moduleId,
 				chunkId,
 				resolves = [];
-			for (var i = 0; i < chunkIds.length; i++) {
-				chunkId = chunkIds[i];
+			for (var i = 0; i < data.i.length; i++) {
+				chunkId = data.i[i];
 				if (options.i[chunkId]) {
 					resolves.push(options.i[chunkId][0]);
 				}
 				options.i[chunkId] = 0;
 			}
-			for (moduleId in moreModules) {
-				if (Object.prototype.hasOwnProperty.call(moreModules, moduleId)) {
-					options.m[moduleId] = moreModules[moduleId];
+			for (moduleId in data.m) {
+				if (Object.prototype.hasOwnProperty.call(data.m, moduleId)) {
+					options.m[moduleId] = data.m[moduleId];
 				}
 			}
 			if (parentJsonpFunction) parentJsonpFunction(data);
@@ -142,7 +148,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			}
 
 			// add entry modules from loaded chunk to deferred list
-			options.e.push.apply(options.e, executeModules || []);
+			options.el.push.apply(options.el, data.e || []);
 
 			// run deferred modules when all chunks ready
 			return checkDeferredModules();
@@ -150,15 +156,15 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 		function checkDeferredModules() {
 			var result;
-			for (var i = 0; i < options.e.length; i++) {
-				var deferredModule = options.e[i];
+			for (var i = 0; i < options.el.length; i++) {
+				var deferredModule = options.el[i];
 				var fulfilled = true;
 				for (var j = 1; j < deferredModule.length; j++) {
 					var depId = deferredModule[j];
 					if (options.i[depId] !== 0) fulfilled = false;
 				}
 				if (fulfilled) {
-					options.e.splice(i--, 1);
+					options.el.splice(i--, 1);
 					result = options.r((options.r.s = deferredModule[0]));
 				}
 			}
@@ -172,8 +178,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			 * It also adds the final module to the require() cache.
 			 */
 			var promises = [];
-			for (i = 0; i < options.d.length; i++) {
-				promises.push(global.require.load(options.d[i]));
+			for (i = 0; i < options.dp.length; i++) {
+				promises.push(global.require.load(options.dp[i]));
 			}
 			var request = options.r.cp;
 			var promise = Promise.all(promises);

@@ -179,10 +179,10 @@ class UniversalMainTemplatePlugin {
 							"m: modules",
 							"s: scriptSrc",
 							"i: installedChunks",
-							"e:  deferredModules",
+							"el: deferredModules",
 							"pl: chunkPreloadMap",
 							"pf: chunkPrefetchMap",
-							"d: dependencies",
+							"dp: dependencies",
 						].join(",\n")
 					),
 					"});",
