@@ -80,13 +80,15 @@ class UniversalMainTemplatePlugin {
 				for (const chunkModule of chunk.modulesIterable) {
 					if (chunkModule.issuer && chunkModule.issuer.dependencies) {
 						const dep = chunkModule.issuer.dependencies[0];
-						const sourceModule = dep.module;
-						if (
-							sourceModule &&
-							sourceModule.external &&
-							sourceModule.externalType
-						) {
-							dependencies.add(sourceModule.request);
+						if (dep) {
+							const sourceModule = dep.module;
+							if (
+								sourceModule &&
+								sourceModule.external &&
+								sourceModule.externalType
+							) {
+								dependencies.add(sourceModule.request);
+							}
 						}
 					}
 				}
