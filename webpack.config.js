@@ -27,7 +27,7 @@ function factory(name, entry, target) {
         {
           test: /\.tsx?$/,
           use: [
-            'cache-loader',
+            // 'cache-loader',
             {
               loader: 'ts-loader',
             },
