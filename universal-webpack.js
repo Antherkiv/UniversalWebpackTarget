@@ -19,6 +19,7 @@ const FetchCompileWasmTemplatePlugin = require("webpack/lib/web/FetchCompileWasm
 const FunctionModulePlugin = require("webpack/lib/FunctionModulePlugin");
 const LoaderTargetPlugin = require("webpack/lib/LoaderTargetPlugin");
 const NodeSourcePlugin = require("webpack/lib/node/NodeSourcePlugin");
+const NodeTargetPlugin = require("webpack/lib/node/NodeTargetPlugin");
 const UniversalTemplatePlugin = require("./UniversalTemplatePlugin");
 
 function universalTarget(options) {
@@ -26,8 +27,16 @@ function universalTarget(options) {
 		new UniversalTemplatePlugin().apply(compiler);
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
 		new FunctionModulePlugin().apply(compiler);
-		new NodeSourcePlugin(compiler.options.node).apply(compiler);
-		new LoaderTargetPlugin(options.target || "node").apply(compiler);
+		if (options.target === "node") {
+			new NodeTargetPlugin().apply(compiler);
+		} else {
+			new NodeSourcePlugin(compiler.options.node).apply(compiler);
+		}
+		new LoaderTargetPlugin(
+			!options.target || options.target === "universal"
+				? "node"
+				: options.target
+		).apply(compiler);
 
 		if (options.dll) {
 			new DllPlugin({
