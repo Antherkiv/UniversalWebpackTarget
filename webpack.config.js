@@ -58,8 +58,10 @@ module.exports = [
   factory(
     'Base',
     {
-      'Base': [
+      'React': [
         'react',
+      ],
+      'ReactDom': [
         'react-dom',
       ],
       'Logger': [
