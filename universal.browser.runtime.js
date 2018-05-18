@@ -231,6 +231,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			 * the module with all it's dependencies is loaded.
 			 * It also adds the final module to the require() cache.
 			 */
+			var installedChunks = Object.keys(options.i);
+
 			var promises = [];
 
 			// Load deferred modules:
@@ -257,6 +259,13 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			if (typeof requiredModule === "undefined") {
 				global.require.cache[request] = promise;
 			}
+
+			for (i = 0; i < installedChunks.length; i++) {
+				var chunkId = installedChunks[i];
+				preFetchLoadJsonp(chunkId);
+				preFetchLoadJsonp(chunkId, promise);
+			}
+
 			promise.then(function() {
 				var requiredModule = global.require.cache[request];
 				if (
@@ -282,17 +291,46 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			return "/" + options.r.p + "" + options.s(chunkId);
 		}
 
+		/**
+		 * Chunk prefetching/preloading for javascript
+		 *
+		 * @param {any} chunkId Chunk to preload/prefetch
+		 * @param {Promise?} async Receives a promise to wait for before prefetching, otherwise preload
+		 * @returns {void}
+		 */
+		function preFetchLoadJsonp(chunkId, async) {
+			var chunkData = (async ? options.pf : options.pl)[chunkId];
+			if (chunkData) {
+				(async || Promise.resolve()).then(function() {
+					var head = document.getElementsByTagName("head")[0];
+					chunkData.forEach(function(chunkId) {
+						if (options.i[chunkId] === undefined) {
+							options.i[chunkId] = null;
+							var link = document.createElement("link");
+							link.charset = "utf-8";
+							if (options.r.nc) {
+								link.setAttribute("nonce", options.r.nc);
+							}
+							link.rel = async ? "prefetch" : "preload";
+							link.href = scriptSrcJsonp(chunkId);
+							head.appendChild(link);
+						}
+					});
+				});
+			}
+		}
+
 		// This file contains only the entry chunk.
 		// The chunk loading function for additional chunks
 		function requireEnsureJsonp(chunkId) {
 			// JSONP chunk loading for javascript
 
-			var promises = [];
-
 			var installedChunkData = options.i[chunkId];
 			// 0 means "already installed".
 			// a Promise means "currently loading".
 			if (installedChunkData !== 0) {
+				var promises = [];
+
 				if (installedChunkData) {
 					promises.push(installedChunkData[2]);
 				} else {
@@ -346,48 +384,13 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					}
 					head.appendChild(script);
 				}
-
-				// chunk preloading for javascript
-				var chunkPreloadData = options.pl[chunkId];
-				if (chunkPreloadData) {
-					head = document.getElementsByTagName("head")[0];
-					chunkPreloadData.forEach(function(chunkId) {
-						if (options.i[chunkId] === undefined) {
-							options.i[chunkId] = null;
-							var link = document.createElement("link");
-
-							link.charset = "utf-8";
-
-							if (options.r.nc) {
-								link.setAttribute("nonce", options.r.nc);
-							}
-							link.rel = "preload";
-							link.as = "script";
-							link.href = scriptSrcJsonp(chunkId);
-							head.appendChild(link);
-						}
-					});
-				}
-
-				// chunk prefetching for javascript
-				var chunkPrefetchData = options.pf[chunkId];
-				if (chunkPrefetchData) {
-					Promise.all(promises).then(function() {
-						var head = document.getElementsByTagName("head")[0];
-						chunkPrefetchData.forEach(function(chunkId) {
-							if (options.i[chunkId] === undefined) {
-								options.i[chunkId] = null;
-								var link = document.createElement("link");
-								link.rel = "prefetch";
-								link.href = scriptSrcJsonp(chunkId);
-								head.appendChild(link);
-							}
-						});
-					});
-				}
+				promise = Promise.all(promises);
+				preFetchLoadJsonp(chunkId);
+				preFetchLoadJsonp(chunkId, promise);
+				return promise;
 			}
 
-			return Promise.all(promises);
+			return Promise.resolve();
 		}
 
 		// on error function for async loading
