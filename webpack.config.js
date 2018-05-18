@@ -1,4 +1,4 @@
-/* eslint prettier/prettier:0 */
+/* eslint prettier/prettier:0 node/no-unpublished-require:0 */
 
 const path = require('path');
 
