@@ -13,7 +13,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 	function universalRequireJsonp() {
 		if (global.require) {
-			if (!global.require.__webpackUniversal) {
+			if (!global.require.__universalWebpack) {
 				throw new Error("An unknown require() is already installed!");
 			}
 			return;
@@ -23,7 +23,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			var requiredModule = r.cache[request];
 			if (
 				typeof requiredModule === "object" &&
-				requiredModule.__webpackPromise
+				requiredModule.__universalWebpackPromise
 			) {
 				throw new Error("Module is still loading");
 			}
@@ -38,19 +38,19 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			// a Promise means "currently loading".
 			if (
 				typeof requiredModule === "object" &&
-				requiredModule.__webpackPromise
+				requiredModule.__universalWebpackPromise
 			) {
 				return requiredModule;
 			}
 			if (typeof requiredModule === "undefined") {
 				// setup Promise in requests cache
-				var __webpackPromise = [];
+				var __universalWebpackPromise = [];
 				var promise = new Promise(function(resolve, reject) {
-					__webpackPromise.push(resolve);
-					__webpackPromise.push(reject);
+					__universalWebpackPromise.push(resolve);
+					__universalWebpackPromise.push(reject);
 				});
-				__webpackPromise.push(promise);
-				promise.__webpackPromise = __webpackPromise;
+				__universalWebpackPromise.push(promise);
+				promise.__universalWebpackPromise = __universalWebpackPromise;
 				r.cache[request] = promise;
 
 				// start request loading
@@ -81,7 +81,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					var requiredModule = r.cache[request];
 					if (
 						typeof requiredModule === "object" &&
-						requiredModule.__webpackPromise
+						requiredModule.__universalWebpackPromise
 					) {
 						var errorType =
 							event && (event.type === "load" ? "missing" : event.type);
@@ -97,7 +97,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						);
 						error.type = errorType;
 						error.request = realSrc;
-						requiredModule.__webpackPromise[1](error);
+						requiredModule.__universalWebpackPromise[1](error);
 						r.cache[request] = undefined;
 					}
 				}
@@ -105,16 +105,16 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				return promise;
 			}
 			promise = Promise.resolve();
-			promise.__webpackPromise = __emptyPromise;
+			promise.__universalWebpackPromise = __emptyPromise;
 			return promise;
 		};
-		r.__webpackUniversal = true;
+		r.__universalWebpack = true;
 		global.require = r;
 	}
 
 	function universalImportJsonp() {
 		if (global.import) {
-			if (!global.import.__webpackUniversal) {
+			if (!global.import.__universalWebpack) {
 				throw new Error("An unknown import() is already installed!");
 			}
 			return;
@@ -125,49 +125,28 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				return global.require(request);
 			});
 		};
-		i.__webpackUniversal = true;
-		global.import = i;
-	}
-
-	function universalImportNode() {
-		if (global.import) {
-			if (!global.import.__webpackUniversal) {
-				throw new Error("An unknown import() is already installed!");
-			}
-			return;
-		}
-
-		i = function(request) {
-			return Promise.resolve().then(function() {
-				return require(request);
-			});
-		};
-		i.__webpackUniversal = true;
+		i.__universalWebpack = true;
 		global.import = i;
 	}
 
 	// install a global import() and require()
-	if (typeof window === "undefined") {
-		universalImportNode();
-	} else {
-		universalRequireJsonp();
-		universalImportJsonp();
-	}
+	universalRequireJsonp();
+	universalImportJsonp();
 
 	//////////////////////////////////////////////////////////////////////////////////////////
-	//                _                      _    _   _       _                          _
-	//  __      _____| |__  _ __   __ _  ___| | _| | | |_ __ (_)_   _____ _ __ ___  __ _| |
-	//  \ \ /\ / / _ \ '_ \| '_ \ / _` |/ __| |/ / | | | '_ \| \ \ / / _ \ '__/ __|/ _` | |
-	//   \ V  V /  __/ |_) | |_) | (_| | (__|   <| |_| | | | | |\ V /  __/ |  \__ \ (_| | |
-	//    \_/\_/ \___|_.__/| .__/ \__,_|\___|_|\_\\___/|_| |_|_| \_/ \___|_|  |___/\__,_|_|
-	//                     |_|
+	//               _                          ___        __   _                      _
+	//   _   _ _ __ (_)_   _____ _ __ ___  __ _| \ \      / /__| |__  _ __   __ _  ___| | __
+	//  | | | | '_ \| \ \ / / _ \ '__/ __|/ _` | |\ \ /\ / / _ \ '_ \| '_ \ / _` |/ __| |/ /
+	//  | |_| | | | | |\ V /  __/ |  \__ \ (_| | | \ V  V /  __/ |_) | |_) | (_| | (__|   <
+	//   \__,_|_| |_|_| \_/ \___|_|  |___/\__,_|_|  \_/\_/ \___|_.__/| .__/ \__,_|\___|_|\_\
+	//                                                               |_|
 	//////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
-	 * webpackUniversal factory
+	 * universalFunction factory
 	 *
 	 * @param {Object} options Receives options
-	 *     options.u  -> __webpackUniversal__
+	 *     options.u  -> __universal__
 	 *     options.r  -> __webpack_require__
 	 *     options.m  -> modules
 	 *     options.s  -> scriptSrc
@@ -178,9 +157,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 	 *     options.dp -> dependencies
 	 * @returns {Promise} Promise for signaling load
 	 */
-	function webpackUniversalFactory(options) {
+	function universalFunctionFactory(options) {
 		/**
-		 * webpackJsonp callback
+		 * universalChunkFunction (webpackJsonp callback)
 		 *
 		 * @param {Object} data Receives options
 		 *     data.i  -> chunkIds
@@ -188,8 +167,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		 *     data.e  -> executeModules
 		 * @returns {any} result
 		 */
-		// install a JSONP callback for chunk loading
-		function webpackJsonpCallback(data) {
+		// install a chunks function for chunk loading
+		function universalChunkFunction(data) {
 			// add "moreModules" to the modules object,
 			// then flag all "chunkIds" as loaded and fire callback
 			var moduleId,
@@ -208,7 +187,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				}
 			}
 
-			if (parentJsonpFunction) parentJsonpFunction(data);
+			if (parentUniversalChunkFunction) parentUniversalChunkFunction(data);
 			while (resolves.length) {
 				resolves.shift()();
 			}
@@ -234,16 +213,6 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					options.el.splice(i--, 1);
 					result = options.r((options.r.s = deferredModule[0]));
 				}
-			}
-			return result;
-		}
-
-		function checkDeferredModulesNode() {
-			var result;
-			for (var i = 0; i < options.el.length; i++) {
-				var deferredModule = options.el[i];
-				options.el.splice(i--, 1);
-				result = options.r((options.r.s = deferredModule[0]));
 			}
 			return result;
 		}
@@ -275,7 +244,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			// Wait for those to load and fullfil
 			var request = options.r.cp;
 			var promise = Promise.all(promises);
-			promise.__webpackPromise = __emptyPromise;
+			promise.__universalWebpackPromise = __emptyPromise;
 			var requiredModule = global.require.cache[request];
 			if (typeof requiredModule === "undefined") {
 				global.require.cache[request] = promise;
@@ -284,14 +253,14 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				var requiredModule = global.require.cache[request];
 				if (
 					typeof requiredModule === "object" &&
-					requiredModule.__webpackPromise
+					requiredModule.__universalWebpackPromise
 				) {
 					try {
 						global.require.cache[request] = callback();
-						requiredModule.__webpackPromise[0]();
+						requiredModule.__universalWebpackPromise[0]();
 					} catch (error) {
 						global.require.cache[request] = undefined;
-						requiredModule.__webpackPromise[1](error);
+						requiredModule.__universalWebpackPromise[1](error);
 					}
 				} else {
 					callback();
@@ -300,34 +269,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			return global.require.cache[request];
 		}
 
-		function loadDependenciesNode(callback) {
-			/**
-			 * This function returns a promise which is resolved once
-			 * the module with all it's dependencies is loaded.
-			 */
-			var promises = [];
-
-			// Load deferred modules:
-			for (var i = 0; i < options.el.length; i++) {
-				var deferredModule = options.el[i];
-				for (var j = 1; j < deferredModule.length; j++) {
-					var depId = deferredModule[j];
-					if (options.i[depId] !== 0) {
-						promises.push(options.r.e(depId));
-					}
-				}
-			}
-
-			return callback();
-		}
-
 		// script path function
 		function scriptSrcJsonp(chunkId) {
 			return "/" + options.r.p + "" + options.s(chunkId);
-		}
-
-		function scriptSrcNode(chunkId) {
-			return options.r.p + "" + options.s(chunkId);
 		}
 
 		// This file contains only the entry chunk.
@@ -340,7 +284,6 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			var installedChunkData = options.i[chunkId];
 			// 0 means "already installed".
 			// a Promise means "currently loading".
-
 			if (installedChunkData !== 0) {
 				if (installedChunkData) {
 					promises.push(installedChunkData[2]);
@@ -439,56 +382,29 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			return Promise.all(promises);
 		}
 
-		function requireEnsureNode(chunkId) {
-			// require() chunk loading for javascript
-
-			var installedChunkData = options.i[chunkId];
-
-			// 0 means "already installed".
-			// a Promise means "currently loading".
-			if (installedChunkData !== 0) {
-				var chunk = require(scriptSrcNode(chunkId));
-				options.u.jsonp = options.u.jsonp || [];
-				options.u.jsonp.push(chunk);
-			}
-
-			return Promise.resolve();
-		}
-
 		// on error function for async loading
 		function onErrorJsonp(err) {
 			console.error(err);
 			throw err; // catch this error by using import().catch()
 		}
 
-		function onErrorNode(err) {
-			process.nextTick(function() {
-				throw err; // catch this error by using import().catch()
-			});
-		}
-
 		var loadDependencies;
 		var checkDeferredModules;
-		if (typeof window === "undefined") {
-			options.r.e = requireEnsureNode;
-			options.r.oe = onErrorNode;
-			loadDependencies = loadDependenciesNode;
-			checkDeferredModules = checkDeferredModulesNode;
-		} else {
-			options.r.e = requireEnsureJsonp;
-			options.r.oe = onErrorJsonp;
-			loadDependencies = loadDependenciesJsonp;
-			checkDeferredModules = checkDeferredModulesJsonp;
-		}
+		options.r.e = requireEnsureJsonp;
+		options.r.oe = onErrorJsonp;
+		loadDependencies = loadDependenciesJsonp;
+		checkDeferredModules = checkDeferredModulesJsonp;
 
-		options.u.jsonp = options.u.jsonp || [];
-		var oldJsonpFunction = options.u.jsonp.push.bind(options.u.jsonp);
-		options.u.jsonp.push = webpackJsonpCallback;
-		var jsonpArray = options.u.jsonp.slice();
-		for (var i = 0; i < jsonpArray.length; i++) {
-			webpackJsonpCallback(jsonpArray[i]);
+		options.u.chunks = options.u.chunks || [];
+		var oldUniversalChunkFunction = options.u.chunks.push.bind(
+			options.u.chunks
+		);
+		options.u.chunks.push = universalChunkFunction;
+		var chunksArray = options.u.chunks.slice();
+		for (var i = 0; i < chunksArray.length; i++) {
+			universalChunkFunction(chunksArray[i]);
 		}
-		var parentJsonpFunction = oldJsonpFunction;
+		var parentUniversalChunkFunction = oldUniversalChunkFunction;
 
 		if (parentUniversalFunction) parentUniversalFunction(options);
 
@@ -504,10 +420,10 @@ if (typeof window !== "undefined") window.global = window.global || window;
 	var oldUniversalFunction = global.webpackUniversal.push.bind(
 		global.webpackUniversal
 	);
-	global.webpackUniversal.push = webpackUniversalFactory;
+	global.webpackUniversal.push = universalFunctionFactory;
 	var universalArray = global.webpackUniversal.slice();
 	for (var i = 0; i < universalArray.length; i++) {
-		webpackUniversalFactory(universalArray[i]);
+		universalFunctionFactory(universalArray[i]);
 	}
 	var parentUniversalFunction = oldUniversalFunction;
 

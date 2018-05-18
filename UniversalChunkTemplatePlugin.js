@@ -39,13 +39,13 @@ class UniversalChunkTemplatePlugin {
 				source.add("\n}");
 				return new ConcatSource(
 					'if (typeof window !== "undefined") window.global = window.global || window;\n',
-					"(function(__webpackUniversal__) {\n",
+					"(function(__universal__) {\n",
 					"var __module__exports =\n",
 					source,
-					";\n__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || []",
-					";\n__webpackUniversal__.jsonp.push(__module__exports)",
+					";\n__universal__.chunks = __universal__.chunks || []",
+					";\n__universal__.chunks.push(__module__exports)",
 					';\nif (typeof module !== "undefined") module.exports = __module__exports',
-					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
+					`;\n})(global.${this.universal} = global.${this.universal} || {})`
 				);
 			}
 		);

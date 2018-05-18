@@ -144,7 +144,7 @@ class UniversalMainTemplatePlugin {
 							.map(request => JSON.stringify(request))
 							.join(",\n")
 					),
-					"];",
+					"];"
 				]);
 			}
 		);
@@ -174,7 +174,7 @@ class UniversalMainTemplatePlugin {
 					"return global.webpackUniversal.push({",
 					Template.indent(
 						[
-							"u: __webpackUniversal__",
+							"u: __universal__",
 							`r: ${mainTemplate.requireFn}`,
 							"m: modules",
 							"s: scriptSrc",
@@ -182,10 +182,10 @@ class UniversalMainTemplatePlugin {
 							"el: deferredModules",
 							"pl: chunkPreloadMap",
 							"pf: chunkPrefetchMap",
-							"dp: dependencies",
+							"dp: dependencies"
 						].join(",\n")
 					),
-					"});",
+					"});"
 				]);
 			}
 		);
@@ -194,7 +194,7 @@ class UniversalMainTemplatePlugin {
 			(source, chunk) => {
 				return new ConcatSource(
 					'if (typeof window !== "undefined") window.global = window.global || window;\n',
-					"(function(__webpackUniversal__) {\n",
+					"(function(__universal__) {\n",
 					"var __module__exports =\n",
 					source,
 					`;\nif (typeof module !== "undefined") module.exports = __module__exports`,
@@ -249,9 +249,7 @@ class UniversalMainTemplatePlugin {
 function hotDisposeChunk(chunkId) {
 	delete installedChunks[chunkId];
 }
-var parentHotUpdateCallback = global[${JSON.stringify(
-					hotUpdateFunction
-				)}];
+var parentHotUpdateCallback = global[${JSON.stringify(hotUpdateFunction)}];
 global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}`;
 			}
 		);
