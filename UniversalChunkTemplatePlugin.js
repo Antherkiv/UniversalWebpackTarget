@@ -42,8 +42,8 @@ class UniversalChunkTemplatePlugin {
 					"(function(__webpackUniversal__) {\n",
 					"var __module__exports =\n",
 					source,
-					";\n__webpackUniversal__.jsonp.push(__module__exports)",
 					";\n__webpackUniversal__.jsonp = __webpackUniversal__.jsonp || []",
+					";\n__webpackUniversal__.jsonp.push(__module__exports)",
 					';\nif (typeof module !== "undefined") module.exports = __module__exports',
 					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
 				);
