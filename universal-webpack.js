@@ -8,6 +8,7 @@
 	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
 */
 "use strict";
+/* eslint node/no-unpublished-require:0 node/no-extraneous-require:0 */
 
 const fs = require("fs");
 const path = require("path");
@@ -40,8 +41,10 @@ function universalTarget(options) {
 
 		if (options.dll) {
 			new DllPlugin({
-				name: `${compiler.options.output.publicPath}${compiler.options.output.filename}`,
-				path: path.resolve(compiler.options.output.path, "[name].json"),
+				name: `${compiler.options.output.publicPath}${
+					compiler.options.output.filename
+				}`,
+				path: path.resolve(compiler.options.output.path, "[name].json")
 			}).apply(compiler);
 		}
 
@@ -55,13 +58,15 @@ function universalTarget(options) {
 						plugins.push(
 							new DllReferencePlugin({
 								manifest: lib,
-								sourceType: "commonjs",
+								sourceType: "commonjs"
 							}).apply(compiler)
 						);
 					}
 				}
 				if (!plugins.length) {
-					console.warn(`Invalid imported library ${name}: not manifests found!`);
+					console.warn(
+						`Invalid imported library ${name}: not manifests found!`
+					);
 					// process.exit(1);
 				}
 			});

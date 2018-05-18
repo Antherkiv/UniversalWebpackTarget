@@ -8,6 +8,7 @@
 	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
 */
 "use strict";
+/* eslint node/no-unpublished-require:0 node/no-extraneous-require:0 */
 
 const { ConcatSource } = require("webpack-sources");
 

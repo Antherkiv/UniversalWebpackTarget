@@ -1,3 +1,11 @@
+/*
+	MIT License http://www.opensource.org/licenses/mit-license.php
+	Author Germán Méndez Bravo (Kronuz)
+
+	This comes in parts from webpack/lib/web/JsonpChunkTemplatePlugin.js
+	and from webpack/lib/node/NodeNodeTemplatePlugin.js
+	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
+*/
 if (typeof window !== "undefined") window.global = window.global || window;
 (function() {
 	//////////////////////////////////////////////////////////////////////////////////////////

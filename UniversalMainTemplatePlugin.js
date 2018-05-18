@@ -8,8 +8,8 @@
 	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
 */
 "use strict";
+/* eslint node/no-unpublished-require:0 node/no-extraneous-require:0 */
 
-const { SyncWaterfallHook } = require("tapable");
 const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
 
@@ -198,7 +198,7 @@ class UniversalMainTemplatePlugin {
 					"var __module__exports =\n",
 					source,
 					`;\nif (typeof module !== "undefined") module.exports = __module__exports`,
-					`;\n})(global.${this.universal} = global.${this.universal} || {})`,
+					`;\n})(global.${this.universal} = global.${this.universal} || {})`
 				);
 			}
 		);
