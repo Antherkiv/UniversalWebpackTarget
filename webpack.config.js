@@ -44,6 +44,12 @@ function factory(name, entry, target) {
     externals: {
       'unicode/category/So': '{}', // Ignore unicode/category/So used (only in the server side) by node-slug.
     },
+
+    optimization: {
+      splitChunks: {
+        chunks: "all"
+      }
+    }
   }
 }
 
