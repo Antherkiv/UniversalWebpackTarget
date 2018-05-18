@@ -2,12 +2,25 @@ if (typeof window !== "undefined") window.global = window.global || window;
 (function() {
 	var __emptyPromise = [function() {}, function() {}];
 
-	////////////////////////////////////////////////////////////////////
-	// Global universal require()
+	//////////////////////////////////////////////////////////////////////////////////////////
+	//         _       _           _
+	//    __ _| | ___ | |__   __ _| |___
+	//   / _` | |/ _ \| '_ \ / _` | / __|
+	//  | (_| | | (_) | |_) | (_| | \__ \
+	//   \__, |_|\___/|_.__/ \__,_|_|___/
+	//   |___/
+	//////////////////////////////////////////////////////////////////////////////////////////
 
-	function requireFactory() {
-		function require(request) {
-			var requiredModule = require.loaded[request];
+	function universalRequireJsonp() {
+		if (global.require) {
+			if (!global.require.__webpackUniversal) {
+				throw new Error("An unknown require() is already installed!");
+			}
+			return;
+		}
+
+		var r = function(request) {
+			var requiredModule = r.cache[request];
 			if (
 				typeof requiredModule === "object" &&
 				requiredModule.__webpackPromise
@@ -18,10 +31,10 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				throw new Error("Cannot find module '" + request + "'");
 			}
 			return requiredModule;
-		}
-		require.loaded = {};
-		require.load = function load(request) {
-			var requiredModule = require.loaded[request];
+		};
+		r.cache = {};
+		r.load = function load(request) {
+			var requiredModule = r.cache[request];
 			// a Promise means "currently loading".
 			if (
 				typeof requiredModule === "object" &&
@@ -38,15 +51,15 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				});
 				__webpackPromise.push(promise);
 				promise.__webpackPromise = __webpackPromise;
-				require.loaded[request] = promise;
+				r.cache[request] = promise;
 
 				// start request loading
 				var head = document.getElementsByTagName("head")[0];
 				var script = document.createElement("script");
 				script.charset = "utf-8";
 				script.timeout = 120;
-				if (require.nonce) {
-					script.setAttribute("nonce", require.nonce);
+				if (r.nonce) {
+					script.setAttribute("nonce", r.nonce);
 				}
 				script.src = "/" + request;
 				var timeout = setTimeout(function() {
@@ -65,7 +78,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					// avoid mem leaks in IE.
 					script.onerror = script.onload = null;
 					clearTimeout(timeout);
-					var requiredModule = require.loaded[request];
+					var requiredModule = r.cache[request];
 					if (
 						typeof requiredModule === "object" &&
 						requiredModule.__webpackPromise
@@ -85,7 +98,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						error.type = errorType;
 						error.request = realSrc;
 						requiredModule.__webpackPromise[1](error);
-						require.loaded[request] = undefined;
+						r.cache[request] = undefined;
 					}
 				}
 				head.appendChild(script);
@@ -95,8 +108,60 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			promise.__webpackPromise = __emptyPromise;
 			return promise;
 		};
-		return require;
+		r.__webpackUniversal = true;
+		global.require = r;
 	}
+
+	function universalImportJsonp() {
+		if (global.import) {
+			if (!global.import.__webpackUniversal) {
+				throw new Error("An unknown import() is already installed!");
+			}
+			return;
+		}
+
+		i = function(request) {
+			return global.require.load(request).then(function() {
+				return global.require(request);
+			});
+		};
+		i.__webpackUniversal = true;
+		global.import = i;
+	}
+
+	function universalImportNode() {
+		if (global.import) {
+			if (!global.import.__webpackUniversal) {
+				throw new Error("An unknown import() is already installed!");
+			}
+			return;
+		}
+
+		i = function(request) {
+			return Promise.resolve().then(function() {
+				return require(request);
+			});
+		};
+		i.__webpackUniversal = true;
+		global.import = i;
+	}
+
+	// install a global import() and require()
+	if (typeof window === "undefined") {
+		universalImportNode();
+	} else {
+		universalRequireJsonp();
+		universalImportJsonp();
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////
+	//                _                      _    _   _       _                          _
+	//  __      _____| |__  _ __   __ _  ___| | _| | | |_ __ (_)_   _____ _ __ ___  __ _| |
+	//  \ \ /\ / / _ \ '_ \| '_ \ / _` |/ __| |/ / | | | '_ \| \ \ / / _ \ '__/ __|/ _` | |
+	//   \ V  V /  __/ |_) | |_) | (_| | (__|   <| |_| | | | | |\ V /  __/ |  \__ \ (_| | |
+	//    \_/\_/ \___|_.__/| .__/ \__,_|\___|_|\_\\___/|_| |_|_| \_/ \___|_|  |___/\__,_|_|
+	//                     |_|
+	//////////////////////////////////////////////////////////////////////////////////////////
 
 	/**
 	 * webpackUniversal factory
@@ -211,28 +276,28 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			var request = options.r.cp;
 			var promise = Promise.all(promises);
 			promise.__webpackPromise = __emptyPromise;
-			var requiredModule = global.require.loaded[request];
+			var requiredModule = global.require.cache[request];
 			if (typeof requiredModule === "undefined") {
-				global.require.loaded[request] = promise;
+				global.require.cache[request] = promise;
 			}
 			promise.then(function() {
-				var requiredModule = global.require.loaded[request];
+				var requiredModule = global.require.cache[request];
 				if (
 					typeof requiredModule === "object" &&
 					requiredModule.__webpackPromise
 				) {
 					try {
-						global.require.loaded[request] = callback();
+						global.require.cache[request] = callback();
 						requiredModule.__webpackPromise[0]();
 					} catch (error) {
-						global.require.loaded[request] = undefined;
+						global.require.cache[request] = undefined;
 						requiredModule.__webpackPromise[1](error);
 					}
 				} else {
 					callback();
 				}
 			});
-			return global.require.loaded[request];
+			return global.require.cache[request];
 		}
 
 		function loadDependenciesNode(callback) {
@@ -432,11 +497,6 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			// run deferred modules when all chunks ready
 			return checkDeferredModules();
 		});
-	}
-
-	// install a global require()
-	if (typeof window !== "undefined") {
-		global.require = global.require || requireFactory();
 	}
 
 	// install a callback for universal modules loading
