@@ -13,7 +13,7 @@ const fs = require("fs");
 const path = require("path");
 const glob = require("glob");
 
-const DllPlugin = require("webpack/lib/DllPlugin");
+const DllPlugin = require("./DllPlugin");
 const DllReferencePlugin = require("webpack/lib/DllReferencePlugin");
 const FetchCompileWasmTemplatePlugin = require("webpack/lib/web/FetchCompileWasmTemplatePlugin");
 const FunctionModulePlugin = require("webpack/lib/FunctionModulePlugin");
