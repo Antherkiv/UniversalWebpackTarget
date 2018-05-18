@@ -23,6 +23,26 @@ const NodeSourcePlugin = require("webpack/lib/node/NodeSourcePlugin");
 const NodeTargetPlugin = require("webpack/lib/node/NodeTargetPlugin");
 const UniversalTemplatePlugin = require("./UniversalTemplatePlugin");
 
+const ContextModule = require("webpack/lib/ContextModule");
+
+// Monkey patch ContextModule so it emits require() and import() add
+// 'module.exprContextCritical = false' to your webpack config to prevent:
+// "Critical dependency: the request of a dependency is an expression"
+ContextModule.prototype.getSourceForEmptyContext = function(id) {
+	return `function webpackEmptyContext(req) {
+	// If you want to avoid seeing "Critical dependency" warnings,
+	// add 'module.exprContextCritical = false' to your webpack config.
+	return require(req);
+}`;
+};
+ContextModule.prototype.getSourceForEmptyAsyncContext = function(id) {
+	return `function webpackEmptyAsyncContext(req) {
+	// If you want to avoid seeing "Critical dependency" warnings,
+	// add 'module.exprContextCritical = false' to your webpack config.
+	return import(req);
+}`;
+};
+
 function universalTarget(options) {
 	function target(compiler) {
 		new UniversalTemplatePlugin().apply(compiler);

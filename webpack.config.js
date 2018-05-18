@@ -23,6 +23,7 @@ function factory(name, entry, target) {
     },
 
     module: {
+      exprContextCritical: false,
       rules: [
         {
           test: /\.tsx?$/,
