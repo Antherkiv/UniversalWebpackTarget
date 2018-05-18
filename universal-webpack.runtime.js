@@ -211,22 +211,19 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			}
 			promise.then(function() {
 				var requiredModule = global.require.loaded[request];
-				try {
-					if (
-						typeof requiredModule === "object" &&
-						requiredModule.__webpackPromise
-					) {
+				if (
+					typeof requiredModule === "object" &&
+					requiredModule.__webpackPromise
+				) {
+					try {
 						global.require.loaded[request] = callback();
 						requiredModule.__webpackPromise[0]();
-					}
-				} catch (error) {
-					if (
-						typeof requiredModule === "object" &&
-						requiredModule.__webpackPromise
-					) {
+					} catch (error) {
 						global.require.loaded[request] = undefined;
 						requiredModule.__webpackPromise[1](error);
 					}
+				} else {
+					callback();
 				}
 			});
 			return global.require.loaded[request];
