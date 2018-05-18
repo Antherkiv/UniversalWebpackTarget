@@ -1,2 +1,2 @@
-require('./universal-webpack.runtime.node');
+require('./universal.node.runtime.js');
 module.exports = require('./libs/server/server');
