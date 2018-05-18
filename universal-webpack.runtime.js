@@ -142,21 +142,21 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					options.m[moduleId] = data.m[moduleId];
 				}
 			}
+
 			if (parentJsonpFunction) parentJsonpFunction(data);
+			while (resolves.length) {
+				resolves.shift()();
+			}
 
 			// add entry modules from loaded chunk to deferred list
 			options.el.push.apply(options.el, data.e || []);
 
-			return loadDependencies(function() {
-				while (resolves.length) {
-					resolves.shift()();
-				}
-				// run deferred modules when all chunks ready
-				return checkDeferredModules();
-			});
+			// Deferred modules will be run when loading of the main module is
+			// initialized (after all dependencies and deferred chunks are loaded)
+			// so no call to checkDeferredModules() here.
 		}
 
-		function checkDeferredModules() {
+		function checkDeferredModulesJsonp() {
 			var result;
 			for (var i = 0; i < options.el.length; i++) {
 				var deferredModule = options.el[i];
@@ -173,10 +173,20 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			return result;
 		}
 
-		function loadDependencies(callback) {
+		function checkDeferredModulesNode() {
+			var result;
+			for (var i = 0; i < options.el.length; i++) {
+				var deferredModule = options.el[i];
+				options.el.splice(i--, 1);
+				result = options.r((options.r.s = deferredModule[0]));
+			}
+			return result;
+		}
+
+		function loadDependenciesJsonp(callback) {
 			/**
-			 * This function returns a promise which is resolved once the module
-			 * with all it's dependencies is loaded.
+			 * This function returns a promise which is resolved once
+			 * the module with all it's dependencies is loaded.
 			 * It also adds the final module to the require() cache.
 			 */
 			var promises = [];
@@ -190,10 +200,6 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						promises.push(options.r.e(depId));
 					}
 				}
-			}
-
-			if (typeof window === "undefined") {
-				return callback();
 			}
 
 			// Load dependencies:
@@ -229,35 +235,47 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			return global.require.loaded[request];
 		}
 
-		// script path function
-		function requireScriptSrc(chunkId) {
-			return options.r.p + "" + options.s(chunkId);
+		function loadDependenciesNode(callback) {
+			/**
+			 * This function returns a promise which is resolved once
+			 * the module with all it's dependencies is loaded.
+			 */
+			var promises = [];
+
+			// Load deferred modules:
+			for (var i = 0; i < options.el.length; i++) {
+				var deferredModule = options.el[i];
+				for (var j = 1; j < deferredModule.length; j++) {
+					var depId = deferredModule[j];
+					if (options.i[depId] !== 0) {
+						promises.push(options.r.e(depId));
+					}
+				}
+			}
+
+			return callback();
 		}
 
-		function jsonpScriptSrc(chunkId) {
+		// script path function
+		function scriptSrcJsonp(chunkId) {
 			return "/" + options.r.p + "" + options.s(chunkId);
+		}
+
+		function scriptSrcNode(chunkId) {
+			return "./" + options.r.p + "" + options.s(chunkId);
 		}
 
 		// This file contains only the entry chunk.
 		// The chunk loading function for additional chunks
-		options.r.e = function requireEnsure(chunkId) {
+		function requireEnsureJsonp(chunkId) {
+			// JSONP chunk loading for javascript
+
 			var promises = [];
 
 			var installedChunkData = options.i[chunkId];
 			// 0 means "already installed".
 			// a Promise means "currently loading".
 
-			// require() chunk loading for javascript
-			if (typeof window === "undefined") {
-				if (installedChunkData !== 0) {
-					var chunk = require(requireScriptSrc(chunkId));
-					options.u.jsonp = options.u.jsonp || [];
-					options.u.jsonp.push(chunk);
-				}
-				return Promise.all(promises);
-			}
-
-			// JSONP chunk loading for javascript
 			if (installedChunkData !== 0) {
 				if (installedChunkData) {
 					promises.push(installedChunkData[2]);
@@ -278,7 +296,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 					if (options.r.nc) {
 						script.setAttribute("nonce", options.r.nc);
 					}
-					script.src = jsonpScriptSrc(chunkId);
+					script.src = scriptSrcJsonp(chunkId);
 					var timeout = setTimeout(function() {
 						onScriptComplete({ type: "timeout", target: script });
 					}, 120000);
@@ -329,7 +347,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							}
 							link.rel = "preload";
 							link.as = "script";
-							link.href = jsonpScriptSrc(chunkId);
+							link.href = scriptSrcJsonp(chunkId);
 							head.appendChild(link);
 						}
 					});
@@ -345,7 +363,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 								options.i[chunkId] = null;
 								var link = document.createElement("link");
 								link.rel = "prefetch";
-								link.href = jsonpScriptSrc(chunkId);
+								link.href = scriptSrcJsonp(chunkId);
 								head.appendChild(link);
 							}
 						});
@@ -354,19 +372,49 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			}
 
 			return Promise.all(promises);
-		};
+		}
+
+		function requireEnsureNode(chunkId) {
+			// require() chunk loading for javascript
+
+			var installedChunkData = options.i[chunkId];
+
+			// 0 means "already installed".
+			// a Promise means "currently loading".
+			if (installedChunkData !== 0) {
+				var chunk = require(scriptSrcNode(chunkId));
+				options.u.jsonp = options.u.jsonp || [];
+				options.u.jsonp.push(chunk);
+			}
+
+			return Promise.resolve();
+		}
 
 		// on error function for async loading
-		options.r.oe = function onError(err) {
-			if (process && process.nextTick) {
-				process.nextTick(function() {
-					throw err; // catch this error by using import().catch()
-				});
-			} else {
-				console.error(err);
+		function onErrorJsonp(err) {
+			console.error(err);
+			throw err; // catch this error by using import().catch()
+		}
+
+		function onErrorNode(err) {
+			process.nextTick(function() {
 				throw err; // catch this error by using import().catch()
-			}
-		};
+			});
+		}
+
+		var loadDependencies;
+		var checkDeferredModules;
+		if (typeof window === "undefined") {
+			options.r.e = requireEnsureNode;
+			options.r.oe = onErrorNode;
+			loadDependencies = loadDependenciesNode;
+			checkDeferredModules = checkDeferredModulesNode;
+		} else {
+			options.r.e = requireEnsureJsonp;
+			options.r.oe = onErrorJsonp;
+			loadDependencies = loadDependenciesJsonp;
+			checkDeferredModules = checkDeferredModulesJsonp;
+		}
 
 		options.u.jsonp = options.u.jsonp || [];
 		var oldJsonpFunction = options.u.jsonp.push.bind(options.u.jsonp);
@@ -379,8 +427,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 		if (parentUniversalFunction) parentUniversalFunction(options);
 
-		// run deferred modules when all chunks ready
+		// Wait for dependencies and chunks to load...
 		return loadDependencies(function() {
+			// run deferred modules when all chunks ready
 			return checkDeferredModules();
 		});
 	}
