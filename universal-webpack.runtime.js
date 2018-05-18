@@ -143,15 +143,17 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				}
 			}
 			if (parentJsonpFunction) parentJsonpFunction(data);
-			while (resolves.length) {
-				resolves.shift()();
-			}
 
 			// add entry modules from loaded chunk to deferred list
 			options.el.push.apply(options.el, data.e || []);
 
-			// run deferred modules when all chunks ready
-			return checkDeferredModules();
+			return loadDependencies(function() {
+				while (resolves.length) {
+					resolves.shift()();
+				}
+				// run deferred modules when all chunks ready
+				return checkDeferredModules();
+			});
 		}
 
 		function checkDeferredModules() {
@@ -171,48 +173,58 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			return result;
 		}
 
-		function loadDependencies() {
+		function loadDependencies(callback) {
 			/**
 			 * This function returns a promise which is resolved once the module
 			 * with all it's dependencies is loaded.
 			 * It also adds the final module to the require() cache.
 			 */
-			if (typeof window === "undefined") {
-				return checkDeferredModules();
+			var promises = [];
+
+			// Load deferred modules:
+			for (var i = 0; i < options.el.length; i++) {
+				var deferredModule = options.el[i];
+				for (var j = 1; j < deferredModule.length; j++) {
+					var depId = deferredModule[j];
+					if (options.i[depId] !== 0) {
+						promises.push(options.r.e(depId));
+					}
+				}
 			}
 
-			var promises = [];
+			if (typeof window === "undefined") {
+				return callback();
+			}
+
+			// Load dependencies:
 			for (i = 0; i < options.dp.length; i++) {
 				promises.push(global.require.load(options.dp[i]));
 			}
+
+			// Wait for those to load and fullfil
 			var request = options.r.cp;
 			var promise = Promise.all(promises);
+			promise.__webpackPromise = __emptyPromise;
 			var requiredModule = global.require.loaded[request];
-			if (
-				typeof requiredModule === "object" &&
-				requiredModule.__webpackPromise
-			) {
-				promise.__webpackPromise = requiredModule.__webpackPromise;
-			} else {
-				promise.__webpackPromise = __emptyPromise;
+			if (typeof requiredModule === "undefined") {
+				global.require.loaded[request] = promise;
 			}
-			global.require.loaded[request] = promise;
 			promise.then(function() {
 				var requiredModule = global.require.loaded[request];
 				try {
-					global.require.loaded[request] = checkDeferredModules();
 					if (
 						typeof requiredModule === "object" &&
 						requiredModule.__webpackPromise
 					) {
+						global.require.loaded[request] = callback();
 						requiredModule.__webpackPromise[0]();
 					}
 				} catch (error) {
-					global.require.loaded[request] = undefined;
 					if (
 						typeof requiredModule === "object" &&
 						requiredModule.__webpackPromise
 					) {
+						global.require.loaded[request] = undefined;
 						requiredModule.__webpackPromise[1](error);
 					}
 				}
@@ -327,7 +339,6 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				}
 
 				// chunk prefetching for javascript
-
 				var chunkPrefetchData = options.pf[chunkId];
 				if (chunkPrefetchData) {
 					Promise.all(promises).then(function() {
@@ -372,7 +383,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		if (parentUniversalFunction) parentUniversalFunction(options);
 
 		// run deferred modules when all chunks ready
-		return loadDependencies();
+		return loadDependencies(function() {
+			return checkDeferredModules();
+		});
 	}
 
 	// install a global require()
