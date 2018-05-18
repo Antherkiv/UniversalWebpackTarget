@@ -102,6 +102,20 @@ class UniversalMainTemplatePlugin {
 						)
 					);
 				}
+
+				// from webpack/lib/Chunk.getChildIdsByOrdersMap()
+				// Modified to include current chunk
+				const chunkMaps = Object.create(null);
+				for (const c of Array.from(chunk.getAllAsyncChunks()).concat(chunk)) {
+					const data = c.getChildIdsByOrders();
+					for (const key of Object.keys(data)) {
+						let chunkMap = chunkMaps[key];
+						if (chunkMap === undefined)
+							chunkMaps[key] = chunkMap = Object.create(null);
+						chunkMap[c.id] = data[key];
+					}
+				}
+
 				return Template.asString([
 					source,
 					"",
@@ -119,20 +133,21 @@ class UniversalMainTemplatePlugin {
 					),
 					"};",
 					"",
+					"// deferred chunks for splitChunks",
 					"var deferredModules = [",
 					Template.indent([entries.map(e => JSON.stringify(e)).join(", ")]),
 					"];",
 					"",
 					"// chunk preloading for javascript",
 					`var chunkPreloadMap = ${JSON.stringify(
-						chunk.getChildIdsByOrdersMap().preload || {},
+						chunkMaps.preload || {},
 						null,
 						"\t"
 					)}`,
 					"",
 					"// chunk prefetching for javascript",
 					`var chunkPrefetchMap = ${JSON.stringify(
-						chunk.getChildIdsByOrdersMap().prefetch || {},
+						chunkMaps.prefetch || {},
 						null,
 						"\t"
 					)}`,
