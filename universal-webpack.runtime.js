@@ -327,7 +327,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		}
 
 		function scriptSrcNode(chunkId) {
-			return "./" + options.r.p + "" + options.s(chunkId);
+			return options.r.p + "" + options.s(chunkId);
 		}
 
 		// This file contains only the entry chunk.
