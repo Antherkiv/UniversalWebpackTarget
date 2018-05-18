@@ -32,14 +32,14 @@ ContextModule.prototype.getSourceForEmptyContext = function(id) {
 	return `function webpackEmptyContext(req) {
 	// If you want to avoid seeing "Critical dependency" warnings,
 	// add 'module.exprContextCritical = false' to your webpack config.
-	return require(req);
+	return global.require(req);
 }`;
 };
 ContextModule.prototype.getSourceForEmptyAsyncContext = function(id) {
 	return `function webpackEmptyAsyncContext(req) {
 	// If you want to avoid seeing "Critical dependency" warnings,
 	// add 'module.exprContextCritical = false' to your webpack config.
-	return import(req);
+	return global.import(req);
 }`;
 };
 
