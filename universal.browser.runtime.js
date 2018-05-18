@@ -299,24 +299,34 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		 * @returns {void}
 		 */
 		function preFetchLoadJsonp(chunkId, async) {
+			function preload(rel) {
+				var head = document.getElementsByTagName("head")[0];
+				chunkData.forEach(function(chunkId) {
+					if (options.i[chunkId] === undefined) {
+						options.i[chunkId] = null;
+						var link = document.createElement("link");
+						link.charset = "utf-8";
+						if (options.r.nc) {
+							link.setAttribute("nonce", options.r.nc);
+						}
+						if (async) {
+							link.rel = "prefetch";
+						} else {
+							link.rel = "preload";
+							link.as = "script";
+						}
+						link.href = scriptSrcJsonp(chunkId);
+						head.appendChild(link);
+					}
+				});
+			}
 			var chunkData = (async ? options.pf : options.pl)[chunkId];
 			if (chunkData) {
-				(async || Promise.resolve()).then(function() {
-					var head = document.getElementsByTagName("head")[0];
-					chunkData.forEach(function(chunkId) {
-						if (options.i[chunkId] === undefined) {
-							options.i[chunkId] = null;
-							var link = document.createElement("link");
-							link.charset = "utf-8";
-							if (options.r.nc) {
-								link.setAttribute("nonce", options.r.nc);
-							}
-							link.rel = async ? "prefetch" : "preload";
-							link.href = scriptSrcJsonp(chunkId);
-							head.appendChild(link);
-						}
-					});
-				});
+				if (async) {
+					async.then(preload);
+				} else {
+					preload();
+				}
 			}
 		}
 
