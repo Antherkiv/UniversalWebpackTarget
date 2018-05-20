@@ -345,43 +345,17 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			// a Promise means "currently loading".
 			if (installedChunkData !== 0) {
 				var promises = [];
-
 				if (installedChunkData) {
-					promises.push(installedChunkData[2]);
+					promises.push(installedChunkData);
 				} else {
 					// setup Promise in chunk cache
-					var promise = new Promise(function(resolve, reject) {
-						installedChunkData = options.i[chunkId] = [resolve, reject];
-					});
-					promises.push((installedChunkData[2] = promise));
-
-					// start chunk loading
-					var head = document.getElementsByTagName("head")[0];
-					var script = document.createElement("script");
-
-					script.charset = "utf-8";
-					script.timeout = 120;
-
-					if (options.r.nc) {
-						script.setAttribute("nonce", options.r.nc);
-					}
-					script.src = scriptSrcJsonp(chunkId);
-					var timeout = setTimeout(function() {
-						onScriptComplete({ type: "timeout", target: script });
-					}, 120000);
-					script.onerror = script.onload = onScriptComplete;
-					// eslint-disable-next-line no-inner-declarations
-					function onScriptComplete(event) {
-						// avoid mem leaks in IE.
-						script.onerror = script.onload = null;
-						clearTimeout(timeout);
-						var chunk = options.i[chunkId];
-						if (chunk !== 0) {
-							if (chunk) {
-								var errorType =
-									event && (event.type === "load" ? "missing" : event.type);
+					var promise = loadScript(scriptSrcJsonp(chunkId))
+						.then(function() {
+							var chunk = options.i[chunkId];
+							if (chunk !== 0) {
+								var errorType = "missing";
 								var realSrc = event && event.target && event.target.src;
-								var error = new Error(
+								throw new Error(
 									"Loading chunk " +
 										chunkId +
 										" failed.\n(" +
@@ -390,14 +364,13 @@ if (typeof window !== "undefined") window.global = window.global || window;
 										realSrc +
 										")"
 								);
-								error.type = errorType;
-								error.request = realSrc;
-								chunk[1](error);
 							}
+						})
+						.catch(function(error) {
 							options.i[chunkId] = undefined;
-						}
-					}
-					head.appendChild(script);
+							throw error;
+						});
+					promises.push(promise);
 				}
 				promise = Promise.all(promises);
 				preFetchLoadJsonp(chunkId);
