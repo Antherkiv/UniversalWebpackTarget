@@ -10,6 +10,63 @@ if (typeof window !== "undefined") window.global = window.global || window;
 (function() {
 	var __emptyPromise = [function() {}, function() {}];
 
+	function loadScript(src, numTries) {
+		var doc = document;
+		function loader(resolve, reject, retry) {
+			__universalWebpackPromise.push(resolve);
+			__universalWebpackPromise.push(reject);
+			var script = doc.createElement("script");
+			script.charset = "utf-8";
+			script.timeout = 120;
+			if (loadScript.nonce) {
+				script.setAttribute("nonce", loadScript.nonce);
+			}
+			script.async = true;
+			script.src = src;
+			var timeout = setTimeout(function() {
+				onScriptComplete({ type: "timeout", target: script });
+			}, 120000);
+			script.onerror = script.onload = onScriptComplete;
+			function onScriptComplete(event) {
+				// avoid mem leaks in IE.
+				script.onerror = script.onload = null;
+				clearTimeout(timeout);
+				switch (event.type) {
+					case "error":
+					case "timeout":
+						if (retry === 1) {
+							var errorType =
+								event && (event.type === "load" ? "missing" : event.type);
+							var realSrc = event && event.target && event.target.src;
+							var error = new Error(
+								"Loading module '" +
+									src +
+									"' failed.\n(" +
+									errorType +
+									": " +
+									realSrc +
+									")"
+							);
+							error.type = errorType;
+							error.request = realSrc;
+							reject(error);
+						} else {
+							loader(resolve, reject, retry ? retry - 1 : numTries || 3);
+						}
+						break;
+					default:
+						resolve();
+				}
+			}
+			doc.head.appendChild(script);
+		}
+		var __universalWebpackPromise = [];
+		var promise = new Promise(loader);
+		__universalWebpackPromise.push(promise);
+		promise.__universalWebpackPromise = __universalWebpackPromise;
+		return promise;
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//         _       _           _
 	//    __ _| | ___ | |__   __ _| |___
@@ -51,65 +108,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				return requiredModule;
 			}
 			if (typeof requiredModule === "undefined") {
-				// setup Promise in requests cache
-				var __universalWebpackPromise = [];
-				var promise = new Promise(function(resolve, reject) {
-					__universalWebpackPromise.push(resolve);
-					__universalWebpackPromise.push(reject);
-				});
-				__universalWebpackPromise.push(promise);
-				promise.__universalWebpackPromise = __universalWebpackPromise;
+				var promise = loadScript("/" + request);
 				r.cache[request] = promise;
-
-				// start request loading
-				var head = document.getElementsByTagName("head")[0];
-				var script = document.createElement("script");
-				script.charset = "utf-8";
-				script.timeout = 120;
-				if (r.nonce) {
-					script.setAttribute("nonce", r.nonce);
-				}
-				script.src = "/" + request;
-				var timeout = setTimeout(function() {
-					onScriptError({ type: "timeout", target: script });
-				}, 120000);
-				script.onload = onScriptLoad;
-				script.onerror = onScriptError;
-				// eslint-disable-next-line no-inner-declarations
-				function onScriptLoad(event) {
-					// avoid mem leaks in IE.
-					script.onerror = script.onload = null;
-					clearTimeout(timeout);
-				}
-				// eslint-disable-next-line no-inner-declarations
-				function onScriptError(event) {
-					// avoid mem leaks in IE.
-					script.onerror = script.onload = null;
-					clearTimeout(timeout);
-					var requiredModule = r.cache[request];
-					if (
-						typeof requiredModule === "object" &&
-						requiredModule.__universalWebpackPromise
-					) {
-						var errorType =
-							event && (event.type === "load" ? "missing" : event.type);
-						var realSrc = event && event.target && event.target.src;
-						var error = new Error(
-							"Loading module '" +
-								request +
-								"' failed.\n(" +
-								errorType +
-								": " +
-								realSrc +
-								")"
-						);
-						error.type = errorType;
-						error.request = realSrc;
-						requiredModule.__universalWebpackPromise[1](error);
-						r.cache[request] = undefined;
-					}
-				}
-				head.appendChild(script);
 				return promise;
 			}
 			promise = Promise.resolve();
