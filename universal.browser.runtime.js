@@ -13,8 +13,6 @@ if (typeof window !== "undefined") window.global = window.global || window;
 	function loadScript(src, numTries) {
 		var doc = document;
 		function loader(resolve, reject, retry) {
-			__universalWebpackPromise.push(resolve);
-			__universalWebpackPromise.push(reject);
 			var script = doc.createElement("script");
 			script.charset = "utf-8";
 			script.timeout = 120;
@@ -34,7 +32,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				switch (event.type) {
 					case "error":
 					case "timeout":
-						if (retry === 1) {
+						if (retry === 0) {
 							var errorType =
 								event && (event.type === "load" ? "missing" : event.type);
 							var realSrc = event && event.target && event.target.src;
@@ -51,7 +49,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							error.request = realSrc;
 							reject(error);
 						} else {
-							loader(resolve, reject, retry ? retry - 1 : numTries || 3);
+							loader(resolve, reject, retry - 1);
 						}
 						break;
 					default:
@@ -60,10 +58,14 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			}
 			doc.head.appendChild(script);
 		}
-		var __universalWebpackPromise = [];
-		var promise = new Promise(loader);
-		__universalWebpackPromise.push(promise);
-		promise.__universalWebpackPromise = __universalWebpackPromise;
+		var rr = {};
+		var promise = new Promise(function(resolve, reject) {
+			rr.resolve = resolve;
+			rr.reject = reject;
+			loader(resolve, reject, numTries || 3);
+		});
+		promise.resolve = rr.resolve;
+		promise.reject = rr.reject;
 		return promise;
 	}
 
