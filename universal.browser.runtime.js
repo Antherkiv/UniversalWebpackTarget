@@ -67,6 +67,10 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		return promise;
 	}
 
+	function isPromise(obj) {
+		return typeof obj === "object" && obj.resolve && obj.reject;
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//         _       _           _
 	//    __ _| | ___ | |__   __ _| |___
@@ -86,11 +90,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 		var r = function(request) {
 			var requiredModule = r.cache[request];
-			if (
-				typeof requiredModule === "object" &&
-				requiredModule.resolve &&
-				requiredModule.reject
-			) {
+			if (isPromise(requiredModule)) {
 				throw new Error("Module is still loading");
 			}
 			if (typeof requiredModule === "undefined") {
@@ -102,15 +102,31 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		r.load = function load(request) {
 			var requiredModule = r.cache[request];
 			// a Promise means "currently loading".
-			if (
-				typeof requiredModule === "object" &&
-				requiredModule.resolve &&
-				requiredModule.reject
-			) {
+			if (isPromise(requiredModule)) {
 				return requiredModule;
 			}
 			if (typeof requiredModule === "undefined") {
-				var promise = loadScript("/" + request);
+				var promise = loadScript("/" + request)
+					.then(function() {
+						var requiredModule = r.cache[request];
+						if (isPromise(requiredModule)) {
+							var errorType = "missing";
+							var realSrc = event && event.target && event.target.src;
+							throw new Error(
+								"Loading module " +
+									request +
+									" failed.\n(" +
+									errorType +
+									": " +
+									realSrc +
+									")"
+							);
+						}
+					})
+					.catch(function(error) {
+						r.cache[request] = undefined;
+						throw error;
+					});
 				r.cache[request] = promise;
 				return promise;
 			}
@@ -272,11 +288,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 			promise.then(function() {
 				var requiredModule = global.require.cache[request];
-				if (
-					typeof requiredModule === "object" &&
-					requiredModule.resolve &&
-					requiredModule.reject
-				) {
+				if (isPromise(requiredModule)) {
 					try {
 						global.require.cache[request] = callback();
 						requiredModule.resolve();
@@ -307,7 +319,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			function preload(rel) {
 				var head = document.getElementsByTagName("head")[0];
 				chunkData.forEach(function(chunkId) {
-					if (options.i[chunkId] === undefined) {
+					if (typeof options.i[chunkId] === "undefined") {
 						options.i[chunkId] = null;
 						var link = document.createElement("link");
 						link.charset = "utf-8";
@@ -370,6 +382,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							options.i[chunkId] = undefined;
 							throw error;
 						});
+					options.i[chunkId] = promise;
 					promises.push(promise);
 				}
 				promise = Promise.all(promises);
