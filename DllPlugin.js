@@ -12,7 +12,7 @@
 
 const DllEntryPlugin = require("webpack/lib/DllEntryPlugin");
 const LibManifestPlugin = require("./LibManifestPlugin");
-const FlagInitialModulesAsUsedPlugin = require("webpack/lib/FlagInitialModulesAsUsedPlugin");
+// const FlagInitialModulesAsUsedPlugin = require("webpack/lib/FlagInitialModulesAsUsedPlugin");
 
 const validateOptions = require("schema-utils");
 const schema = require("webpack/schemas/plugins/DllPlugin.json");
@@ -39,7 +39,7 @@ class DllPlugin {
 			return true;
 		});
 		new LibManifestPlugin(this.options).apply(compiler);
-		new FlagInitialModulesAsUsedPlugin("DllPlugin").apply(compiler);
+		// new FlagInitialModulesAsUsedPlugin("DllPlugin").apply(compiler);
 	}
 }
 
