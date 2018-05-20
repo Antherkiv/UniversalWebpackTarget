@@ -8,8 +8,6 @@
 */
 if (typeof window !== "undefined") window.global = window.global || window;
 (function() {
-	var __emptyPromise = [function() {}, function() {}];
-
 	function loadScript(src, numTries) {
 		var doc = document;
 		function loader(resolve, reject, retry) {
@@ -90,7 +88,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			var requiredModule = r.cache[request];
 			if (
 				typeof requiredModule === "object" &&
-				requiredModule.__universalWebpackPromise
+				requiredModule.resolve &&
+				requiredModule.reject
 			) {
 				throw new Error("Module is still loading");
 			}
@@ -105,7 +104,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			// a Promise means "currently loading".
 			if (
 				typeof requiredModule === "object" &&
-				requiredModule.__universalWebpackPromise
+				requiredModule.resolve &&
+				requiredModule.reject
 			) {
 				return requiredModule;
 			}
@@ -115,7 +115,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				return promise;
 			}
 			promise = Promise.resolve();
-			promise.__universalWebpackPromise = __emptyPromise;
+			promise.resolve = function() {};
+			promise.reject = function() {};
 			return promise;
 		};
 		r.__universalWebpack = true;
@@ -256,7 +257,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			// Wait for those to load and fullfil
 			var request = options.r.cp;
 			var promise = Promise.all(promises);
-			promise.__universalWebpackPromise = __emptyPromise;
+			promise.resolve = function() {};
+			promise.reject = function() {};
 			var requiredModule = global.require.cache[request];
 			if (typeof requiredModule === "undefined") {
 				global.require.cache[request] = promise;
@@ -272,14 +274,15 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				var requiredModule = global.require.cache[request];
 				if (
 					typeof requiredModule === "object" &&
-					requiredModule.__universalWebpackPromise
+					requiredModule.resolve &&
+					requiredModule.reject
 				) {
 					try {
 						global.require.cache[request] = callback();
-						requiredModule.__universalWebpackPromise[0]();
+						requiredModule.resolve();
 					} catch (error) {
 						global.require.cache[request] = undefined;
-						requiredModule.__universalWebpackPromise[1](error);
+						requiredModule.reject(error);
 					}
 				} else {
 					callback();
