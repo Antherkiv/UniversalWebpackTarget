@@ -6,8 +6,8 @@
   "scripts": {
     "start": "npm run build:dev && NODE_PATH=. node server.js",
     "start:dev": "webpack-dev-server --mode development --verbose",
-    "build": "webpack --mode production",
-    "build:dev": "webpack --mode development --verbose",
+    "build": "webpack --mode production --progress",
+    "build:dev": "webpack --mode development --progress --verbose",
     "debug": "node --inspect-brk $(npm bin)/webpack --mode development --verbose",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
