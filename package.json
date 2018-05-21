@@ -11,7 +11,7 @@
     "build:dev": "webpack --mode development --progress --verbose",
     "debug:build": "node --inspect $(npm bin)/webpack --mode production --progress",
     "debug:build:dev": "node --inspect $(npm bin)/webpack --mode development --progress --verbose",
-    "debug": "node --inspect-brk $(npm bin)/webpack --mode development --verbose",
+    "debug": "node --inspect $(npm bin)/webpack-dev-server --mode development --verbose",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
