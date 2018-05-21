@@ -87,7 +87,7 @@ function universalTarget(options) {
 					console.warn(
 						`Invalid imported library ${name}: not manifests found!`
 					);
-					// process.exit(1);
+					process.exit(1);
 				}
 			});
 		}
