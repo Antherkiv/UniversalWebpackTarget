@@ -101,18 +101,28 @@ reference.to = function(name) {
 	return reference[name];
 };
 
-class DllReferenceResolverPlugin {
-	constructor(libsPath, imports) {
+class PluggablePlugin {
+	constructor(dll, libsPath, imports) {
+		this.dll = dll;
 		this.libsPath = libsPath;
 		this.imports = imports;
 	}
 
 	apply(compiler) {
+		if (this.dll) {
+			new DllPlugin({
+				name: `${compiler.options.output.publicPath}${
+					compiler.options.output.filename
+				}`,
+				path: path.resolve(compiler.options.output.path, "[name].json")
+			}).apply(compiler);
+		}
+
 		const libsPath = this.libsPath || compiler.options.output.path;
 		const imports = this.imports || [];
 
 		compiler.hooks.beforeRun.tapAsync(
-			"DllReferenceResolverPlugin",
+			"PluggablePlugin",
 			(compiler, callback) => {
 				const promises = [];
 				imports.forEach(name => {
@@ -145,14 +155,14 @@ class DllReferenceResolverPlugin {
 			}
 		);
 		compiler.hooks.afterEmit.tapAsync(
-			"DllReferenceResolverPlugin",
+			"PluggablePlugin",
 			(compiler, callback) => {
 				const promise = reference.to(compiler.options.name);
 				promise.resolve();
 				callback();
 			}
 		);
-		compiler.hooks.failed.tap("DllReferenceResolverPlugin", error => {
+		compiler.hooks.failed.tap("PluggablePlugin", error => {
 			const promise = reference.to(compiler.options.name);
 			promise.reject(error);
 		});
@@ -178,22 +188,10 @@ function universalTarget(options) {
 		// Add plugin to create symbolic link to entry points:
 		new EntryPointSymlink().apply(compiler);
 
-		// Add plugin for dll generation
-		if (options.dll) {
-			new DllPlugin({
-				name: `${compiler.options.output.publicPath}${
-					compiler.options.output.filename
-				}`,
-				path: path.resolve(compiler.options.output.path, "[name].json")
-			}).apply(compiler);
-		}
-
 		// Add plugins for dll reference:
-		if (options.imports && options.imports.length) {
-			new DllReferenceResolverPlugin(options.libsPath, options.imports).apply(
-				compiler
-			);
-		}
+		new PluggablePlugin(options.dll, options.libsPath, options.imports).apply(
+			compiler
+		);
 	}
 	return target;
 }
