@@ -8,6 +8,28 @@
 */
 if (typeof window !== "undefined") window.global = window.global || window;
 (function() {
+	function wrapPromise(promise, resolve, reject, context) {
+		promise.resolve = resolve;
+		promise.reject = reject;
+		if (context) promise.context = context;
+		promise.then = function() {
+			return wrapPromise(
+				Promise.prototype.then.apply(promise, arguments),
+				resolve,
+				reject,
+				context
+			);
+		};
+		promise.catch = function() {
+			return wrapPromise(
+				Promise.prototype.catch.apply(promise, arguments),
+				resolve,
+				reject,
+				context
+			);
+		};
+		return promise;
+	}
 	function loadScript(src, numTries) {
 		var doc = document;
 		function loader(resolve, reject, retry) {
@@ -35,7 +57,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 								event && (event.type === "load" ? "missing" : event.type);
 							var realSrc = event && event.target && event.target.src;
 							var error = new Error(
-								"Loading module '" +
+								"Loading script '" +
 									src +
 									"' failed.\n(" +
 									errorType +
@@ -47,7 +69,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							error.request = realSrc;
 							reject(error);
 						} else {
-							loader(resolve, reject, retry - 1);
+							setTimeout(function() {
+								loader(resolve, reject, retry - 1);
+							}, 500);
 						}
 						break;
 					default:
@@ -60,11 +84,9 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		var promise = new Promise(function(resolve, reject) {
 			rr.resolve = resolve;
 			rr.reject = reject;
-			loader(resolve, reject, numTries || 3);
+			loader(resolve, reject, numTries || 5);
 		});
-		promise.resolve = rr.resolve;
-		promise.reject = rr.reject;
-		return promise;
+		return wrapPromise(promise, rr.resolve, rr.reject, src);
 	}
 
 	function isPromise(obj) {
@@ -91,7 +113,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		var r = function(request) {
 			var requiredModule = r.cache[request];
 			if (isPromise(requiredModule)) {
-				throw new Error("Module is still loading");
+				throw new Error("Module '" + request + "' is still loading");
 			}
 			if (typeof requiredModule === "undefined") {
 				throw new Error("Cannot find module '" + request + "'");
@@ -106,34 +128,11 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				return requiredModule;
 			}
 			if (typeof requiredModule === "undefined") {
-				var promise = loadScript("/" + request)
-					.then(function() {
-						var requiredModule = r.cache[request];
-						if (isPromise(requiredModule)) {
-							var errorType = "missing";
-							var realSrc = event && event.target && event.target.src;
-							throw new Error(
-								"Loading module " +
-									request +
-									" failed.\n(" +
-									errorType +
-									": " +
-									realSrc +
-									")"
-							);
-						}
-					})
-					.catch(function(error) {
-						r.cache[request] = undefined;
-						throw error;
-					});
+				var promise = loadScript("/" + request);
 				r.cache[request] = promise;
 				return promise;
 			}
-			promise = Promise.resolve();
-			promise.resolve = function() {};
-			promise.reject = function() {};
-			return promise;
+			return wrapPromise(Promise.resolve(), function() {}, function() {});
 		};
 		r.__universalWebpack = true;
 		global.require = r;
@@ -204,7 +203,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			for (var i = 0; i < data.i.length; i++) {
 				chunkId = data.i[i];
 				if (options.i[chunkId]) {
-					resolves.push(options.i[chunkId][0]);
+					resolves.push(options.i[chunkId].resolve);
 				}
 				options.i[chunkId] = 0;
 			}
@@ -272,9 +271,14 @@ if (typeof window !== "undefined") window.global = window.global || window;
 
 			// Wait for those to load and fullfil
 			var request = options.r.cp;
-			var promise = Promise.all(promises);
-			promise.resolve = function() {};
-			promise.reject = function() {};
+			var promise = wrapPromise(
+				Promise.all(promises),
+				function() {},
+				function(error) {
+					throw error;
+				},
+				promises
+			);
 			var requiredModule = global.require.cache[request];
 			if (typeof requiredModule === "undefined") {
 				global.require.cache[request] = promise;
@@ -293,7 +297,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						global.require.cache[request] = callback();
 						requiredModule.resolve();
 					} catch (error) {
-						global.require.cache[request] = undefined;
+						delete global.require.cache[request];
 						requiredModule.reject(error);
 					}
 				} else {
@@ -356,21 +360,21 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			// 0 means "already installed".
 			// a Promise means "currently loading".
 			if (installedChunkData !== 0) {
-				var promises = [];
+				var promise;
 				if (installedChunkData) {
-					promises.push(installedChunkData);
+					promise = installedChunkData;
 				} else {
 					// setup Promise in chunk cache
-					var promise = loadScript(scriptSrcJsonp(chunkId))
+					promise = loadScript(scriptSrcJsonp(chunkId))
 						.then(function() {
 							var chunk = options.i[chunkId];
 							if (chunk !== 0) {
 								var errorType = "missing";
 								var realSrc = event && event.target && event.target.src;
 								throw new Error(
-									"Loading chunk " +
+									"Loading chunk '" +
 										chunkId +
-										" failed.\n(" +
+										"' failed.\n(" +
 										errorType +
 										": " +
 										realSrc +
@@ -379,19 +383,18 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							}
 						})
 						.catch(function(error) {
-							options.i[chunkId] = undefined;
+							delete options.i[chunkId];
 							throw error;
 						});
 					options.i[chunkId] = promise;
-					promises.push(promise);
 				}
-				promise = Promise.all(promises);
 				preFetchLoadJsonp(chunkId);
 				preFetchLoadJsonp(chunkId, promise);
 				return promise;
 			}
 
-			return Promise.resolve();
+			promise = wrapPromise(Promise.resolve(), function() {}, function() {});
+			return promise;
 		}
 
 		// on error function for async loading
