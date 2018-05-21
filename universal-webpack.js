@@ -43,6 +43,36 @@ ContextModule.prototype.getSourceForEmptyAsyncContext = function(id) {
 }`;
 };
 
+class EntryPointSymlink {
+	apply(compiler) {
+		compiler.hooks.emit.tapAsync(
+			"EntryPointSymlink",
+			(compilation, callback) => {
+				compilation.chunks.forEach(function(chunk) {
+					if (chunk.hasEntryModule()) {
+						chunk.files
+							.filter(f => f.endsWith(".js"))
+							.forEach(function(filename) {
+								let symlink = `${chunk.name}.js`;
+								if (symlink !== filename) {
+									symlink = path.resolve(
+										compilation.outputOptions.path,
+										symlink
+									);
+									if (fs.existsSync(symlink)) {
+										fs.unlinkSync(symlink);
+									}
+									fs.symlinkSync(filename, symlink);
+								}
+							});
+					}
+				});
+				callback();
+			}
+		);
+	}
+}
+
 function universalTarget(options) {
 	function target(compiler) {
 		new UniversalTemplatePlugin().apply(compiler);
@@ -59,6 +89,10 @@ function universalTarget(options) {
 				: options.target
 		).apply(compiler);
 
+		// Add plugin to create symbolic link to entry points:
+		new EntryPointSymlink().apply(compiler);
+
+		// Add plugin for dll generation
 		if (options.dll) {
 			new DllPlugin({
 				name: `${compiler.options.output.publicPath}${
@@ -68,6 +102,7 @@ function universalTarget(options) {
 			}).apply(compiler);
 		}
 
+		// Add plugins for dll references:
 		if (options.imports) {
 			const libsPath = options.libsPath || compiler.options.output.path;
 			options.imports.forEach(function(name) {
