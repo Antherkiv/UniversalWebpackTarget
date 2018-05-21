@@ -4,7 +4,8 @@
   "description": "Dubalu Framework",
   "main": "index.js",
   "scripts": {
-    "start": "npm run build:dev && NODE_PATH=. node server.js",
+    "server": "NODE_PATH=. node server.js",
+    "start": "npm run build:dev && npm run server",
     "start:dev": "webpack-dev-server --mode development --verbose",
     "build": "webpack --mode production --progress",
     "build:dev": "webpack --mode development --progress --verbose",
