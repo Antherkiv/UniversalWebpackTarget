@@ -70,7 +70,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							reject(error);
 						} else {
 							setTimeout(function() {
-								loader(resolve, reject, retry - 1);
+								loader(resolve, reject, retry ? retry - 1 : numTries || 5);
 							}, 500);
 						}
 						break;
@@ -84,7 +84,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		var promise = new Promise(function(resolve, reject) {
 			rr.resolve = resolve;
 			rr.reject = reject;
-			loader(resolve, reject, numTries || 5);
+			loader(resolve, reject);
 		});
 		return wrapPromise(promise, rr.resolve, rr.reject, src);
 	}
@@ -128,7 +128,20 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				return requiredModule;
 			}
 			if (typeof requiredModule === "undefined") {
-				var promise = loadScript("/" + request);
+				var rr = {};
+				var promise = new Promise(function(resolve, reject) {
+					rr.resolve = resolve;
+					rr.reject = reject;
+				});
+				promise = wrapPromise(
+					Promise.all([loadScript("/" + request), promise]),
+					rr.resolve,
+					rr.reject,
+					request
+				).catch(function(error) {
+					delete r.cache[request];
+					throw error;
+				});
 				r.cache[request] = promise;
 				return promise;
 			}
