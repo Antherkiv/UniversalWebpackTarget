@@ -1,9 +1,10 @@
 /* eslint prettier/prettier:0 node/no-unpublished-require:0 */
 
 const path = require('path');
-
 const webpack = require('webpack');
 const universalTarget = require('./universal-webpack');
+
+const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 
 function factory(name, entry, target) {
   return {
@@ -11,8 +12,7 @@ function factory(name, entry, target) {
     devtool: 'source-map',
     entry: entry,
     output: {
-      filename: '[name].js',
-      // filename: '[name].[chunkhash].js',
+      filename: development ? '[name].js' : '[name].[chunkhash].js',
       publicPath: 'libs/' + name + '/',
       path: path.resolve(__dirname, 'libs', name),
     },
@@ -38,8 +38,7 @@ function factory(name, entry, target) {
     },
 
     plugins: [
-      new webpack.NamedModulesPlugin(),
-      // new webpack.NamedChunksPlugin(),
+      development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
     ],
 
     externals: {
