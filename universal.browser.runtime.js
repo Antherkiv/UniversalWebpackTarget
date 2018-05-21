@@ -70,8 +70,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							reject(error);
 						} else {
 							setTimeout(function() {
-								loader(resolve, reject, retry ? retry - 1 : numTries || 5);
-							}, 500);
+								loader(resolve, reject, retry ? retry - 1 : numTries || 15);
+							}, 200);
 						}
 						break;
 					default:
