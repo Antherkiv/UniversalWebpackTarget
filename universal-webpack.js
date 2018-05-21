@@ -45,6 +45,8 @@ ContextModule.prototype.getSourceForEmptyAsyncContext = function(id) {
 
 class EntryPointSymlink {
 	apply(compiler) {
+		const symlinks = [];
+
 		compiler.hooks.emit.tapAsync(
 			"EntryPointSymlink",
 			(compilation, callback) => {
@@ -59,10 +61,10 @@ class EntryPointSymlink {
 										compilation.outputOptions.path,
 										symlink
 									);
-									if (fs.existsSync(symlink)) {
-										fs.unlinkSync(symlink);
-									}
-									fs.symlinkSync(filename, symlink);
+									symlinks.push({
+										filename,
+										symlink
+									});
 								}
 							});
 					}
@@ -70,6 +72,90 @@ class EntryPointSymlink {
 				callback();
 			}
 		);
+
+		compiler.hooks.afterEmit.tapAsync(
+			"EntryPointSymlink",
+			(compiler, callback) => {
+				for (const ln of symlinks) {
+					if (fs.existsSync(ln.symlink)) {
+						fs.unlinkSync(ln.symlink);
+					}
+					fs.symlinkSync(ln.filename, ln.symlink);
+				}
+				callback();
+			}
+		);
+	}
+}
+
+const reference = {};
+reference.to = function(name) {
+	const rr = {};
+	const promise = new Promise(function(resolve, reject) {
+		rr.resolve = resolve;
+		rr.reject = reject;
+	});
+	promise.resolve = rr.resolve;
+	promise.reject = rr.reject;
+	reference[name] = reference[name] || promise;
+	return reference[name];
+};
+
+class DllReferenceResolverPlugin {
+	constructor(libsPath, imports) {
+		this.libsPath = libsPath;
+		this.imports = imports;
+	}
+
+	apply(compiler) {
+		const libsPath = this.libsPath || compiler.options.output.path;
+		const imports = this.imports || [];
+
+		compiler.hooks.beforeRun.tapAsync(
+			"DllReferenceResolverPlugin",
+			(compiler, callback) => {
+				const promises = [];
+				imports.forEach(name => {
+					promises.push(reference.to(name));
+				});
+				Promise.all(promises).then(() => {
+					imports.forEach(function(name) {
+						const plugins = [];
+						for (const file of glob.sync(
+							path.resolve(libsPath, name, "*.json")
+						)) {
+							if (path.basename(file) !== "manifest.json") {
+								const lib = JSON.parse(fs.readFileSync(file, "utf8"));
+								plugins.push(
+									new DllReferencePlugin({
+										manifest: lib,
+										sourceType: "commonjs"
+									}).apply(compiler)
+								);
+							}
+						}
+						if (!plugins.length) {
+							throw new Error(
+								`Invalid imported library ${name}: not manifests found!`
+							);
+						}
+					});
+					callback();
+				});
+			}
+		);
+		compiler.hooks.afterEmit.tapAsync(
+			"DllReferenceResolverPlugin",
+			(compiler, callback) => {
+				const promise = reference.to(compiler.options.name);
+				promise.resolve();
+				callback();
+			}
+		);
+		compiler.hooks.failed.tap("DllReferenceResolverPlugin", error => {
+			const promise = reference.to(compiler.options.name);
+			promise.reject(error);
+		});
 	}
 }
 
@@ -102,29 +188,11 @@ function universalTarget(options) {
 			}).apply(compiler);
 		}
 
-		// Add plugins for dll references:
-		if (options.imports) {
-			const libsPath = options.libsPath || compiler.options.output.path;
-			options.imports.forEach(function(name) {
-				const plugins = [];
-				for (const file of glob.sync(path.resolve(libsPath, name, "*.json"))) {
-					if (path.basename(file) !== "manifest.json") {
-						const lib = JSON.parse(fs.readFileSync(file, "utf8"));
-						plugins.push(
-							new DllReferencePlugin({
-								manifest: lib,
-								sourceType: "commonjs"
-							}).apply(compiler)
-						);
-					}
-				}
-				if (!plugins.length) {
-					console.warn(
-						`Invalid imported library ${name}: not manifests found!`
-					);
-					process.exit(1);
-				}
-			});
+		// Add plugins for dll reference:
+		if (options.imports && options.imports.length) {
+			new DllReferenceResolverPlugin(options.libsPath, options.imports).apply(
+				compiler
+			);
 		}
 	}
 	return target;
