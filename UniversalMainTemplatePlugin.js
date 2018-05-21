@@ -13,6 +13,50 @@
 const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
 
+// from webpack/lib/Chunk.getChunkMaps()
+// Modified to also include deferred chunks
+function getChunkMaps() {
+	const chunkHashMap = Object.create(null);
+	const chunkContentHashMap = Object.create(null);
+	const chunkNameMap = Object.create(null);
+	const chunks = this.getAllAsyncChunks();
+	// Add deferred chunks
+	for (const chunk of Array.from(this.groupsIterable)[0].chunks) {
+		// (this bit comes from deferredModules in JsonpMainTemplatePlugin)
+		if (chunk !== this) chunks.add(chunk);
+	}
+	for (const chunk of chunks) {
+		chunkHashMap[chunk.id] = chunk.renderedHash;
+		for (const key of Object.keys(chunk.contentHash)) {
+			if (!chunkContentHashMap[key])
+				chunkContentHashMap[key] = Object.create(null);
+			chunkContentHashMap[key][chunk.id] = chunk.contentHash[key];
+		}
+		if (chunk.name) chunkNameMap[chunk.id] = chunk.name;
+	}
+	return {
+		hash: chunkHashMap,
+		contentHash: chunkContentHashMap,
+		name: chunkNameMap
+	};
+}
+
+// from webpack/lib/Chunk.getChildIdsByOrdersMap()
+// Modified to also include current chunk
+function getChildIdsByOrdersMap() {
+	const chunkMaps = Object.create(null);
+	for (const chunk of this.getAllAsyncChunks().add(this)) {
+		const data = chunk.getChildIdsByOrders();
+		for (const key of Object.keys(data)) {
+			let chunkMap = chunkMaps[key];
+			if (chunkMap === undefined)
+				chunkMaps[key] = chunkMap = Object.create(null);
+			chunkMap[chunk.id] = data[key];
+		}
+	}
+	return chunkMaps;
+}
+
 class UniversalMainTemplatePlugin {
 	constructor(universal) {
 		this.universal = universal;
@@ -21,7 +65,7 @@ class UniversalMainTemplatePlugin {
 	apply(mainTemplate) {
 		const getScriptSrc = (hash, chunk, chunkIdExpression) => {
 			const chunkFilename = mainTemplate.outputOptions.chunkFilename;
-			const chunkMaps = chunk.getChunkMaps();
+			const chunkMaps = getChunkMaps.call(chunk);
 			return mainTemplate.getAssetPath(JSON.stringify(chunkFilename), {
 				hash: `" + ${mainTemplate.renderCurrentHashCode(hash)} + "`,
 				hashWithLength: length =>
@@ -92,29 +136,15 @@ class UniversalMainTemplatePlugin {
 						}
 					}
 				}
-				let entries = [];
-				if (chunk.hasEntryModule()) {
-					entries = [chunk.entryModule].filter(Boolean).map(m =>
-						[m.id].concat(
-							Array.from(chunk.groupsIterable)[0]
-								.chunks.filter(c => c !== chunk)
-								.map(c => c.id)
-						)
-					);
-				}
+				const entries = [chunk.entryModule].filter(Boolean).map(m =>
+					[m.id].concat(
+						Array.from(chunk.groupsIterable)[0]
+							.chunks.filter(c => c !== chunk)
+							.map(c => c.id)
+					)
+				);
 
-				// from webpack/lib/Chunk.getChildIdsByOrdersMap()
-				// Modified to include current chunk
-				const chunkMaps = Object.create(null);
-				for (const c of Array.from(chunk.getAllAsyncChunks()).concat(chunk)) {
-					const data = c.getChildIdsByOrders();
-					for (const key of Object.keys(data)) {
-						let chunkMap = chunkMaps[key];
-						if (chunkMap === undefined)
-							chunkMaps[key] = chunkMap = Object.create(null);
-						chunkMap[c.id] = data[key];
-					}
-				}
+				const chunkMaps = getChildIdsByOrdersMap.call(chunk);
 
 				return Template.asString([
 					source,
