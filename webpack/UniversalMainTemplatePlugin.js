@@ -11,33 +11,38 @@
 const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
 
-// from webpack/lib/Chunk.getChunkMaps()
-// Modified to also include deferred chunks
-function getChunkMaps() {
-	const chunkHashMap = Object.create(null);
-	const chunkContentHashMap = Object.create(null);
-	const chunkNameMap = Object.create(null);
-	const chunks = this.getAllAsyncChunks();
-	// Add deferred chunks
+const intersect = require("webpack/lib/util/SetHelpers").intersect;
+const Chunk = require("webpack/lib/Chunk");
+
+// from webpack/lib/Chunk.getAllAsyncChunks()
+// Monkey-patch so it also includes deferred chunks
+function getAllAsyncChunks() {
+	const queue = new Set();
+	const chunks = new Set();
+
+	const initialChunks = intersect(
+		Array.from(this.groupsIterable, g => new Set(g.chunks))
+	);
+
+	for (const chunkGroup of this.groupsIterable) {
+		for (const child of chunkGroup.childrenIterable) queue.add(child);
+	}
+
+	for (const chunkGroup of queue) {
+		for (const chunk of chunkGroup.chunks) {
+			if (!initialChunks.has(chunk)) chunks.add(chunk);
+		}
+		for (const child of chunkGroup.childrenIterable) queue.add(child);
+	}
+
 	for (const chunk of Array.from(this.groupsIterable)[0].chunks) {
 		// (this bit comes from deferredModules in JsonpMainTemplatePlugin)
 		if (chunk !== this) chunks.add(chunk);
 	}
-	for (const chunk of chunks) {
-		chunkHashMap[chunk.id] = chunk.renderedHash;
-		for (const key of Object.keys(chunk.contentHash)) {
-			if (!chunkContentHashMap[key])
-				chunkContentHashMap[key] = Object.create(null);
-			chunkContentHashMap[key][chunk.id] = chunk.contentHash[key];
-		}
-		if (chunk.name) chunkNameMap[chunk.id] = chunk.name;
-	}
-	return {
-		hash: chunkHashMap,
-		contentHash: chunkContentHashMap,
-		name: chunkNameMap
-	};
+
+	return chunks;
 }
+Chunk.prototype.getAllAsyncChunks = getAllAsyncChunks;
 
 // from webpack/lib/Chunk.getChildIdsByOrdersMap()
 // Modified to also include current chunk
@@ -65,7 +70,7 @@ class UniversalMainTemplatePlugin {
 		const withRuntime = this.withRuntime;
 		const getScriptSrc = (hash, chunk, chunkIdExpression) => {
 			const chunkFilename = mainTemplate.outputOptions.chunkFilename;
-			const chunkMaps = getChunkMaps.call(chunk);
+			const chunkMaps = chunk.getChunkMaps();
 			return mainTemplate.getAssetPath(JSON.stringify(chunkFilename), {
 				hash: `" + ${mainTemplate.renderCurrentHashCode(hash)} + "`,
 				hashWithLength: length =>
