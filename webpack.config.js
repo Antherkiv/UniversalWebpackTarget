@@ -21,7 +21,7 @@ function factory(options) {
     target: universalTarget(options),
 
     resolve: {
-      extensions: ['.ts', '.tsx', '.js', '.json']
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.node']
     },
 
     module: {
