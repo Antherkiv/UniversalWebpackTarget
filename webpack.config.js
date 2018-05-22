@@ -69,7 +69,6 @@ module.exports = [
       ],
     },
     universalTarget({
-      dll: true,
     })
   ),
 
@@ -84,7 +83,6 @@ module.exports = [
       ],
     },
     universalTarget({
-      dll: true,
       libsPath: path.resolve(__dirname, 'libs'),
       imports: [
         'Base'
@@ -100,6 +98,7 @@ module.exports = [
       ],
     },
     universalTarget({
+      main: true,
       libsPath: path.resolve(__dirname, 'libs'),
       imports: [
         'Base',
@@ -116,6 +115,7 @@ module.exports = [
       ],
     },
     universalTarget({
+      main: true,
       target: 'node',
       libsPath: path.resolve(__dirname, 'libs'),
       imports: [

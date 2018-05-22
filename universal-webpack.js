@@ -102,14 +102,14 @@ reference.to = function(name) {
 };
 
 class PluggablePlugin {
-	constructor(dll, libsPath, imports) {
-		this.dll = dll;
+	constructor(main, libsPath, imports) {
+		this.main = main;
 		this.libsPath = libsPath;
 		this.imports = imports;
 	}
 
 	apply(compiler) {
-		if (this.dll) {
+		if (!this.main) {
 			new DllPlugin({
 				name: `${compiler.options.output.publicPath}${
 					compiler.options.output.filename
@@ -170,6 +170,15 @@ class PluggablePlugin {
 }
 
 function universalTarget(options) {
+	options = Object.assign(
+		{
+			main: false,
+			target: "universal",
+			libsPath: null,
+			imports: []
+		},
+		options
+	);
 	function target(compiler) {
 		new UniversalTemplatePlugin(options).apply(compiler);
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
@@ -188,8 +197,8 @@ function universalTarget(options) {
 		// Add plugin to create symbolic link to entry points:
 		new EntryPointSymlink().apply(compiler);
 
-		// Add plugins for dll reference:
-		new PluggablePlugin(options.dll, options.libsPath, options.imports).apply(
+		// Add plugins for dll and dll references:
+		new PluggablePlugin(options.main, options.libsPath, options.imports).apply(
 			compiler
 		);
 	}
