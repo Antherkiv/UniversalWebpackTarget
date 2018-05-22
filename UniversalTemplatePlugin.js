@@ -15,24 +15,26 @@ const JsonpHotUpdateChunkTemplatePlugin = require("webpack/lib/web/JsonpHotUpdat
 const Template = require("webpack/lib/Template");
 
 class UniversalTemplatePlugin {
-	constructor(options) {
-		this.options = options;
+	constructor(universalName, withRuntime) {
+		this.universalName = universalName;
+		this.withRuntime = withRuntime;
 	}
 
 	apply(compiler) {
-		const universal =
+		const universalName =
+			this.universalName ||
 			"webpackUniversal" +
-			Template.toIdentifier(compiler.options.name)
-				.replace(/\b\w/g, l => l.toUpperCase())
-				.replace(/\//g, "");
-		const withRuntime = !this.options.dll;
+				Template.toIdentifier(compiler.options.name)
+					.replace(/\b\w/g, l => l.toUpperCase())
+					.replace(/\//g, "");
+		const withRuntime = this.withRuntime;
 		compiler.hooks.thisCompilation.tap(
 			"UniversalTemplatePlugin",
 			compilation => {
-				new UniversalMainTemplatePlugin(universal, withRuntime).apply(
+				new UniversalMainTemplatePlugin(universalName, withRuntime).apply(
 					compilation.mainTemplate
 				);
-				new UniversalChunkTemplatePlugin(universal).apply(
+				new UniversalChunkTemplatePlugin(universalName).apply(
 					compilation.chunkTemplate
 				);
 				new JsonpHotUpdateChunkTemplatePlugin().apply(

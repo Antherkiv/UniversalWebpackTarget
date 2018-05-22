@@ -58,8 +58,8 @@ function getChildIdsByOrdersMap() {
 }
 
 class UniversalMainTemplatePlugin {
-	constructor(universal, withRuntime) {
-		this.universal = universal;
+	constructor(universalName, withRuntime) {
+		this.universalName = universalName;
 		this.withRuntime = withRuntime;
 	}
 
@@ -252,7 +252,7 @@ class UniversalMainTemplatePlugin {
 					"var __module__exports =\n",
 					source,
 					`;\nif (typeof module !== "undefined") module.exports = __module__exports`,
-					`;\n})(global.${this.universal} = global.${this.universal} || {})`
+					`;\n})(global.${this.universalName} = global.${this.universalName} || {})`
 				);
 			}
 		);
@@ -310,7 +310,7 @@ global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}`;
 		mainTemplate.hooks.hash.tap("UniversalMainTemplatePlugin", hash => {
 			hash.update("universal");
 			hash.update("1");
-			hash.update(this.universal);
+			hash.update(this.universalName);
 			hash.update(`${mainTemplate.outputOptions.chunkFilename}`);
 			hash.update(`${mainTemplate.outputOptions.hotUpdateFunction}`);
 		});

@@ -14,8 +14,8 @@
 const { ConcatSource } = require("webpack-sources");
 
 class UniversalChunkTemplatePlugin {
-	constructor(universal) {
-		this.universal = universal;
+	constructor(universalName) {
+		this.universalName = universalName;
 	}
 
 	apply(chunkTemplate) {
@@ -47,14 +47,14 @@ class UniversalChunkTemplatePlugin {
 					";\n__universal__.chunks = __universal__.chunks || []",
 					";\n__universal__.chunks.push(__module__exports)",
 					';\nif (typeof module !== "undefined") module.exports = __module__exports',
-					`;\n})(global.${this.universal} = global.${this.universal} || {})`
+					`;\n})(global.${this.universalName} = global.${this.universalName} || {})`
 				);
 			}
 		);
 		chunkTemplate.hooks.hash.tap("UniversalChunkTemplatePlugin", hash => {
 			hash.update("UniversalChunkTemplatePlugin");
 			hash.update("1");
-			hash.update(this.universal);
+			hash.update(this.universalName);
 		});
 	}
 }
