@@ -1,7 +1,7 @@
 {
-  "name": "dubalu",
-  "version": "1.0.0",
-  "description": "Dubalu Framework",
+  "name": "universal-webpack",
+  "version": "0.1.0",
+  "description": "Universal Webpack",
   "main": "index.js",
   "scripts": {
     "server": "NODE_PATH=. node ./libs/server/server.js",
