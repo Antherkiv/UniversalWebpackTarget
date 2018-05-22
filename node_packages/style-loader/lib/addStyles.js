@@ -23,26 +23,14 @@ var isOldIE = memoize(function () {
 	return window && document && document.all && !window.atob;
 });
 
-var getTarget = function (target) {
-  return document.querySelector(target);
-};
-
 var getElement = (function (fn) {
 	var memo = {};
 
-	return function(target) {
-                // If passing function in options, then use it for resolve "head" element.
-                // Useful for Shadow Root style i.e
-                // {
-                //   insertInto: function () { return document.querySelector("#foo").shadowRoot }
-                // }
-                if (typeof target === 'function') {
-                        return target();
-                }
-                if (typeof memo[target] === "undefined") {
-			var styleTarget = getTarget.call(this, target);
+	return function(selector) {
+		if (typeof memo[selector] === "undefined") {
+			var styleTarget = fn.call(this, selector);
 			// Special case to return head of iframe instead of iframe itself
-			if (window.HTMLIFrameElement && styleTarget instanceof window.HTMLIFrameElement) {
+			if (styleTarget instanceof window.HTMLIFrameElement) {
 				try {
 					// This will throw an exception if access to iframe is blocked
 					// due to cross-origin restrictions
@@ -51,17 +39,17 @@ var getElement = (function (fn) {
 					styleTarget = null;
 				}
 			}
-			memo[target] = styleTarget;
+			memo[selector] = styleTarget;
 		}
-		return memo[target]
+		return memo[selector]
 	};
-})();
+})(function (target) {
+	return document.querySelector(target)
+});
 
 var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
-
-var	fixUrls = require("./urls");
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -74,10 +62,10 @@ module.exports = function(list, options) {
 
 	// Force single-tag solution on IE6-9, which has a hard limit on the # of <style>
 	// tags it will allow on a page
-	if (!options.singleton && typeof options.singleton !== "boolean") options.singleton = isOldIE();
+	if (!options.singleton) options.singleton = isOldIE();
 
 	// By default, add <style> tags to the <head> element
-        if (!options.insertInto) options.insertInto = "head";
+	if (!options.insertInto) options.insertInto = "head";
 
 	// By default, add <style> tags to the bottom of the target
 	if (!options.insertAt) options.insertAt = "bottom";
@@ -201,28 +189,12 @@ function removeStyleElement (style) {
 function createStyleElement (options) {
 	var style = document.createElement("style");
 
-	if(options.attrs.type === undefined) {
-		options.attrs.type = "text/css";
-	}
+	options.attrs.type = "text/css";
 
 	addAttrs(style, options.attrs);
 	insertStyleElement(options, style);
 
 	return style;
-}
-
-function createLinkElement (options) {
-	var link = document.createElement("link");
-
-	if(options.attrs.type === undefined) {
-		options.attrs.type = "text/css";
-	}
-	options.attrs.rel = "stylesheet";
-
-	addAttrs(link, options.attrs);
-	insertStyleElement(options, link);
-
-	return link;
 }
 
 function addAttrs (el, attrs) {
@@ -259,21 +231,6 @@ function addStyle (obj, options) {
 		update = applyToSingletonTag.bind(null, style, styleIndex, false);
 		remove = applyToSingletonTag.bind(null, style, styleIndex, true);
 
-	} else if (
-		obj.sourceMap &&
-		typeof URL === "function" &&
-		typeof URL.createObjectURL === "function" &&
-		typeof URL.revokeObjectURL === "function" &&
-		typeof Blob === "function" &&
-		typeof btoa === "function"
-	) {
-		style = createLinkElement(options);
-		update = updateLink.bind(null, style, options);
-		remove = function () {
-			removeStyleElement(style);
-
-			if(style.href) URL.revokeObjectURL(style.href);
-		};
 	} else {
 		style = createStyleElement(options);
 		update = applyToTag.bind(null, style);
@@ -333,6 +290,12 @@ function applyToSingletonTag (style, index, remove, obj) {
 function applyToTag (style, obj) {
 	var css = obj.css;
 	var media = obj.media;
+	var sourceMap = obj.sourceMap;
+
+	if (sourceMap) {
+		css += "\n/*# sourceMappingURL=data:application/json;base64," +
+			btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + " */";
+	}
 
 	if(media) {
 		style.setAttribute("media", media)
@@ -347,34 +310,4 @@ function applyToTag (style, obj) {
 
 		style.appendChild(document.createTextNode(css));
 	}
-}
-
-function updateLink (link, options, obj) {
-	var css = obj.css;
-	var sourceMap = obj.sourceMap;
-
-	/*
-		If convertToAbsoluteUrls isn't defined, but sourcemaps are enabled
-		and there is no publicPath defined then lets turn convertToAbsoluteUrls
-		on by default.  Otherwise default to the convertToAbsoluteUrls option
-		directly
-	*/
-	var autoFixUrls = options.convertToAbsoluteUrls === undefined && sourceMap;
-
-	if (options.convertToAbsoluteUrls || autoFixUrls) {
-		css = fixUrls(css);
-	}
-
-	if (sourceMap) {
-		// http://stackoverflow.com/a/26603875
-		css += "\n/*# sourceMappingURL=data:application/json;base64," + btoa(unescape(encodeURIComponent(JSON.stringify(sourceMap)))) + " */";
-	}
-
-	var blob = new Blob([css], { type: "text/css" });
-
-	var oldSrc = link.href;
-
-	link.href = URL.createObjectURL(blob);
-
-	if(oldSrc) URL.revokeObjectURL(oldSrc);
 }
