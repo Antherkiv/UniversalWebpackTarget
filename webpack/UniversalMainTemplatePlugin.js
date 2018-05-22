@@ -193,6 +193,15 @@ class UniversalMainTemplatePlugin {
 				]);
 			}
 		);
+		mainTemplate.hooks.requireEnsure.tap(
+			"UniversalMainTemplatePlugin",
+			(source, chunk, hash) => {
+				return Template.asString([
+					source,
+					`promises.push(${mainTemplate.requireFn}.eu(chunkId));`
+				]);
+			}
+		);
 		mainTemplate.hooks.requireExtensions.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
