@@ -44,6 +44,8 @@ class PluggablePlugin {
 		const libsPath = this.libsPath || compiler.options.output.path;
 		const imports = this.imports || [];
 
+		const errors = [];
+
 		compiler.hooks.beforeRun.tapAsync(
 			"PluggablePlugin",
 			(compiler, callback) => {
@@ -51,43 +53,50 @@ class PluggablePlugin {
 				imports.forEach(name => {
 					promises.push(reference.to(name));
 				});
-				Promise.all(promises).then(() => {
-					imports.forEach(function(name) {
-						const plugins = [];
-						for (const file of glob.sync(
-							path.resolve(libsPath, name, "*.json")
-						)) {
-							if (path.basename(file) !== "manifest.json") {
-								const lib = JSON.parse(fs.readFileSync(file, "utf8"));
-								plugins.push(
-									new DllReferencePlugin({
-										manifest: lib,
-										sourceType: "commonjs"
-									}).apply(compiler)
-								);
+				Promise.all(promises)
+					.then(() => {
+						imports.forEach(function(name) {
+							const plugins = [];
+							for (const file of glob.sync(
+								path.resolve(libsPath, name, "*.json")
+							)) {
+								if (path.basename(file) !== "manifest.json") {
+									const lib = JSON.parse(fs.readFileSync(file, "utf8"));
+									plugins.push(
+										new DllReferencePlugin({
+											manifest: lib,
+											sourceType: "commonjs"
+										}).apply(compiler)
+									);
+								}
 							}
-						}
-						if (!plugins.length) {
-							throw new Error(
-								`Invalid imported library ${name}: not manifests found!`
-							);
-						}
+							if (!plugins.length) {
+								errors.push(name);
+							}
+						});
+						callback();
+					})
+					.catch(error => {
+						callback(error);
 					});
-					callback();
-				});
 			}
 		);
-		compiler.hooks.afterEmit.tapAsync(
-			"PluggablePlugin",
-			(compiler, callback) => {
-				const promise = reference.to(compiler.options.name);
-				promise.resolve();
-				callback();
+		compiler.hooks.thisCompilation.tap("PluggablePlugin", compilation => {
+			if (errors.length) {
+				for (const name of errors) {
+					compilation.warnings.push(
+						new Error(
+							`${
+								compiler.options.name
+							}: Invalid imported pluggable library '${name}': not manifests found!`
+						)
+					);
+				}
 			}
-		);
-		compiler.hooks.failed.tap("PluggablePlugin", error => {
+		});
+		compiler.hooks.done.tap("PluggablePlugin", () => {
 			const promise = reference.to(compiler.options.name);
-			promise.reject(error);
+			promise.resolve();
 		});
 	}
 }
