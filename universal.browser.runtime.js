@@ -35,12 +35,23 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		};
 		return promise;
 	}
-	function loadScript(src, numTries) {
+
+	/*
+	* Returns the next wait interval, in milliseconds,
+	* using an exponential backoff algorithm.
+	*/
+	function getWaitTimeExp(retryCount) {
+		var waitTime = Math.pow(2, retryCount) * 100;
+		return waitTime;
+	}
+	function loadScript(src, timeout, maxRetries) {
+		timeout = timeout || 120;
+		maxRetries = maxRetries || 10;
 		var doc = document;
-		function loader(resolve, reject, retry) {
+		function loader(resolve, reject, retryCount) {
 			var script = doc.createElement("script");
 			script.charset = "utf-8";
-			script.timeout = 120;
+			script.timeout = timeout;
 			if (loadScript.nonce) {
 				script.setAttribute("nonce", loadScript.nonce);
 			}
@@ -48,7 +59,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 			script.src = src;
 			var timeout = setTimeout(function() {
 				onScriptComplete({ type: "timeout", target: script });
-			}, 120000);
+			}, timeout * 1000);
 			script.onerror = script.onload = onScriptComplete;
 			function onScriptComplete(event) {
 				// avoid mem leaks in IE.
@@ -57,7 +68,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				switch (event.type) {
 					case "error":
 					case "timeout":
-						if (retry === 0) {
+						if (++retryCount >= maxRetries) {
 							var errorType =
 								event && (event.type === "load" ? "missing" : event.type);
 							var realSrc = event && event.target && event.target.src;
@@ -75,8 +86,8 @@ if (typeof window !== "undefined") window.global = window.global || window;
 							reject(error);
 						} else {
 							setTimeout(function() {
-								loader(resolve, reject, retry ? retry - 1 : numTries || 15);
-							}, 200);
+								loader(resolve, reject, retryCount);
+							}, getWaitTimeExp(retryCount));
 						}
 						break;
 					default:
@@ -89,7 +100,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 		var promise = new Promise(function(resolve, reject) {
 			rr.resolve = resolve;
 			rr.reject = reject;
-			loader(resolve, reject);
+			loader(resolve, reject, 0);
 		});
 		return wrapPromise(promise, rr.resolve, rr.reject, src);
 	}
