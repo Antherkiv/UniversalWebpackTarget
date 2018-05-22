@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import * as styles from './styles.scss';
+
 export interface HelloProps {
   name: string;
   compiler: string;
@@ -7,7 +9,7 @@ export interface HelloProps {
 }
 
 export const Hello = (props: HelloProps) => (
-  <h1>
+  <h1 className={styles.className}>
     Hello {props.name} from {props.compiler} and {props.framework}!
   </h1>
 );
