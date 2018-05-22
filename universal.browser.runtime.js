@@ -8,6 +8,11 @@
 */
 if (typeof window !== "undefined") window.global = window.global || window;
 (function() {
+	var handleError =
+		global.showFailureMessage ||
+		function(error) {
+			throw error;
+		};
 	function wrapPromise(promise, resolve, reject, context) {
 		promise.resolve = resolve;
 		promise.reject = reject;
@@ -303,20 +308,25 @@ if (typeof window !== "undefined") window.global = window.global || window;
 				preFetchLoadJsonp(chunkId, promise);
 			}
 
-			promise.then(function() {
-				var requiredModule = global.require.cache[request];
-				if (isPromise(requiredModule)) {
-					try {
-						global.require.cache[request] = callback();
-						requiredModule.resolve();
-					} catch (error) {
-						delete global.require.cache[request];
-						requiredModule.reject(error);
+			promise
+				.then(function() {
+					var requiredModule = global.require.cache[request];
+					if (isPromise(requiredModule)) {
+						try {
+							global.require.cache[request] = callback();
+							requiredModule.resolve();
+						} catch (error) {
+							delete global.require.cache[request];
+							requiredModule.reject(error);
+						}
+					} else {
+						callback();
 					}
-				} else {
-					callback();
-				}
-			});
+				})
+				.catch(function(error) {
+					delete global.require.cache[request];
+					handleError(error);
+				});
 			return global.require.cache[request];
 		}
 
@@ -397,7 +407,7 @@ if (typeof window !== "undefined") window.global = window.global || window;
 						})
 						.catch(function(error) {
 							delete options.i[chunkId];
-							throw error;
+							handleError(error);
 						});
 					options.i[chunkId] = promise;
 				}
