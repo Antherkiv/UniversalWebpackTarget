@@ -86,7 +86,7 @@
     "prettier": "^1.12.1",
     "react-test-renderer": "^16.3.2",
     "sass-loader": "^7.0.1",
-    "style-loader": "^0.21.0",
+    "style-loader": "file:node_packages/style-loader",
     "ts-jest": "^22.4.6",
     "ts-loader": "^4.3.0",
     "tslint": "^5.10.0",
