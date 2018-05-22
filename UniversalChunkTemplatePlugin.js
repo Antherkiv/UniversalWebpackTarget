@@ -9,6 +9,7 @@
 */
 "use strict";
 /* eslint node/no-unpublished-require:0 node/no-extraneous-require:0 */
+/* eslint prettier/prettier: ["warn", { trailingComma: "none", singleQuote: false, useTabs: true, tabWidth: 2, printWidth: 80 }] */
 
 const { ConcatSource } = require("webpack-sources");
 

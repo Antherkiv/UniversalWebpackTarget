@@ -1,7 +1,6 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
-	Authors Tobias Koppers @sokra
-	        Germán Méndez Bravo (Kronuz)
+	Author Germán Méndez Bravo (Kronuz)
 
 	This comes mainly from webpack/lib/web/JsonpMainTemplatePlugin.js
 	and partially from webpack/lib/node/NodeMainTemplatePlugin.js
@@ -9,6 +8,7 @@
 */
 "use strict";
 /* eslint node/no-unpublished-require:0 node/no-extraneous-require:0 */
+/* eslint prettier/prettier: ["warn", { trailingComma: "none", singleQuote: false, useTabs: true, tabWidth: 2, printWidth: 80 }] */
 
 const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
@@ -58,11 +58,13 @@ function getChildIdsByOrdersMap() {
 }
 
 class UniversalMainTemplatePlugin {
-	constructor(universal) {
+	constructor(universal, withRuntime) {
 		this.universal = universal;
+		this.withRuntime = withRuntime;
 	}
 
 	apply(mainTemplate) {
+		const withRuntime = this.withRuntime;
 		const getScriptSrc = (hash, chunk, chunkIdExpression) => {
 			const chunkFilename = mainTemplate.outputOptions.chunkFilename;
 			const chunkMaps = getChunkMaps.call(chunk);
@@ -237,9 +239,16 @@ class UniversalMainTemplatePlugin {
 		mainTemplate.hooks.renderWithEntry.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk) => {
+				const runtimeSource = withRuntime
+					? Template.getFunctionContent(
+							require("./UniversalMainTemplate.runtime.js")
+					  )
+					: "";
+
 				return new ConcatSource(
 					'if (typeof window !== "undefined") window.global = window.global || window;\n',
 					"(function(__universal__) {\n",
+					runtimeSource,
 					"var __module__exports =\n",
 					source,
 					`;\nif (typeof module !== "undefined") module.exports = __module__exports`,

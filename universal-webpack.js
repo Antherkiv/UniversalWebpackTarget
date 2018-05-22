@@ -1,7 +1,6 @@
 /*
 	MIT License http://www.opensource.org/licenses/mit-license.php
-	Authors Tobias Koppers @sokra
-	        Germán Méndez Bravo (Kronuz)
+	Author Germán Méndez Bravo (Kronuz)
 
 	This comes mainly from webpack/lib/WebpackOptionsApply.js
 	from processing "web" target
@@ -9,6 +8,7 @@
 */
 "use strict";
 /* eslint node/no-unpublished-require:0 node/no-extraneous-require:0 */
+/* eslint prettier/prettier: ["warn", { trailingComma: "none", singleQuote: false, useTabs: true, tabWidth: 2, printWidth: 80 }] */
 
 const fs = require("fs");
 const path = require("path");
@@ -171,7 +171,7 @@ class PluggablePlugin {
 
 function universalTarget(options) {
 	function target(compiler) {
-		new UniversalTemplatePlugin().apply(compiler);
+		new UniversalTemplatePlugin(options).apply(compiler);
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
 		new FunctionModulePlugin().apply(compiler);
 		if (options.target === "node") {
