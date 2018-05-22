@@ -63,7 +63,6 @@
 					script.setAttribute("nonce", loadScript.nonce);
 				}
 				script.async = true;
-				script.src = src;
 				var timeoutTimer = setTimeout(function() {
 					onScriptComplete({ type: "timeout", target: script });
 				}, timeout * 1000);
@@ -101,6 +100,7 @@
 							resolve();
 					}
 				}
+				script.src = src;
 				doc.head.appendChild(script);
 			}
 			var rr = {};
@@ -110,6 +110,76 @@
 				loader(resolve, reject, 0);
 			});
 			return wrapPromise(promise, rr.resolve, rr.reject, src);
+		}
+
+		function loadCss(href, timeout, maxRetries) {
+			timeout = timeout || 120;
+			maxRetries = maxRetries || 10;
+			var doc = document;
+			function loader(resolve, reject, retryCount) {
+				var existingLinkTags = doc.getElementsByTagName("link");
+				for (var i = 0; i < existingLinkTags.length; i++) {
+					var tag = existingLinkTags[i];
+					var dataHref =
+						tag.getAttribute("data-href") || tag.getAttribute("href");
+					if (tag.rel === "stylesheet" && dataHref === href) return resolve();
+				}
+				var existingStyleTags = doc.getElementsByTagName("style");
+				for (i = 0; i < existingStyleTags.length; i++) {
+					tag = existingStyleTags[i];
+					dataHref = tag.getAttribute("data-href");
+					if (dataHref === href) return resolve();
+				}
+				var link = doc.createElement("link");
+				link.rel = "stylesheet";
+				link.type = "text/css";
+				var timeoutTimer = setTimeout(function() {
+					onScriptComplete({ type: "timeout", target: link });
+				}, timeout * 1000);
+				link.onerror = link.onload = onScriptComplete;
+				function onScriptComplete(event) {
+					// avoid mem leaks in IE.
+					link.onerror = link.onload = null;
+					clearTimeout(timeoutTimer);
+					switch (event.type) {
+						case "error":
+						case "timeout":
+							if (++retryCount >= maxRetries) {
+								var errorType =
+									event && (event.type === "load" ? "missing" : event.type);
+								var realSrc = event && event.target && event.target.src;
+								var error = new Error(
+									"Loading CSS '" +
+										href +
+										"' failed.\n(" +
+										errorType +
+										": " +
+										realSrc +
+										")"
+								);
+								error.type = errorType;
+								error.request = realSrc;
+								reject(error);
+							} else {
+								setTimeout(function() {
+									loader(resolve, reject, retryCount);
+								}, getWaitTimeExp(retryCount));
+							}
+							break;
+						default:
+							resolve();
+					}
+				}
+				link.href = href;
+				doc.head.appendChild(link);
+			}
+			var rr = {};
+			var promise = new Promise(function(resolve, reject) {
+				rr.resolve = resolve;
+				rr.reject = reject;
+				loader(resolve, reject, 0);
+			});
+			return wrapPromise(promise, rr.resolve, rr.reject, href);
 		}
 
 		function isPromise(obj) {
@@ -222,7 +292,9 @@
 		 *     options.r  -> __webpack_require__
 		 *     options.m  -> modules
 		 *     options.s  -> scriptSrc
+		 *     options.sc -> cssSrc
 		 *     options.i  -> installedChunks
+		 *     options.ic -> installedCssChunks
 		 *     options.el -> deferredModules list
 		 *     options.pl -> chunkPreloadMap
 		 *     options.pf -> chunkPrefetchMap
@@ -363,6 +435,11 @@
 				return "/" + options.r.p + "" + options.s(chunkId);
 			}
 
+			// css path function
+			function cssSrcJsonp(chunkId) {
+				return "/" + options.r.p + "" + options.sc(chunkId);
+			}
+
 			/**
 			 * Chunk prefetching/preloading for javascript
 			 *
@@ -405,15 +482,16 @@
 			// This file contains only the entry chunk.
 			// The chunk loading function for additional chunks
 			function requireEnsureJsonp(chunkId) {
-				// JSONP chunk loading for javascript
-
-				var installedChunkData = options.i[chunkId];
 				// 0 means "already installed".
 				// a Promise means "currently loading".
-				if (installedChunkData !== 0) {
-					var promise;
-					if (installedChunkData) {
-						promise = installedChunkData;
+				var promises = [];
+				var promise;
+
+				// Javascript chunk loading using JSONP
+				var installedChunkScript = options.i[chunkId];
+				if (installedChunkScript !== 0) {
+					if (installedChunkScript) {
+						promise = installedChunkScript;
 					} else {
 						// setup Promise in chunk cache
 						promise = loadScript(scriptSrcJsonp(chunkId))
@@ -441,11 +519,29 @@
 					}
 					preFetchLoadJsonp(chunkId);
 					preFetchLoadJsonp(chunkId, promise);
-					return promise;
+					promises.push(promise);
 				}
 
-				promise = wrapPromise(Promise.resolve(), function() {}, function() {});
-				return promise;
+				// CSS chunk loading
+				var installedChunkCss = options.ic[chunkId];
+				if (installedChunkCss !== 0) {
+					if (installedChunkCss) {
+						promise = installedChunkCss;
+					} else {
+						promise = loadCss(cssSrcJsonp(chunkId))
+							.then(function() {
+								options.ic[chunkId] = 0;
+							})
+							.catch(function(error) {
+								delete options.ic[chunkId];
+								handleError(error);
+							});
+						options.ic[chunkId] = promise;
+					}
+					promises.push(promise);
+				}
+
+				return wrapPromise(Promise.all(promises), function() {}, function() {});
 			}
 
 			// on error function for async loading

@@ -8,11 +8,18 @@
 */
 "use strict";
 
+const fs = require("fs");
+const path = require("path");
+
 const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
 
 const intersect = require("webpack/lib/util/SetHelpers").intersect;
 const Chunk = require("webpack/lib/Chunk");
+
+const NS = path.dirname(
+	fs.realpathSync(require("mini-css-extract-plugin").loader)
+);
 
 // from webpack/lib/Chunk.getAllAsyncChunks()
 // Monkey-patch so it also includes deferred chunks
@@ -44,15 +51,22 @@ function getAllAsyncChunks() {
 Chunk.prototype.getAllAsyncChunks = getAllAsyncChunks;
 
 class UniversalMainTemplatePlugin {
-	constructor(universalName, withRuntime) {
-		this.universalName = universalName;
-		this.withRuntime = withRuntime;
+	constructor(options) {
+		this.universalName = options.universalName;
+		this.withRuntime = options.main;
+		this.cssFilename = options.cssFilename;
 	}
 
 	apply(mainTemplate) {
 		const withRuntime = this.withRuntime;
-		const getScriptSrc = (hash, chunk, chunkIdExpression) => {
-			const chunkFilename = mainTemplate.outputOptions.chunkFilename;
+		const cssFilename = this.cssFilename;
+		const getScriptSrc = (
+			contentHashType,
+			chunkFilename,
+			hash,
+			chunk,
+			chunkIdExpression
+		) => {
 			const chunkMaps = chunk.getChunkMaps();
 			return mainTemplate.getAssetPath(JSON.stringify(chunkFilename), {
 				hash: `" + ${mainTemplate.renderCurrentHashCode(hash)} + "`,
@@ -80,14 +94,14 @@ class UniversalMainTemplatePlugin {
 						chunkMaps.name
 					)}[${chunkIdExpression}]||${chunkIdExpression}) + "`,
 					contentHash: {
-						javascript: `" + ${JSON.stringify(
-							chunkMaps.contentHash.javascript
+						[contentHashType]: `" + ${JSON.stringify(
+							chunkMaps.contentHash[contentHashType]
 						)}[${chunkIdExpression}] + "`
 					},
 					contentHashWithLength: {
-						javascript: length => {
+						[contentHashType]: length => {
 							const shortContentHashMap = {};
-							const contentHash = chunkMaps.contentHash.javascript;
+							const contentHash = chunkMaps.contentHash[contentHashType];
 							for (const chunkId of Object.keys(contentHash)) {
 								if (typeof contentHash[chunkId] === "string") {
 									shortContentHashMap[chunkId] = contentHash[chunkId].substr(
@@ -102,7 +116,7 @@ class UniversalMainTemplatePlugin {
 						}
 					}
 				},
-				contentHashType: "javascript"
+				contentHashType
 			});
 		};
 		mainTemplate.hooks.localVars.tap(
@@ -133,16 +147,13 @@ class UniversalMainTemplatePlugin {
 				);
 
 				const chunkMaps = chunk.getChildIdsByOrdersMap();
-
 				return Template.asString([
 					source,
+					source.match(/\binstalledCssChunks\b/)
+						? ""
+						: "var installedCssChunks = {};",
 					"",
-					"// script path function",
-					"function scriptSrc(chunkId) {",
-					Template.indent([`return ${getScriptSrc(hash, chunk, "chunkId")}`]),
-					"}",
-					"",
-					"// object to store loaded and loading chunks",
+					"// object to store loaded and loading Javascript chunks",
 					"// undefined = chunk not loaded, null = chunk preloaded/prefetched",
 					"// Promise = chunk loading, 0 = chunk loaded",
 					"var installedChunks = {",
@@ -150,6 +161,26 @@ class UniversalMainTemplatePlugin {
 						chunk.ids.map(id => `${JSON.stringify(id)}: 0`).join(",\n")
 					),
 					"};",
+					"",
+					"// script path function",
+					"function scriptSrc(chunkId) {",
+					Template.indent([
+						`return ${getScriptSrc(
+							"javascript",
+							mainTemplate.outputOptions.chunkFilename,
+							hash,
+							chunk,
+							"chunkId"
+						)}`
+					]),
+					"}",
+					"",
+					"// css path function",
+					"function cssSrc(chunkId) {",
+					Template.indent([
+						`return ${getScriptSrc(NS, cssFilename, hash, chunk, "chunkId")}`
+					]),
+					"}",
 					"",
 					"// deferred chunks for splitChunks",
 					"var deferredModules = [",
@@ -184,7 +215,6 @@ class UniversalMainTemplatePlugin {
 		mainTemplate.hooks.requireEnsure.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
-				console.log(source);
 				// Remove any requireEnsure, in case it's needed, it has to go
 				// to UniversalMainTemplatePlugin.runtime.js
 				return "";
@@ -221,6 +251,8 @@ class UniversalMainTemplatePlugin {
 							"m: modules",
 							"s: scriptSrc",
 							"i: installedChunks",
+							"sc: cssSrc",
+							"ic: installedCssChunks",
 							"el: deferredModules",
 							"pl: chunkPreloadMap",
 							"pf: chunkPrefetchMap",

@@ -12,8 +12,8 @@
 const { ConcatSource } = require("webpack-sources");
 
 class UniversalChunkTemplatePlugin {
-	constructor(universalName) {
-		this.universalName = universalName;
+	constructor(options) {
+		this.universalName = options.universalName;
 	}
 
 	apply(chunkTemplate) {

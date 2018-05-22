@@ -45,7 +45,7 @@ function universalTarget(options) {
 		options
 	);
 	function target(compiler) {
-		new UniversalTemplatePlugin(null, options.main).apply(compiler);
+		new UniversalTemplatePlugin(options).apply(compiler);
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
 		new FunctionModulePlugin().apply(compiler);
 		if (options.server) {

@@ -19,7 +19,9 @@ function factory(options) {
       publicPath: 'libs/' + options.name + '/',
       path: path.resolve(__dirname, 'libs', options.name),
     },
-    target: universalTarget(options),
+    target: universalTarget(Object.assign({
+      cssFilename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
+    }, options)),
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.node']
