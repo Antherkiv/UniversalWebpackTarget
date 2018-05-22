@@ -2,6 +2,7 @@
 
 const path = require('path');
 const webpack = require('webpack');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const universalTarget = require('./webpack/universalTarget');
 const PluggablePlugin = require('./webpack/PluggablePlugin');
 const EntrySymlinkPlugin = require('./webpack/EntrySymlinkPlugin');
@@ -36,10 +37,22 @@ function factory(options) {
             },
           ],
         },
+        {
+          test: /\.s?[ac]ss$/,
+          use: [
+            development ? 'style-loader' : MiniCssExtractPlugin.loader,
+            'css-loader',
+            'postcss-loader',
+            'sass-loader',
+          ],
+        },
       ]
     },
 
     plugins: [
+      new MiniCssExtractPlugin({
+        filename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
+      }),
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
 		  new EntrySymlinkPlugin(),
   		new PluggablePlugin(
