@@ -15,8 +15,6 @@ const NodeSourcePlugin = require("webpack/lib/node/NodeSourcePlugin");
 const NodeTargetPlugin = require("webpack/lib/node/NodeTargetPlugin");
 
 const UniversalTemplatePlugin = require("./UniversalTemplatePlugin");
-const PluggablePlugin = require("./PluggablePlugin");
-const EntryPointSymlink = require("./EntryPointSymlink");
 
 const ContextModule = require("webpack/lib/ContextModule");
 
@@ -42,9 +40,7 @@ function universalTarget(options) {
 	options = Object.assign(
 		{
 			main: false,
-			target: "universal",
-			libsPath: null,
-			imports: []
+			target: "universal"
 		},
 		options
 	);
@@ -62,14 +58,6 @@ function universalTarget(options) {
 				? "node"
 				: options.target
 		).apply(compiler);
-
-		// Add plugin to create symbolic link to entry points:
-		new EntryPointSymlink().apply(compiler);
-
-		// Add plugins for dll and dll references:
-		new PluggablePlugin(options.main, options.libsPath, options.imports).apply(
-			compiler
-		);
 	}
 	return target;
 }

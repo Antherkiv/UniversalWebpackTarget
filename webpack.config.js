@@ -3,10 +3,12 @@
 const path = require('path');
 const webpack = require('webpack');
 const universalTarget = require('./webpack/universalTarget');
+const PluggablePlugin = require('./webpack/PluggablePlugin');
+const EntryPointSymlink = require('./webpack/EntryPointSymlink');
 
 const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 
-function factory(name, entry, target) {
+function factory(name, entry, options) {
   return {
     name: name,
     devtool: 'source-map',
@@ -16,7 +18,7 @@ function factory(name, entry, target) {
       publicPath: 'libs/' + name + '/',
       path: path.resolve(__dirname, 'libs', name),
     },
-    target: target,
+    target: universalTarget(options),
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.json']
@@ -39,6 +41,12 @@ function factory(name, entry, target) {
 
     plugins: [
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
+		  new EntryPointSymlink(),
+  		new PluggablePlugin(
+        options.main,
+        path.resolve(__dirname, 'libs'),
+        options.imports
+      ),
     ],
 
     externals: {
@@ -47,7 +55,7 @@ function factory(name, entry, target) {
 
     optimization: {
       splitChunks: {
-        chunks: "all"
+        chunks: 'all'
       }
     }
   }
@@ -68,8 +76,8 @@ module.exports = [
         './src/logger',
       ],
     },
-    universalTarget({
-    })
+    {
+    }
   ),
 
   factory(
@@ -82,12 +90,11 @@ module.exports = [
         './src/other',
       ],
     },
-    universalTarget({
-      libsPath: path.resolve(__dirname, 'libs'),
+    {
       imports: [
         'Base'
       ],
-    })
+    }
   ),
 
   factory(
@@ -97,14 +104,13 @@ module.exports = [
         './src/client',
       ],
     },
-    universalTarget({
+    {
       main: true,
-      libsPath: path.resolve(__dirname, 'libs'),
       imports: [
         'Base',
         'main'
       ],
-    })
+    }
   ),
 
   factory(
@@ -114,15 +120,14 @@ module.exports = [
         './src/server',
       ],
     },
-    universalTarget({
+    {
       main: true,
       target: 'node',
-      libsPath: path.resolve(__dirname, 'libs'),
       imports: [
         'Base',
         'main'
       ],
-    })
+    }
   ),
 
 ]
