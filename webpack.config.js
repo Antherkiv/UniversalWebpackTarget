@@ -8,15 +8,15 @@ const EntrySymlinkPlugin = require('./webpack/EntrySymlinkPlugin');
 
 const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 
-function factory(name, entry, options) {
+function factory(options) {
   return {
-    name: name,
+    name: options.name,
     devtool: 'source-map',
-    entry: entry,
+    entry: options.entry,
     output: {
       filename: development ? '[name].js' : '[name].[chunkhash].js',
-      publicPath: 'libs/' + name + '/',
-      path: path.resolve(__dirname, 'libs', name),
+      publicPath: 'libs/' + options.name + '/',
+      path: path.resolve(__dirname, 'libs', options.name),
     },
     target: universalTarget(options),
 
@@ -63,9 +63,9 @@ function factory(name, entry, options) {
 
 module.exports = [
 
-  factory(
-    'Base',
-    {
+  factory({
+    name: 'Base',
+    entry: {
       'React': [
         'react',
       ],
@@ -76,13 +76,11 @@ module.exports = [
         './src/logger',
       ],
     },
-    {
-    }
-  ),
+  }),
 
-  factory(
-    'main',
-    {
+  factory({
+    name: 'main',
+    entry: {
       'main': [
         './src/main',
       ],
@@ -90,44 +88,38 @@ module.exports = [
         './src/other',
       ],
     },
-    {
-      imports: [
-        'Base'
-      ],
-    }
-  ),
+    imports: [
+      'Base',
+    ],
+  }),
 
-  factory(
-    'client',
-    {
+  factory({
+    name: 'client',
+    entry: {
       'client': [
         './src/client',
       ],
     },
-    {
-      main: true,
-      imports: [
-        'Base',
-        'main'
-      ],
-    }
-  ),
+    main: true,
+    imports: [
+      'Base',
+      'main',
+    ],
+  }),
 
-  factory(
-    'server',
-    {
+  factory({
+    name: 'server',
+    entry: {
       'server': [
         './src/server',
       ],
     },
-    {
-      main: true,
-      target: 'node',
-      imports: [
-        'Base',
-        'main'
-      ],
-    }
-  ),
+    main: true,
+    server: true,
+    imports: [
+      'Base',
+      'main',
+    ],
+  }),
 
 ]

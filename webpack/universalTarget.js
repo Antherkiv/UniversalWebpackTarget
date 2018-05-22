@@ -40,7 +40,7 @@ function universalTarget(options) {
 	options = Object.assign(
 		{
 			main: false,
-			target: "universal"
+			server: false
 		},
 		options
 	);
@@ -48,16 +48,12 @@ function universalTarget(options) {
 		new UniversalTemplatePlugin(null, options.main).apply(compiler);
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
 		new FunctionModulePlugin().apply(compiler);
-		if (options.target === "node") {
+		if (options.server) {
 			new NodeTargetPlugin().apply(compiler);
 		} else {
 			new NodeSourcePlugin(compiler.options.node).apply(compiler);
 		}
-		new LoaderTargetPlugin(
-			!options.target || options.target === "universal"
-				? "node"
-				: options.target
-		).apply(compiler);
+		new LoaderTargetPlugin("node").apply(compiler);
 	}
 	return target;
 }
