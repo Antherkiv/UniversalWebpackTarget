@@ -2,11 +2,72 @@
 <html>
     <head>
         <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,shrink-to-fit=no" />
+        <meta http-equiv="x-ua-compatible" content="ie=edge" />
         <title>Hello React!</title>
     </head>
+<!--
+|          d8888                 8888          8888               888
+|         8888888                8888          8888               888
+|         888888K                8888          8888               888
+|         8888888o.          o8888888 888  888 8888888o  `V8888o. 888 888  888
+|       ,A8"   `Y88888b.   .d88  8888 888  888 8888 "88b.    `Y88 888 888  888
+|    .8888b      8888888b  +888  8888 888  888 8888  888+,d888888 888 888  888
+|    88888$      Y8888888  `888o,8888 l88+.888 8888,d88P 88X` 888 888 l88+.888
+|    "888P        "Y888P"    "888888"  "Y888PY "88888P"  `Y8888PY 888  "Y888PY
+|    `""
+-->
     <body>
+        <div id="failure" style="background-color:#121617;top:0;left:0;right:0;bottom:0;position:fixed;display:none;z-index: 99999;">
+            <div style="position:absolute;height:200px;top:0;left:0;right:0;bottom:0;margin:auto;text-align:center;line-height:1.3125;font-size:14px;color:#f5f8fa;font-family:-apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, Ubuntu, &quot;Helvetica Neue&quot;, sans-serif;">
+                <svg style="display:block;fill:currentcolor;height:72px;max-width:100%;position:relative;user-select:none;vertical-align:text-bottom;color:#657786;width:72px;margin:0 auto 24px;" viewBox="0 0 60 72">
+                    <g>
+                        <path d="M30 15c11.598 0 21 9.402 21 20.999s-9.401 20.999-21 20.999S9 47.596 9 35.999 18.401 15 30 15m0-6C15.112 9 3 21.111 3 35.999s12.112 26.999 27 26.999 27-12.111 27-26.999S44.888 9 30 9z"></path>
+                        <circle cx="29.981" cy="46.999" r="4"></circle>
+                        <path d="M29.981 21.001c-3.282 0-5 2.013-5 4 0 1.015 1.659 8.418 3.051 14.45a2.001 2.001 0 0 0 3.898 0c1.392-6.032 3.051-13.436 3.051-14.45 0-1.987-1.718-4-5-4z"></path>
+                    </g>
+                </svg>
+                <p id="failureMessage"></p>
+                <a href="javascript:reloadFromScriptError()" style="background-color:#f97700;border-radius:0.3em;border:0px;padding:0.5em 1em;display:inline-block;margin:1em 0;color:#fff;text-decoration:none;font-weight:bold;">
+                    <svg style="display:inline-block;fill:currentcolor;height:1.5em;max-width:100%;position:relative;user-select:none;vertical-align:text-bottom;" viewBox="0 0 60 72">
+                        <g>
+                            <path d="M30 9C15.113 9 3 21.112 3 36a3 3 0 1 0 6 0c0-11.579 9.42-21 21-21s21 9.421 21 21-9.42 21-21 21a20.86 20.86 0 0 1-10.261-2.688l3.752-4.894a2 2 0 0 0-1.65-3.216l-14.205.45a2 2 0 0 0-1.884 2.457l3.252 13.835a1.999 1.999 0 0 0 3.534.759l3.511-4.579A26.836 26.836 0 0 0 30 63c14.888 0 27-12.112 27-27S44.888 9 30 9z"></path>
+                        </g>
+                    </svg>
+                    <span style="vertical-align:.1em;">Retry</span>
+                </a>
+            </div>
+        </div>
+        <script>
+            window.showFailureMessage = function(error, source) {
+                if (source && window.Raven) {
+                    if (typeof error === "string") {
+                        window.Raven.captureMessage(error, {
+                            level: 'error',
+                            extra: { source: source }
+                        });
+                    } else {
+                        window.Raven.captureException(error, {
+                            extra: { source: source }
+                        });
+                    }
+                }
+                var failure = document.getElementById('failure');
+                if (failure) {
+                    var failureMessage = document.getElementById('failureMessage');
+                    failureMessage.innerText = typeof error === "string" && error ? error : "A problem was encountered trying to load the page.";
+                    failure.style.display = 'block';
+                    document.body.style.overflow = 'hidden';
+                }
+            };
+            window.reloadFromScriptError = function() {
+                window.location.reload();
+            };
+        </script>
+
         <div id="main">{{& main }}</div>
         <div id="other">{{& other }}</div>
-        <script src="/libs/client/client.js"></script>
+
+        <script src="/libs/client/client.js" onerror="showFailureMessage()"></script>
     </body>
 </html>
