@@ -7,12 +7,12 @@
 const fs = require("fs");
 const path = require("path");
 
-class EntryPointSymlink {
+class EntrySymlinkPlugin {
 	apply(compiler) {
 		const symlinks = [];
 
 		compiler.hooks.emit.tapAsync(
-			"EntryPointSymlink",
+			"EntrySymlinkPlugin",
 			(compilation, callback) => {
 				compilation.chunks.forEach(function(chunk) {
 					if (chunk.hasEntryModule()) {
@@ -38,7 +38,7 @@ class EntryPointSymlink {
 		);
 
 		compiler.hooks.afterEmit.tapAsync(
-			"EntryPointSymlink",
+			"EntrySymlinkPlugin",
 			(compiler, callback) => {
 				for (const ln of symlinks) {
 					if (fs.existsSync(ln.symlink)) {
@@ -52,4 +52,4 @@ class EntryPointSymlink {
 	}
 }
 
-module.exports = EntryPointSymlink;
+module.exports = EntrySymlinkPlugin;

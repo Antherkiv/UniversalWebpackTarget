@@ -4,7 +4,7 @@ const path = require('path');
 const webpack = require('webpack');
 const universalTarget = require('./webpack/universalTarget');
 const PluggablePlugin = require('./webpack/PluggablePlugin');
-const EntryPointSymlink = require('./webpack/EntryPointSymlink');
+const EntrySymlinkPlugin = require('./webpack/EntrySymlinkPlugin');
 
 const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 
@@ -41,7 +41,7 @@ function factory(name, entry, options) {
 
     plugins: [
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
-		  new EntryPointSymlink(),
+		  new EntrySymlinkPlugin(),
   		new PluggablePlugin(
         options.main,
         path.resolve(__dirname, 'libs'),
