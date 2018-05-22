@@ -184,11 +184,10 @@ class UniversalMainTemplatePlugin {
 		mainTemplate.hooks.requireEnsure.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
-				return Template.asString([
-					source,
-					"",
-					`promises.push(${mainTemplate.requireFn}.eu(chunkId));`
-				]);
+				console.log(source);
+				// Remove any requireEnsure, in case it's needed, it has to go
+				// to UniversalMainTemplatePlugin.runtime.js
+				return "";
 			}
 		);
 		mainTemplate.hooks.requireExtensions.tap(

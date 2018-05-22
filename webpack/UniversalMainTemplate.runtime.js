@@ -404,7 +404,7 @@
 
 			// This file contains only the entry chunk.
 			// The chunk loading function for additional chunks
-			function requireEnsureUniversalJsonp(chunkId) {
+			function requireEnsureJsonp(chunkId) {
 				// JSONP chunk loading for javascript
 
 				var installedChunkData = options.i[chunkId];
@@ -492,7 +492,7 @@
 
 			// This file contains only the entry chunk.
 			// The chunk loading function for additional chunks
-			function requireEnsureUniversalNode(chunkId) {
+			function requireEnsureNode(chunkId) {
 				// require() chunk loading for javascript
 
 				var installedChunkData = options.i[chunkId];
@@ -518,12 +518,12 @@
 			var loadDependencies;
 			var checkDeferredModules;
 			if (typeof window === "undefined") {
-				options.r.eu = requireEnsureUniversalNode;
+				options.r.e = requireEnsureNode;
 				options.r.oe = onErrorNode;
 				loadDependencies = loadDependenciesNode;
 				checkDeferredModules = checkDeferredModulesNode;
 			} else {
-				options.r.eu = requireEnsureUniversalJsonp;
+				options.r.e = requireEnsureJsonp;
 				options.r.oe = onErrorJsonp;
 				loadDependencies = loadDependenciesJsonp;
 				checkDeferredModules = checkDeferredModulesJsonp;
