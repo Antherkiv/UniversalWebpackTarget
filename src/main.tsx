@@ -13,10 +13,10 @@ import(/* webpackChunkName: "test1", webpackPreload: true */ './test1').then(({ 
 });
 
 export const loadApp = (app: string) => {
-  import(app).then(({ app:string }) => {
+  import(app).then(({ app }) => {
     console.log(`Hello app ${app}`);
   });
-}
+};
 
 export const Main = () =>
   <Hello name="main" compiler="TypeScript" framework="React" />;
