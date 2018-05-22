@@ -2,7 +2,7 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const universalTarget = require('./universal-webpack');
+const universalTarget = require('./webpack/universal');
 
 const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 

@@ -13,7 +13,6 @@
 	it uses all chunks only in the initial groups.
 */
 "use strict";
-/* eslint node/no-unpublished-require:0 node/no-extraneous-require:0 */
 
 const path = require("path");
 const asyncLib = require("neo-async");

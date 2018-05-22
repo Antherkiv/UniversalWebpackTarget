@@ -6,7 +6,6 @@
 	and from webpack/lib/node/NodeNodeTemplatePlugin.js
 	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
 */
-/* eslint prettier/prettier: ["warn", { trailingComma: "none", singleQuote: false, useTabs: true, tabWidth: 2, printWidth: 80 }] */
 (function() {
 	var runtimeInstall = function() {
 		//
