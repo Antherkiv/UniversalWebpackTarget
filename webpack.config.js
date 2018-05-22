@@ -74,6 +74,7 @@ function factory(options) {
     },
 
     optimization: {
+      // minimize: false,
       splitChunks: {
         chunks: 'all'
       }
