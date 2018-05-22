@@ -36,29 +36,12 @@ function getAllAsyncChunks() {
 	}
 
 	for (const chunk of Array.from(this.groupsIterable)[0].chunks) {
-		// (this bit comes from deferredModules in JsonpMainTemplatePlugin)
-		if (chunk !== this) chunks.add(chunk);
+		chunks.add(chunk);
 	}
 
 	return chunks;
 }
 Chunk.prototype.getAllAsyncChunks = getAllAsyncChunks;
-
-// from webpack/lib/Chunk.getChildIdsByOrdersMap()
-// Modified to also include current chunk
-function getChildIdsByOrdersMap() {
-	const chunkMaps = Object.create(null);
-	for (const chunk of this.getAllAsyncChunks().add(this)) {
-		const data = chunk.getChildIdsByOrders();
-		for (const key of Object.keys(data)) {
-			let chunkMap = chunkMaps[key];
-			if (chunkMap === undefined)
-				chunkMaps[key] = chunkMap = Object.create(null);
-			chunkMap[chunk.id] = data[key];
-		}
-	}
-	return chunkMaps;
-}
 
 class UniversalMainTemplatePlugin {
 	constructor(universalName, withRuntime) {
@@ -149,7 +132,7 @@ class UniversalMainTemplatePlugin {
 					)
 				);
 
-				const chunkMaps = getChildIdsByOrdersMap.call(chunk);
+				const chunkMaps = chunk.getChildIdsByOrdersMap();
 
 				return Template.asString([
 					source,
@@ -203,6 +186,7 @@ class UniversalMainTemplatePlugin {
 			(source, chunk, hash) => {
 				return Template.asString([
 					source,
+					"",
 					`promises.push(${mainTemplate.requireFn}.eu(chunkId));`
 				]);
 			}
