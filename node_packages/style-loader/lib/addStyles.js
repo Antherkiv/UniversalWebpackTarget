@@ -52,8 +52,8 @@ var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
 module.exports = function(list, options) {
-	if (typeof DEBUG !== "undefined" && DEBUG) {
-		if (typeof document !== "object") throw new Error("The style-loader cannot be used in a non-browser environment");
+	if (typeof window === "undefined") {
+		return;
 	}
 
 	options = options || {};
