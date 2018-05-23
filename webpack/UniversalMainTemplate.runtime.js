@@ -620,7 +620,7 @@
 
 				GROUP_END();
 
-				GROUP_LOG("⏳", "waiting for dependencies of", request, "...");
+				LOG("⏳", "waiting for dependencies of", request, "...");
 				promise
 					.then(function() {
 						LOG("✅", "dependencies of", request, "loaded!");
