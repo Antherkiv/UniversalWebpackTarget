@@ -1,5 +1,21 @@
 {
     "singleQuote": true,
     "trailingComma": "all",
-    "printWidth": 105
+    "printWidth": 105,
+    "overrides": [
+        {
+            "files": "node_modules/**/*",
+            "options": {
+                "singleQuote": false,
+                "trailingComma": "none",
+                "printWidth": 80
+            }
+        },
+        {
+            "files": "node_modules/webpack/**/*",
+            "options": {
+                "useTabs": true
+            }
+        }
+    ]
 }

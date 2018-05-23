@@ -1,11 +1,14 @@
 {
-    "defaultSeverity": "warning",
+    "defaultSeverity": "error",
     "extends": [
         "tslint-react",
         "tslint-config-airbnb",
         "tslint-plugin-prettier"
     ],
     "rules": {
+        "prettier": {
+            "severity": "warning"
+        },
         "class-name": true,
         "forin": true,
         "jsdoc-format": true,
@@ -18,8 +21,9 @@
         "member-access": true,
         "member-ordering": [
             true,
-            "variables-before-functions",
-            "public-before-private"
+            {
+                "order": "fields-first"
+            }
         ],
         "quotemark": [
             true,
