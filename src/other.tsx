@@ -6,5 +6,4 @@ import(/* webpackChunkName: "test3" */ './test3').then(({ test3 }) => {
   test3('other');
 });
 
-export const Other = () =>
-  <Hello name="other" compiler="TypeScript" framework="React" />;
+export const Other = () => <Hello name="other" compiler="TypeScript" framework="React" />;

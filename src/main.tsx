@@ -18,5 +18,4 @@ export const loadApp = (app: string) => {
   });
 };
 
-export const Main = () =>
-  <Hello name="main" compiler="TypeScript" framework="React" />;
+export const Main = () => <Hello name="main" compiler="TypeScript" framework="React" />;
