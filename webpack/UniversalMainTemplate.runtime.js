@@ -123,41 +123,25 @@
 			timeout = timeout || 120;
 			maxRetries = maxRetries || 10;
 			var doc = document;
+			var btldr;
 			function loader(resolve, reject, retryCount) {
 				var script;
-				var existingScriptTags = doc.getElementsByTagName("script");
-				for (var i = 0; i < existingScriptTags.length; i++) {
-					var tag = existingScriptTags[i];
-					if (tag.getAttribute("data-src") === src) {
-						if (!tag.getAttribute("src")) {
-							resolve();
-							return;
+				btldr = global._btldr[src];
+				if (btldr === 1) {
+					resolve();
+					return;
+				} else if (!btldr) {
+					var existingScriptTags = doc.getElementsByTagName("script");
+					for (var i = 0; i < existingScriptTags.length; i++) {
+						var tag = existingScriptTags[i];
+						if (tag.hasAttribute("btldr")) {
+							if (tag.getAttribute("src") === src) {
+								script = tag;
+								break;
+							}
 						}
-						script = tag;
-						break;
-					}
-					if (tag.getAttribute("src") === src) {
-						script = tag;
-						break;
 					}
 				}
-				if (script) {
-					script.onerror = script.onload = onScriptComplete;
-				} else {
-					script = doc.createElement("script");
-					script.charset = "utf-8";
-					script.timeout = timeout;
-					if (loadScript.nonce) {
-						script.setAttribute("nonce", loadScript.nonce);
-					}
-					script.async = true;
-					script.onerror = script.onload = onScriptComplete;
-					script.src = src;
-				}
-				doc.head.appendChild(script);
-				var timeoutTimer = setTimeout(function() {
-					onScriptComplete({ type: "timeout", target: script });
-				}, timeout * 1000);
 				function onScriptComplete(event) {
 					// avoid mem leaks in IE.
 					script.onerror = script.onload = null;
@@ -191,6 +175,26 @@
 							resolve();
 					}
 				}
+				var timeoutTimer = setTimeout(function() {
+					onScriptComplete({ type: "timeout", target: script });
+				}, timeout * 1000);
+				if (script) {
+					global._btldr[src] = function(s) {
+						onScriptComplete({ type: s ? "load" : "error", target: script });
+					};
+					if (btldr === 0) global._btldr[src](0);
+				} else {
+					script = doc.createElement("script");
+					script.charset = "utf-8";
+					script.timeout = timeout;
+					if (loadScript.nonce) {
+						script.setAttribute("nonce", loadScript.nonce);
+					}
+					script.async = 1;
+					script.onerror = script.onload = onScriptComplete;
+					script.src = src;
+					doc.head.appendChild(script);
+				}
 			}
 			var rr = {};
 			var promise = new Promise(function(resolve, reject) {
@@ -208,19 +212,24 @@
 			timeout = timeout || 120;
 			maxRetries = maxRetries || 10;
 			var doc = document;
+			var btldr;
 			function loader(resolve, reject, retryCount) {
 				var link;
-				var existingLinkTags = doc.getElementsByTagName("link");
-				for (var i = 0; i < existingLinkTags.length; i++) {
-					var tag = existingLinkTags[i];
-					if (tag.rel === "stylesheet") {
-						if (tag.getAttribute("data-href") === href) {
-							link = tag;
-							break;
-						}
-						if (tag.getAttribute("href") === href) {
-							link = tag;
-							break;
+				btldr = global._btldr[href];
+				if (btldr === 1) {
+					resolve();
+					return;
+				} else if (!btldr) {
+					var existingLinkTags = doc.getElementsByTagName("link");
+					for (var i = 0; i < existingLinkTags.length; i++) {
+						var tag = existingLinkTags[i];
+						if (tag.hasAttribute("btldr")) {
+							if (tag.rel === "stylesheet") {
+								if (tag.getAttribute("href") === href) {
+									link = tag;
+									break;
+								}
+							}
 						}
 					}
 				}
@@ -232,19 +241,6 @@
 						return;
 					}
 				}
-				if (link) {
-					link.onerror = link.onload = onScriptComplete;
-				} else {
-					link = doc.createElement("link");
-					link.rel = "stylesheet";
-					link.type = "text/css";
-					link.onerror = link.onload = onScriptComplete;
-					link.href = href;
-					doc.head.appendChild(link);
-				}
-				var timeoutTimer = setTimeout(function() {
-					onScriptComplete({ type: "timeout", target: link });
-				}, timeout * 1000);
 				function onScriptComplete(event) {
 					// avoid mem leaks in IE.
 					link.onerror = link.onload = null;
@@ -277,6 +273,22 @@
 						default:
 							resolve();
 					}
+				}
+				var timeoutTimer = setTimeout(function() {
+					onScriptComplete({ type: "timeout", target: link });
+				}, timeout * 1000);
+				if (link) {
+					global._btldr[href] = function(s) {
+						onScriptComplete({ type: s ? "load" : "error", target: link });
+					};
+					if (btldr === 0) global._btldr[href](0);
+				} else {
+					link = doc.createElement("link");
+					link.rel = "stylesheet";
+					link.type = "text/css";
+					link.onerror = link.onload = onScriptComplete;
+					link.href = href;
+					doc.head.appendChild(link);
 				}
 			}
 			var rr = {};
