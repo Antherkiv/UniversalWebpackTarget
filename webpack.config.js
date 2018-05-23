@@ -1,4 +1,4 @@
-/* eslint prettier/prettier:0 node/no-unpublished-require:0 */
+/* eslint node/no-unpublished-require:0 */
 
 const path = require('path');
 const webpack = require('webpack');
@@ -19,12 +19,17 @@ function factory(options) {
       publicPath: 'libs/' + options.name + '/',
       path: path.resolve(__dirname, 'libs', options.name),
     },
-    target: universalTarget(Object.assign({
-      cssFilename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
-    }, options)),
+    target: universalTarget(
+      Object.assign(
+        {
+          cssFilename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
+        },
+        options,
+      ),
+    ),
 
     resolve: {
-      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.node']
+      extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.node'],
     },
 
     module: {
@@ -52,10 +57,10 @@ function factory(options) {
           test: /\.(png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$/,
           loader: 'url-loader',
           options: {
-            limit: 10240
-          }
+            limit: 10240,
+          },
         },
-      ]
+      ],
     },
 
     plugins: [
@@ -63,12 +68,8 @@ function factory(options) {
         filename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
       }),
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
-		  new EntrySymlinkPlugin(),
-  		new PluggablePlugin(
-        options.main,
-        path.resolve(__dirname, 'libs'),
-        options.imports
-      ),
+      new EntrySymlinkPlugin(),
+      new PluggablePlugin(options.main, path.resolve(__dirname, 'libs'), options.imports),
     ],
 
     externals: {
@@ -78,71 +79,47 @@ function factory(options) {
     optimization: {
       // minimize: false,
       splitChunks: {
-        chunks: 'all'
-      }
-    }
-  }
+        chunks: 'all',
+      },
+    },
+  };
 }
 
 module.exports = [
-
   factory({
     name: 'Base',
     entry: {
-      'React': [
-        'react',
-      ],
-      'ReactDom': [
-        'react-dom',
-      ],
-      'Logger': [
-        './src/logger',
-      ],
+      React: ['react'],
+      ReactDom: ['react-dom'],
+      Logger: ['./src/logger'],
     },
   }),
 
   factory({
     name: 'main',
     entry: {
-      'main': [
-        './src/main',
-      ],
-      'other': [
-        './src/other',
-      ],
+      main: ['./src/main'],
+      other: ['./src/other'],
     },
-    imports: [
-      'Base',
-    ],
+    imports: ['Base'],
   }),
 
   factory({
     name: 'client',
     entry: {
-      'client': [
-        './src/client',
-      ],
+      client: ['./src/client'],
     },
     main: true,
-    imports: [
-      'Base',
-      'main',
-    ],
+    imports: ['Base', 'main'],
   }),
 
   factory({
     name: 'server',
     entry: {
-      'server': [
-        './src/server',
-      ],
+      server: ['./src/server'],
     },
     main: true,
     server: true,
-    imports: [
-      'Base',
-      'main',
-    ],
+    imports: ['Base', 'main'],
   }),
-
-]
+];
