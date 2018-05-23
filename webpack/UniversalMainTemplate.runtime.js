@@ -700,6 +700,11 @@
 					}
 				}
 
+				// Load dependencies:
+				for (i = 0; i < options.dp.length; i++) {
+					console.log(options.dp[i]);
+				}
+
 				return callback();
 			}
 
@@ -715,16 +720,17 @@
 				// a Promise means "currently loading".
 
 				// Javascript chunk loading using require()
-				var installedChunkData = options.i[chunkId];
-				if (installedChunkData !== 0) {
+				var installedChunkScript = options.i[chunkId];
+				console.log(scriptSrcNode(chunkId));
+				if (installedChunkScript !== 0) {
 					var chunk = require(scriptSrcNode(chunkId));
 					options.u.chunks = options.u.chunks || [];
 					options.u.chunks.push(chunk);
 				}
 
 				// CSS chunk loading
-				var installedChunkCss = options.ic[chunkId];
-				if (installedChunkCss !== 0 && options.cc[chunkId]) {
+				if (options.cc[chunkId]) {
+					console.log(cssSrcJsonp(chunkId));
 				}
 
 				return Promise.resolve();
