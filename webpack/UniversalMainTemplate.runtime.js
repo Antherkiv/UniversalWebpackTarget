@@ -7,7 +7,69 @@
 	[https://github.com/webpack/webpack/tree/v4.8.3]
 */
 (function() {
-	if (typeof window !== "undefined") window.global = window.global || window;
+	function jailbait(options) {
+		if (options.off || top !== window) return;
+		var stop = options.stop || "Stop!",
+			text =
+				options.text ||
+				"This is a browser feature intended for developers. " +
+					"If someone told you to copy-paste something here to enable a " +
+					'feature or "hack" someone’s account, it is a scam and will ' +
+					"give them access to your account.",
+			more =
+				options.more ||
+				"See https://en.wikipedia.org/wiki/Self-XSS for more information.";
+		if ((window.chrome || window.safari) && !options.textonly) {
+			var css = "font-family:helvetica; font-size:20px; ";
+			[
+				[
+					stop,
+					options.css1 ||
+						css +
+							"font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black;"
+				],
+				[text, options.css2 || css],
+				[more, options.css3 || css],
+				["", ""]
+			].map(function(line) {
+				setTimeout(console.log.bind(console, "\n%c" + line[0], line[1]));
+			});
+		} else {
+			stop = [
+				"",
+				" .d8888b.  888                       888",
+				"d88P  Y88b 888                       888",
+				"Y88b.      888                       888",
+				' "Y888b.   888888  .d88b.  88888b.   888',
+				'    "Y88b. 888    d88""88b 888 "88b  888',
+				'      "888 888    888  888 888  888  Y8P',
+				"Y88b  d88P Y88b.  Y88..88P 888 d88P",
+				' "Y8888P"   "Y888  "Y88P"  88888P"   888',
+				"                           888",
+				"                           888",
+				"                           888"
+			];
+			// Split text in lines of at most 35 characters
+			text = ("" + text).match(/.{35}.+?\s+|.+$/g);
+			var middle = Math.floor(Math.max(0, (stop.length - text.length) / 2));
+			// Concatenate such lines to the right of "Stop" banner
+			for (var i = 0; i < stop.length || i < text.length; i++) {
+				var line = stop[i];
+				stop[i] =
+					line +
+					new Array(45 - line.length).join(" ") +
+					(text[i - middle] || "");
+			}
+			// And print...
+			console.log("\n\n\n" + stop.join("\n") + "\n\n" + more + "\n");
+		}
+	}
+
+	if (typeof window !== "undefined") {
+		window.global = window.global || window;
+		jailbait({});
+	}
+
 	var runtimeInstall = function() {
 		//
 		//   _   _       _                          _   ____              _   _
@@ -379,21 +441,20 @@
 				var installedChunks = Object.keys(options.i);
 
 				var promises = [];
+				var chunkId;
 
 				// Load deferred modules:
 				for (var i = 0; i < options.el.length; i++) {
 					var deferredModule = options.el[i];
 					for (var j = 1; j < deferredModule.length; j++) {
-						var depId = deferredModule[j];
-						if (options.i[depId] !== 0) {
-							promises.push(options.r.e(depId));
-						}
+						chunkId = deferredModule[j];
+						promises.push(options.r.e(chunkId));
 					}
 				}
 
 				// Ensure CSS for installed chunks
 				for (i = 0; i < installedChunks.length; i++) {
-					var chunkId = installedChunks[i];
+					chunkId = installedChunks[i];
 					if (options.cc[chunkId]) {
 						promises.push(options.r.e(chunkId));
 					}
@@ -582,16 +643,25 @@
 				 * This function returns a promise which is resolved once
 				 * the module with all it's dependencies is loaded.
 				 */
+				var installedChunks = Object.keys(options.i);
+
 				var promises = [];
+				var chunkId;
 
 				// Load deferred modules:
 				for (var i = 0; i < options.el.length; i++) {
 					var deferredModule = options.el[i];
 					for (var j = 1; j < deferredModule.length; j++) {
-						var depId = deferredModule[j];
-						if (options.i[depId] !== 0) {
-							promises.push(options.r.e(depId));
-						}
+						chunkId = deferredModule[j];
+						promises.push(options.r.e(chunkId));
+					}
+				}
+
+				// Ensure CSS for installed chunks
+				for (i = 0; i < installedChunks.length; i++) {
+					chunkId = installedChunks[i];
+					if (options.cc[chunkId]) {
+						promises.push(options.r.e(chunkId));
 					}
 				}
 
@@ -606,16 +676,20 @@
 			// This file contains only the entry chunk.
 			// The chunk loading function for additional chunks
 			function requireEnsureNode(chunkId) {
-				// require() chunk loading for javascript
-
-				var installedChunkData = options.i[chunkId];
-
 				// 0 means "already installed".
 				// a Promise means "currently loading".
+
+				// Javascript chunk loading using require()
+				var installedChunkData = options.i[chunkId];
 				if (installedChunkData !== 0) {
 					var chunk = require(scriptSrcNode(chunkId));
 					options.u.chunks = options.u.chunks || [];
 					options.u.chunks.push(chunk);
+				}
+
+				// CSS chunk loading
+				var installedChunkCss = options.ic[chunkId];
+				if (installedChunkCss !== 0 && options.cc[chunkId]) {
 				}
 
 				return Promise.resolve();
