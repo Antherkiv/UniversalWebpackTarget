@@ -4,7 +4,7 @@
 
 	This comes in parts from webpack/lib/web/JsonpChunkTemplatePlugin.js
 	and from webpack/lib/node/NodeNodeTemplatePlugin.js
-	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
+	[https://github.com/webpack/webpack/tree/v4.8.3]
 */
 (function() {
 	var runtimeInstall = function() {
@@ -20,6 +20,7 @@
 			function(error) {
 				throw error;
 			};
+
 		function wrapPromise(promise, resolve, reject, context) {
 			promise.resolve = resolve;
 			promise.reject = reject;
@@ -51,7 +52,10 @@
 			var waitTime = Math.pow(2, retryCount) * 100;
 			return waitTime;
 		}
+
 		function loadScript(src, timeout, maxRetries) {
+			// This comes mainly from webpack/lib/web/JsonpMainTemplatePlugin.js
+			// [https://github.com/webpack/webpack/tree/v4.8.3]
 			timeout = timeout || 120;
 			maxRetries = maxRetries || 10;
 			var doc = document;
@@ -113,6 +117,9 @@
 		}
 
 		function loadCss(href, timeout, maxRetries) {
+			// This comes mainly from mini-css-extract-plugin/src/index.js
+			// and partially from webpack/lib/web/JsonpMainTemplatePlugin.js
+			// [https://github.com/webpack-contrib/mini-css-extract-plugin/tree/v0.4.0]
 			timeout = timeout || 120;
 			maxRetries = maxRetries || 10;
 			var doc = document;

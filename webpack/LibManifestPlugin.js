@@ -4,7 +4,7 @@
 	        Germán Méndez Bravo (Kronuz)
 
 	This comes mainly from webpack/lib/LibManifestPlugin.js
-	[https://github.com/webpack/webpack/tree/8d36df13aa35e2f2cb83f1afe5f626d4fb83d107]
+	[https://github.com/webpack/webpack/tree/v4.8.3]
 
 	Problem was Dll manifests are of no use for initial chunks
 	which have no Main (which are no entry points)

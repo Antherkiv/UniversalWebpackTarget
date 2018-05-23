@@ -3,7 +3,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const EntrySymlinkPlugin = require('./webpack/EntrySymlinkPlugin');
-const UniversalCssExtractPlugin = require('./webpack/UniversalCssExtractPlugin');
+const MiniCssExtractPlugin = require('./webpack/MiniCssExtractPlugin');
 const PluggablePlugin = require('./webpack/PluggablePlugin');
 const universalTarget = require('./webpack/universalTarget');
 
@@ -40,7 +40,7 @@ function factory(options) {
         {
           test: /\.s?[ac]ss$/,
           use: [
-            development ? 'style-loader' : UniversalCssExtractPlugin.loader,
+            development ? 'style-loader' : MiniCssExtractPlugin.loader,
             'css-loader',
             'postcss-loader',
             'sass-loader',
@@ -57,7 +57,7 @@ function factory(options) {
     },
 
     plugins: [
-      new UniversalCssExtractPlugin({
+      new MiniCssExtractPlugin({
         filename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
       }),
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
