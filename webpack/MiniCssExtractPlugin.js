@@ -6,6 +6,7 @@
 		[https://github.com/webpack-contrib/mini-css-extract-plugin/tree/v0.4.0]
 */
 "use strict";
+
 const fs = require("fs");
 const path = require("path");
 

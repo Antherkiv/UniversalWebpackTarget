@@ -6,6 +6,7 @@
 	and from webpack/lib/node/NodeNodeTemplatePlugin.js
 	[https://github.com/webpack/webpack/tree/v4.8.3]
 */
+
 (function() {
 	function jailbait(options) {
 		if (options.off || top !== window) return;
