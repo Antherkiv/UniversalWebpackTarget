@@ -8,70 +8,139 @@
 */
 
 (function() {
-	function jailbait(options) {
-		if (options.off || top !== window) return;
-		var stop = options.stop || "Stop!",
-			text =
-				options.text ||
-				"This is a browser feature intended for developers. " +
-					"If someone told you to copy-paste something here to enable a " +
-					'feature or "hack" someone’s account, it is a scam and will ' +
-					"give them access to your account.",
-			more =
-				options.more ||
-				"See https://en.wikipedia.org/wiki/Self-XSS for more information.";
-		if ((window.chrome || window.safari) && !options.textonly) {
-			var css = "font-family:helvetica; font-size:20px; ";
-			[
-				[
-					stop,
-					options.css1 ||
-						css +
-							"font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black;"
-				],
-				[text, options.css2 || css],
-				[more, options.css3 || css],
-				["", ""]
-			].map(function(line) {
-				setTimeout(console.log.bind(console, "\n%c" + line[0], line[1]));
-			});
-		} else {
-			stop = [
-				"",
-				" .d8888b.  888                       888",
-				"d88P  Y88b 888                       888",
-				"Y88b.      888                       888",
-				' "Y888b.   888888  .d88b.  88888b.   888',
-				'    "Y88b. 888    d88""88b 888 "88b  888',
-				'      "888 888    888  888 888  888  Y8P',
-				"Y88b  d88P Y88b.  Y88..88P 888 d88P",
-				' "Y8888P"   "Y888  "Y88P"  88888P"   888',
-				"                           888",
-				"                           888",
-				"                           888"
-			];
-			// Split text in lines of at most 35 characters
-			text = ("" + text).match(/.{35}.+?\s+|.+$/g);
-			var middle = Math.floor(Math.max(0, (stop.length - text.length) / 2));
-			// Concatenate such lines to the right of "Stop" banner
-			for (var i = 0; i < stop.length || i < text.length; i++) {
-				var line = stop[i];
-				stop[i] =
-					line +
-					new Array(45 - line.length).join(" ") +
-					(text[i - middle] || "");
-			}
-			// And print...
-			console.log("\n\n\n" + stop.join("\n") + "\n\n" + more + "\n");
-		}
-	}
-
-	if (typeof window !== "undefined") {
-		window.global = window.global || window;
-		jailbait({});
-	}
-
 	var runtimeInstall = function() {
+		var win, doc, glob;
+		var SERVER_SIDE = typeof window === "undefined";
+		if (SERVER_SIDE) {
+			glob = global;
+		} else {
+			win = window;
+			doc = document;
+			glob = win.global = win.global || win;
+		}
+
+		/**
+		 * Function to register status of loaded
+		 * @param {string} src - Resource src/href
+		 * @param {number} status - 0/1 (loaded/not-loaded)
+		 * @returns {void}
+		 */
+		glob._btldr = function btldr(src, status) {
+			var callback = btldr[src];
+			if (typeof callback === "function") {
+				callback(status);
+			} else {
+				console.log("btldr", src, status);
+			}
+			btldr[src] = status;
+		};
+
+		/**
+		 * Function to process errors, publishes to Raven if available
+		 * and displays a splash screen (#failure) with a message (#failureMessage)
+		 * @param {string|Error} error - Message or error
+		 * @param {any} source - Source to pass to raven
+		 * @returns {void}
+		 */
+		glob._err = function(error, source) {
+			if (source && glob.Raven) {
+				if (typeof error === "string") {
+					glob.Raven.captureMessage(error, {
+						level: "error",
+						extra: { source: source }
+					});
+				} else {
+					glob.Raven.captureException(error, {
+						extra: { source: source }
+					});
+				}
+			}
+			var failure = doc.getElementById("failure");
+			if (failure) {
+				var failureMessage = doc.getElementById("failureMessage");
+				failureMessage.innerText =
+					typeof error === "string" && error
+						? error
+						: "A problem was encountered trying to load the page.";
+				failure.style.display = "block";
+				doc.body.style.overflow = "hidden";
+			}
+		};
+
+		/**
+		 * Function to reload window
+		 * @returns {void}
+		 */
+		glob._rld = function() {
+			glob.location.reload();
+		};
+
+		//     _       _ _ _           _ _
+		//    (_) __ _(_) | |__   __ _(_) |_
+		//    | |/ _` | | | '_ \ / _` | | __|
+		//    | | (_| | | | |_) | (_| | | |_
+		//   _/ |\__,_|_|_|_.__/ \__,_|_|\__|
+		//  |__/
+		function jailbait(options) {
+			if (SERVER_SIDE || options.off || top !== win) return;
+			var stop = options.stop || "Stop!",
+				text =
+					options.text ||
+					"This is a browser feature intended for developers. " +
+						"If someone told you to copy-paste something here to enable a " +
+						'feature or "hack" someone’s account, it is a scam and will ' +
+						"give them access to your account.",
+				more =
+					options.more ||
+					"See https://en.wikipedia.org/wiki/Self-XSS for more information.";
+			if ((glob.chrome || glob.safari) && !options.textonly) {
+				var css = "font-family:helvetica; font-size:20px; ";
+				[
+					[
+						stop,
+						options.css1 ||
+							css +
+								"font-size:50px; font-weight:bold; color:red; -webkit-text-stroke:1px black;"
+					],
+					[text, options.css2 || css],
+					[more, options.css3 || css],
+					["", ""]
+				].map(function(line) {
+					setTimeout(console.log.bind(console, "\n%c" + line[0], line[1]));
+				});
+			} else {
+				stop = [
+					"",
+					" .d8888b.  888                       888",
+					"d88P  Y88b 888                       888",
+					"Y88b.      888                       888",
+					' "Y888b.   888888  .d88b.  88888b.   888',
+					'    "Y88b. 888    d88""88b 888 "88b  888',
+					'      "888 888    888  888 888  888  Y8P',
+					"Y88b  d88P Y88b.  Y88..88P 888 d88P",
+					' "Y8888P"   "Y888  "Y88P"  88888P"   888',
+					"                           888",
+					"                           888",
+					"                           888"
+				];
+				// Split text in lines of at most 35 characters
+				text = ("" + text).match(/.{35}.+?\s+|.+$/g);
+				var middle = Math.floor(Math.max(0, (stop.length - text.length) / 2));
+				// Concatenate such lines to the right of "Stop" banner
+				for (var i = 0; i < stop.length || i < text.length; i++) {
+					var line = stop[i];
+					stop[i] =
+						line +
+						new Array(45 - line.length).join(" ") +
+						(text[i - middle] || "");
+				}
+				// And print...
+				console.log("\n\n\n" + stop.join("\n") + "\n\n" + more + "\n");
+			}
+		}
+
+		// jailbait({});
+
 		//
 		//   _   _       _                          _   ____              _   _
 		//  | | | |_ __ (_)_   _____ _ __ ___  __ _| | |  _ \ _   _ _ __ | |_(_)_ __ ___   ___
@@ -80,7 +149,7 @@
 		//   \___/|_| |_|_| \_/ \___|_|  |___/\__,_|_| |_| \_\\__,_|_| |_|\__|_|_| |_| |_|\___|
 		//
 		var handleError =
-			global.showFailureMessage ||
+			glob.showFailureMessage ||
 			function(error) {
 				throw error;
 			};
@@ -122,11 +191,10 @@
 			// [https://github.com/webpack/webpack/tree/v4.8.3]
 			timeout = timeout || 120;
 			maxRetries = maxRetries || 10;
-			var doc = document;
 			var btldr;
 			function loader(resolve, reject, retryCount) {
 				var script;
-				btldr = global._btldr[src];
+				btldr = glob._btldr[src];
 				if (btldr === 1) {
 					resolve();
 					return;
@@ -179,10 +247,11 @@
 					onScriptComplete({ type: "timeout", target: script });
 				}, timeout * 1000);
 				if (script) {
-					global._btldr[src] = function(s) {
+					glob._btldr[src] = function(s) {
+						console.log("btldr callback", src, s);
 						onScriptComplete({ type: s ? "load" : "error", target: script });
 					};
-					if (btldr === 0) global._btldr[src](0);
+					if (btldr === 0) glob._btldr[src](0);
 				} else {
 					script = doc.createElement("script");
 					script.charset = "utf-8";
@@ -211,11 +280,10 @@
 			// [https://github.com/webpack-contrib/mini-css-extract-plugin/tree/v0.4.0]
 			timeout = timeout || 120;
 			maxRetries = maxRetries || 10;
-			var doc = document;
 			var btldr;
 			function loader(resolve, reject, retryCount) {
 				var link;
-				btldr = global._btldr[href];
+				btldr = glob._btldr[href];
 				if (btldr === 1) {
 					resolve();
 					return;
@@ -278,10 +346,10 @@
 					onScriptComplete({ type: "timeout", target: link });
 				}, timeout * 1000);
 				if (link) {
-					global._btldr[href] = function(s) {
+					glob._btldr[href] = function(s) {
 						onScriptComplete({ type: s ? "load" : "error", target: link });
 					};
-					if (btldr === 0) global._btldr[href](0);
+					if (btldr === 0) glob._btldr[href](0);
 				} else {
 					link = doc.createElement("link");
 					link.rel = "stylesheet";
@@ -308,8 +376,8 @@
 		// global universal require/import
 
 		function universalRequireJsonp() {
-			if (global.require) {
-				if (!global.require.__universalWebpack) {
+			if (glob.require) {
+				if (!glob.require.__universalWebpack) {
 					throw new Error("An unknown require() is already installed!");
 				}
 				return;
@@ -353,29 +421,29 @@
 				return wrapPromise(Promise.resolve(), function() {}, function() {});
 			};
 			r.__universalWebpack = true;
-			global.require = r;
+			glob.require = r;
 		}
 
 		function universalImportJsonp() {
-			if (global.import) {
-				if (!global.import.__universalWebpack) {
+			if (glob.import) {
+				if (!glob.import.__universalWebpack) {
 					throw new Error("An unknown import() is already installed!");
 				}
 				return;
 			}
 
 			i = function(request) {
-				return global.require.load(request).then(function() {
-					return global.require(request);
+				return glob.require.load(request).then(function() {
+					return glob.require(request);
 				});
 			};
 			i.__universalWebpack = true;
-			global.import = i;
+			glob.import = i;
 		}
 
 		function universalImportNode() {
-			if (global.import) {
-				if (!global.import.__universalWebpack) {
+			if (glob.import) {
+				if (!glob.import.__universalWebpack) {
 					throw new Error("An unknown import() is already installed!");
 				}
 				return;
@@ -387,10 +455,10 @@
 				});
 			};
 			i.__universalWebpack = true;
-			global.import = i;
+			glob.import = i;
 		}
 
-		if (typeof window === "undefined") {
+		if (SERVER_SIDE) {
 			// install a global import() and require()
 			universalImportNode();
 		} else {
@@ -510,7 +578,7 @@
 
 				// Load dependencies:
 				for (i = 0; i < options.dp.length; i++) {
-					promises.push(global.require.load(options.dp[i]));
+					promises.push(glob.require.load(options.dp[i]));
 				}
 
 				// Wait for those to load and fullfil
@@ -523,9 +591,9 @@
 					},
 					promises
 				);
-				var requiredModule = global.require.cache[request];
+				var requiredModule = glob.require.cache[request];
 				if (typeof requiredModule === "undefined") {
-					global.require.cache[request] = promise;
+					glob.require.cache[request] = promise;
 				}
 
 				for (i = 0; i < installedChunks.length; i++) {
@@ -536,13 +604,13 @@
 
 				promise
 					.then(function() {
-						var requiredModule = global.require.cache[request];
+						var requiredModule = glob.require.cache[request];
 						if (isPromise(requiredModule)) {
 							try {
-								global.require.cache[request] = callback();
+								glob.require.cache[request] = callback();
 								requiredModule.resolve();
 							} catch (error) {
-								delete global.require.cache[request];
+								delete glob.require.cache[request];
 								requiredModule.reject(error);
 							}
 						} else {
@@ -550,10 +618,10 @@
 						}
 					})
 					.catch(function(error) {
-						delete global.require.cache[request];
+						delete glob.require.cache[request];
 						handleError(error);
 					});
-				return global.require.cache[request];
+				return glob.require.cache[request];
 			}
 
 			// script path function
@@ -575,11 +643,11 @@
 			 */
 			function preFetchLoadJsonp(chunkId, async) {
 				function preload(rel) {
-					var head = document.getElementsByTagName("head")[0];
+					var head = doc.getElementsByTagName("head")[0];
 					chunkData.forEach(function(chunkId) {
 						if (typeof options.i[chunkId] === "undefined") {
 							options.i[chunkId] = null;
-							var link = document.createElement("link");
+							var link = doc.createElement("link");
 							link.charset = "utf-8";
 							if (options.r.nc) {
 								link.setAttribute("nonce", options.r.nc);
@@ -758,7 +826,7 @@
 
 			var loadDependencies;
 			var checkDeferredModules;
-			if (typeof window === "undefined") {
+			if (SERVER_SIDE) {
 				options.r.e = requireEnsureNode;
 				options.r.oe = onErrorNode;
 				loadDependencies = loadDependenciesNode;
@@ -790,16 +858,16 @@
 			});
 		}
 
-		if (!global.__universalWebpackInstalled) {
-			global.__universalWebpackInstalled = true;
+		if (!glob.__universalWebpackInstalled) {
+			glob.__universalWebpackInstalled = true;
 
 			// install a callback for universal modules loading
-			global.webpackUniversal = global.webpackUniversal || [];
-			var oldUniversalFunction = global.webpackUniversal.push.bind(
-				global.webpackUniversal
+			glob.webpackUniversal = glob.webpackUniversal || [];
+			var oldUniversalFunction = glob.webpackUniversal.push.bind(
+				glob.webpackUniversal
 			);
-			global.webpackUniversal.push = universalLoaderFactory;
-			var universalArray = global.webpackUniversal.slice();
+			glob.webpackUniversal.push = universalLoaderFactory;
+			var universalArray = glob.webpackUniversal.slice();
 			for (var i = 0; i < universalArray.length; i++) {
 				universalLoaderFactory(universalArray[i]);
 			}

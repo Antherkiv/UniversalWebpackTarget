@@ -65,7 +65,7 @@ function factory(options) {
       new PluggablePlugin(
         Object.assign(
           {
-            dll: !options.withRuntime,
+            dll: options.dll,
             libsPath: path.resolve(__dirname, 'libs'),
           },
           options,
@@ -78,7 +78,7 @@ function factory(options) {
     },
 
     optimization: {
-      // minimize: false,
+      minimize: false,
       splitChunks: {
         chunks: 'all',
       },
@@ -94,6 +94,7 @@ module.exports = [
       ReactDom: ['react-dom'],
       Logger: ['./src/logger'],
     },
+    dll: true,
   }),
 
   factory({
@@ -102,6 +103,7 @@ module.exports = [
       main: ['./src/main'],
       other: ['./src/other'],
     },
+    dll: true,
     imports: ['Base'],
   }),
 
@@ -110,7 +112,7 @@ module.exports = [
     entry: {
       client: ['./src/client'],
     },
-    withRuntime: true,
+    // withRuntime: true,
     imports: ['Base', 'main'],
   }),
 
@@ -119,7 +121,7 @@ module.exports = [
     entry: {
       server: ['./src/server'],
     },
-    withRuntime: true,
+    // withRuntime: true,
     server: true,
     imports: ['Base', 'main'],
   }),

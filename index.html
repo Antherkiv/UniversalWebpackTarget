@@ -5,6 +5,8 @@
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,shrink-to-fit=no" />
         <meta http-equiv="x-ua-compatible" content="ie=edge" />
         <title>Hello React!</title>
+        <script src="/webpack/UniversalMainTemplate.runtime.js" onerror="_err()"></script>
+        <script src="/libs/client/client.js" onerror="_err()"></script>
     </head>
 <!--
 |          d8888                 8888          8888               888
@@ -28,7 +30,7 @@
                     </g>
                 </svg>
                 <p id="failureMessage"></p>
-                <a href="javascript:reloadFromScriptError()" style="background-color:#f97700;border-radius:0.3em;border:0px;padding:0.5em 1em;display:inline-block;margin:1em 0;color:#fff;text-decoration:none;font-weight:bold;">
+                <a href="javascript:_rld()" style="background-color:#f97700;border-radius:0.3em;border:0px;padding:0.5em 1em;display:inline-block;margin:1em 0;color:#fff;text-decoration:none;font-weight:bold;">
                     <svg style="display:inline-block;fill:currentcolor;height:1.5em;max-width:100%;position:relative;user-select:none;vertical-align:text-bottom;" viewBox="0 0 60 72">
                         <g>
                             <path d="M30 9C15.113 9 3 21.112 3 36a3 3 0 1 0 6 0c0-11.579 9.42-21 21-21s21 9.421 21 21-9.42 21-21 21a20.86 20.86 0 0 1-10.261-2.688l3.752-4.894a2 2 0 0 0-1.65-3.216l-14.205.45a2 2 0 0 0-1.884 2.457l3.252 13.835a1.999 1.999 0 0 0 3.534.759l3.511-4.579A26.836 26.836 0 0 0 30 63c14.888 0 27-12.112 27-27S44.888 9 30 9z"></path>
@@ -38,36 +40,8 @@
                 </a>
             </div>
         </div>
-        <script>
-            window.showFailureMessage = function(error, source) {
-                if (source && window.Raven) {
-                    if (typeof error === "string") {
-                        window.Raven.captureMessage(error, {
-                            level: 'error',
-                            extra: { source: source }
-                        });
-                    } else {
-                        window.Raven.captureException(error, {
-                            extra: { source: source }
-                        });
-                    }
-                }
-                var failure = document.getElementById('failure');
-                if (failure) {
-                    var failureMessage = document.getElementById('failureMessage');
-                    failureMessage.innerText = typeof error === "string" && error ? error : "A problem was encountered trying to load the page.";
-                    failure.style.display = 'block';
-                    document.body.style.overflow = 'hidden';
-                }
-            };
-            window.reloadFromScriptError = function() {
-                window.location.reload();
-            };
-        </script>
 
         <div id="main">{{& main }}</div>
         <div id="other">{{& other }}</div>
-
-        <script src="/libs/client/client.js" onerror="showFailureMessage()"></script>
-    </body>
+      </body>
 </html>
