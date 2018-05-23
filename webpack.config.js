@@ -31,7 +31,7 @@ function factory(options) {
         {
           test: /\.tsx?$/,
           use: [
-            'cache-loader',
+            // 'cache-loader',
             {
               loader: 'ts-loader',
             },
