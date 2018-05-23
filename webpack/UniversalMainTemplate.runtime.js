@@ -28,12 +28,12 @@
 
 		/**
 		 * Function to register status of loaded
-		 * @param {string} src - Resource src/href
-		 * @param {number} status - 0/1 (loaded/not-loaded)
+		 * @param {Event} event - load event
 		 * @returns {void}
 		 */
-		glob._btldr = function btldr(src, status) {
-			status = !!status;
+		glob._btldr = function btldr(event) {
+			var src = event && event.target && event.target.getAttribute("btldr");
+			var status = event && event.type === "load";
 			var callback = btldr[src];
 			if (typeof callback === "function") {
 				callback(status);
@@ -208,11 +208,9 @@
 					var existingScriptTags = doc.getElementsByTagName("script");
 					for (var i = 0; i < existingScriptTags.length; i++) {
 						var tag = existingScriptTags[i];
-						if (tag.hasAttribute("btldr")) {
-							if (tag.getAttribute("src") === src) {
-								script = tag;
-								break;
-							}
+						if (tag.getAttribute("btldr") === src) {
+							script = tag;
+							break;
 						}
 					}
 				}
@@ -298,12 +296,10 @@
 					var existingLinkTags = doc.getElementsByTagName("link");
 					for (var i = 0; i < existingLinkTags.length; i++) {
 						var tag = existingLinkTags[i];
-						if (tag.hasAttribute("btldr")) {
-							if (tag.rel === "stylesheet") {
-								if (tag.getAttribute("href") === href) {
-									link = tag;
-									break;
-								}
+						if (tag.rel === "stylesheet") {
+							if (tag.getAttribute("btldr") === href) {
+								link = tag;
+								break;
 							}
 						}
 					}
@@ -311,7 +307,7 @@
 				var existingStyleTags = doc.getElementsByTagName("style");
 				for (i = 0; i < existingStyleTags.length; i++) {
 					tag = existingStyleTags[i];
-					if (tag.getAttribute("data-href") === href) {
+					if (tag.getAttribute("btldr") === href) {
 						resolve();
 						return;
 					}
@@ -326,7 +322,7 @@
 							if (++retryCount >= maxRetries) {
 								var errorType =
 									event && (event.type === "load" ? "missing" : event.type);
-								var realSrc = event && event.target && event.target.src;
+								var realSrc = event && event.target && event.target.href;
 								var error = new Error(
 									"Loading CSS '" +
 										href +
@@ -718,7 +714,7 @@
 								if (chunk !== 0) {
 									var errorType = "missing";
 									var realSrc = event && event.target && event.target.src;
-									throw new Error(
+									var error = new Error(
 										"Loading chunk '" +
 											chunkId +
 											"' failed.\n(" +
@@ -727,6 +723,9 @@
 											realSrc +
 											")"
 									);
+									error.type = errorType;
+									error.request = realSrc;
+									throw error;
 								}
 							})
 							.catch(function(error) {
