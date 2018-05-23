@@ -9,6 +9,13 @@
 
 (function() {
 	var runtimeInstall = function() {
+		var DEFAULT_TIMEOUT = 120; // 120
+		var DEFAULT_MAX_RETRIES = 10; // 10
+
+		var LOG = console.log;
+		var GROUP_LOG = console.group;
+		var GROUP_END = console.groupEnd;
+
 		var win, doc, glob;
 		var SERVER_SIDE = typeof window === "undefined";
 		if (SERVER_SIDE) {
@@ -26,11 +33,12 @@
 		 * @returns {void}
 		 */
 		glob._btldr = function btldr(src, status) {
+			status = !!status;
 			var callback = btldr[src];
 			if (typeof callback === "function") {
 				callback(status);
 			} else {
-				console.log("btldr", src, status);
+				LOG("", "btldr", src, status);
 			}
 			btldr[src] = status;
 		};
@@ -139,7 +147,7 @@
 			}
 		}
 
-		// jailbait({});
+		jailbait({});
 
 		//
 		//   _   _       _                          _   ____              _   _
@@ -189,16 +197,14 @@
 		function loadScript(src, timeout, maxRetries) {
 			// This comes mainly from webpack/lib/web/JsonpMainTemplatePlugin.js
 			// [https://github.com/webpack/webpack/tree/v4.8.3]
-			timeout = timeout || 120;
-			maxRetries = maxRetries || 10;
-			var btldr;
+			LOG("🕸", "loadScript(", src, ")");
+			timeout = timeout || DEFAULT_TIMEOUT;
+			maxRetries = maxRetries || DEFAULT_MAX_RETRIES;
 			function loader(resolve, reject, retryCount) {
 				var script;
-				btldr = glob._btldr[src];
-				if (btldr === 1) {
-					resolve();
-					return;
-				} else if (!btldr) {
+				var btldr = glob._btldr[src];
+				var btldr_type = typeof btldr;
+				if (btldr_type === "undefined" || btldr_type === "boolean") {
 					var existingScriptTags = doc.getElementsByTagName("script");
 					for (var i = 0; i < existingScriptTags.length; i++) {
 						var tag = existingScriptTags[i];
@@ -232,6 +238,7 @@
 								);
 								error.type = errorType;
 								error.request = realSrc;
+								LOG("💥", "loadScript(", src, ")", "reject()", error);
 								reject(error);
 							} else {
 								setTimeout(function() {
@@ -240,18 +247,20 @@
 							}
 							break;
 						default:
+							LOG("👍", "loadScript(", src, ")", "resolve()");
 							resolve();
 					}
 				}
 				var timeoutTimer = setTimeout(function() {
+					LOG("⌛️", src, "timed out!");
 					onScriptComplete({ type: "timeout", target: script });
 				}, timeout * 1000);
 				if (script) {
 					glob._btldr[src] = function(s) {
-						console.log("btldr callback", src, s);
+						LOG("", "btldr callback", src, s);
 						onScriptComplete({ type: s ? "load" : "error", target: script });
 					};
-					if (btldr === 0) glob._btldr[src](0);
+					if (btldr_type === "boolean") glob._btldr[src](btldr);
 				} else {
 					script = doc.createElement("script");
 					script.charset = "utf-8";
@@ -278,16 +287,14 @@
 			// This comes mainly from mini-css-extract-plugin/src/index.js
 			// and partially from webpack/lib/web/JsonpMainTemplatePlugin.js
 			// [https://github.com/webpack-contrib/mini-css-extract-plugin/tree/v0.4.0]
-			timeout = timeout || 120;
-			maxRetries = maxRetries || 10;
-			var btldr;
+			LOG("🕸 loadCss(", href, ")");
+			timeout = timeout || DEFAULT_TIMEOUT;
+			maxRetries = maxRetries || DEFAULT_MAX_RETRIES;
 			function loader(resolve, reject, retryCount) {
 				var link;
-				btldr = glob._btldr[href];
-				if (btldr === 1) {
-					resolve();
-					return;
-				} else if (!btldr) {
+				var btldr = glob._btldr[href];
+				var btldr_type = typeof btldr;
+				if (btldr_type === "undefined" || btldr_type === "boolean") {
 					var existingLinkTags = doc.getElementsByTagName("link");
 					for (var i = 0; i < existingLinkTags.length; i++) {
 						var tag = existingLinkTags[i];
@@ -331,6 +338,7 @@
 								);
 								error.type = errorType;
 								error.request = realSrc;
+								LOG("💥", "loadScript(", href, ")", "reject()", error);
 								reject(error);
 							} else {
 								setTimeout(function() {
@@ -339,17 +347,19 @@
 							}
 							break;
 						default:
+							LOG("👍", "loadScript(", href, ")", "resolve()");
 							resolve();
 					}
 				}
 				var timeoutTimer = setTimeout(function() {
+					LOG("⌛️", href, "timed out!");
 					onScriptComplete({ type: "timeout", target: link });
 				}, timeout * 1000);
 				if (link) {
 					glob._btldr[href] = function(s) {
 						onScriptComplete({ type: s ? "load" : "error", target: link });
 					};
-					if (btldr === 0) glob._btldr[href](0);
+					if (btldr_type === "boolean") glob._btldr[href](btldr);
 				} else {
 					link = doc.createElement("link");
 					link.rel = "stylesheet";
@@ -554,12 +564,15 @@
 				 * the module with all it's dependencies is loaded.
 				 * It also adds the final module to the require() cache.
 				 */
+				var request = options.r.cp;
+				GROUP_LOG("Loading module", request, "...");
 				var installedChunks = Object.keys(options.i);
 
 				var promises = [];
 				var chunkId;
 
-				// Load deferred modules:
+				// Load deferred modules
+				GROUP_LOG("Load deferred modules");
 				for (var i = 0; i < options.el.length; i++) {
 					var deferredModule = options.el[i];
 					for (var j = 1; j < deferredModule.length; j++) {
@@ -567,22 +580,26 @@
 						promises.push(options.r.e(chunkId));
 					}
 				}
+				GROUP_END();
 
 				// Ensure CSS for installed chunks
+				GROUP_LOG("Ensure CSS for installed chunks");
 				for (i = 0; i < installedChunks.length; i++) {
 					chunkId = installedChunks[i];
 					if (options.cc[chunkId]) {
 						promises.push(options.r.e(chunkId));
 					}
 				}
+				GROUP_END();
 
-				// Load dependencies:
+				// Load dependencies
+				GROUP_LOG("Load dependencies");
 				for (i = 0; i < options.dp.length; i++) {
 					promises.push(glob.require.load(options.dp[i]));
 				}
+				GROUP_END();
 
 				// Wait for those to load and fullfil
-				var request = options.r.cp;
 				var promise = wrapPromise(
 					Promise.all(promises),
 					function() {},
@@ -596,14 +613,21 @@
 					glob.require.cache[request] = promise;
 				}
 
+				// Pre-fetching chunks
+				GROUP_LOG("Pre-fetching chunks");
 				for (i = 0; i < installedChunks.length; i++) {
 					chunkId = installedChunks[i];
 					preFetchLoadJsonp(chunkId);
 					preFetchLoadJsonp(chunkId, promise);
 				}
+				GROUP_END();
 
+				GROUP_END();
+
+				GROUP_LOG("⏳", "waiting for dependencies of", request, "...");
 				promise
 					.then(function() {
+						LOG("✅", "dependencies of", request, "loaded!");
 						var requiredModule = glob.require.cache[request];
 						if (isPromise(requiredModule)) {
 							try {
@@ -783,7 +807,7 @@
 
 				// Load dependencies:
 				for (i = 0; i < options.dp.length; i++) {
-					console.log(options.dp[i]);
+					LOG(options.dp[i]);
 				}
 
 				return callback();
@@ -802,7 +826,7 @@
 
 				// Javascript chunk loading using require()
 				var installedChunkScript = options.i[chunkId];
-				console.log(scriptSrcNode(chunkId));
+				LOG(scriptSrcNode(chunkId));
 				if (installedChunkScript !== 0) {
 					var chunk = require(scriptSrcNode(chunkId));
 					options.u.chunks = options.u.chunks || [];
@@ -811,7 +835,7 @@
 
 				// CSS chunk loading
 				if (options.cc[chunkId]) {
-					console.log(cssSrcJsonp(chunkId));
+					LOG(cssSrcJsonp(chunkId));
 				}
 
 				return Promise.resolve();
