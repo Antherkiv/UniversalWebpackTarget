@@ -7,6 +7,7 @@
 	[https://github.com/webpack/webpack/tree/v4.8.3]
 */
 (function() {
+	if (typeof window !== "undefined") window.global = window.global || window;
 	var runtimeInstall = function() {
 		//
 		//   _   _       _                          _   ____              _   _
