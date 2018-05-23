@@ -146,12 +146,20 @@ class UniversalMainTemplatePlugin {
 					)
 				);
 
+				const cssChunks = {};
+				for (const c of chunk.getAllAsyncChunks()) {
+					for (const module of c.modulesIterable) {
+						if (module.type === NS) {
+							cssChunks[c.id] = 1;
+							break;
+						}
+					}
+				}
+
 				const chunkMaps = chunk.getChildIdsByOrdersMap();
 				return Template.asString([
-					source,
-					source.match(/\binstalledCssChunks\b/)
-						? ""
-						: "var installedCssChunks = {};",
+					"// The module cache",
+					"var installedModules = {};",
 					"",
 					"// object to store loaded and loading Javascript chunks",
 					"// undefined = chunk not loaded, null = chunk preloaded/prefetched",
@@ -161,6 +169,12 @@ class UniversalMainTemplatePlugin {
 						chunk.ids.map(id => `${JSON.stringify(id)}: 0`).join(",\n")
 					),
 					"};",
+					"",
+					"// object to store loaded CSS chunks",
+					"var installedCssChunks = {};",
+					"",
+					"// object with valid css chunks",
+					`var cssChunks = ${JSON.stringify(cssChunks)};`,
 					"",
 					"// script path function",
 					"function scriptSrc(chunkId) {",
@@ -253,6 +267,7 @@ class UniversalMainTemplatePlugin {
 							"i: installedChunks",
 							"sc: cssSrc",
 							"ic: installedCssChunks",
+							"cc: cssChunks",
 							"el: deferredModules",
 							"pl: chunkPreloadMap",
 							"pf: chunkPrefetchMap",

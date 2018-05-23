@@ -295,6 +295,7 @@
 		 *     options.sc -> cssSrc
 		 *     options.i  -> installedChunks
 		 *     options.ic -> installedCssChunks
+		 *     options.cc -> cssChunks
 		 *     options.el -> deferredModules list
 		 *     options.pl -> chunkPreloadMap
 		 *     options.pf -> chunkPrefetchMap
@@ -382,6 +383,14 @@
 					}
 				}
 
+				// Ensure CSS for installed chunks
+				for (i = 0; i < installedChunks.length; i++) {
+					var chunkId = installedChunks[i];
+					if (options.cc[chunkId]) {
+						promises.push(options.r.e(chunkId));
+					}
+				}
+
 				// Load dependencies:
 				for (i = 0; i < options.dp.length; i++) {
 					promises.push(global.require.load(options.dp[i]));
@@ -403,7 +412,7 @@
 				}
 
 				for (i = 0; i < installedChunks.length; i++) {
-					var chunkId = installedChunks[i];
+					chunkId = installedChunks[i];
 					preFetchLoadJsonp(chunkId);
 					preFetchLoadJsonp(chunkId, promise);
 				}
@@ -524,7 +533,7 @@
 
 				// CSS chunk loading
 				var installedChunkCss = options.ic[chunkId];
-				if (installedChunkCss !== 0) {
+				if (installedChunkCss !== 0 && options.cc[chunkId]) {
 					if (installedChunkCss) {
 						promise = installedChunkCss;
 					} else {
