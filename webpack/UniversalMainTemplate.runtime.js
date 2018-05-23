@@ -123,17 +123,40 @@
 			maxRetries = maxRetries || 10;
 			var doc = document;
 			function loader(resolve, reject, retryCount) {
-				var script = doc.createElement("script");
-				script.charset = "utf-8";
-				script.timeout = timeout;
-				if (loadScript.nonce) {
-					script.setAttribute("nonce", loadScript.nonce);
+				var script;
+				var existingScriptTags = doc.getElementsByTagName("script");
+				for (var i = 0; i < existingScriptTags.length; i++) {
+					var tag = existingScriptTags[i];
+					if (tag.getAttribute("data-src") === src) {
+						if (!tag.getAttribute("src")) {
+							resolve();
+							return;
+						}
+						script = tag;
+						break;
+					}
+					if (tag.getAttribute("src") === src) {
+						script = tag;
+						break;
+					}
 				}
-				script.async = true;
+				if (script) {
+					script.onerror = script.onload = onScriptComplete;
+				} else {
+					script = doc.createElement("script");
+					script.charset = "utf-8";
+					script.timeout = timeout;
+					if (loadScript.nonce) {
+						script.setAttribute("nonce", loadScript.nonce);
+					}
+					script.async = true;
+					script.onerror = script.onload = onScriptComplete;
+					script.src = src;
+				}
+				doc.head.appendChild(script);
 				var timeoutTimer = setTimeout(function() {
 					onScriptComplete({ type: "timeout", target: script });
 				}, timeout * 1000);
-				script.onerror = script.onload = onScriptComplete;
 				function onScriptComplete(event) {
 					// avoid mem leaks in IE.
 					script.onerror = script.onload = null;
@@ -167,8 +190,6 @@
 							resolve();
 					}
 				}
-				script.src = src;
-				doc.head.appendChild(script);
 			}
 			var rr = {};
 			var promise = new Promise(function(resolve, reject) {
@@ -187,26 +208,42 @@
 			maxRetries = maxRetries || 10;
 			var doc = document;
 			function loader(resolve, reject, retryCount) {
+				var link;
 				var existingLinkTags = doc.getElementsByTagName("link");
 				for (var i = 0; i < existingLinkTags.length; i++) {
 					var tag = existingLinkTags[i];
-					var dataHref =
-						tag.getAttribute("data-href") || tag.getAttribute("href");
-					if (tag.rel === "stylesheet" && dataHref === href) return resolve();
+					if (tag.rel === "stylesheet") {
+						if (tag.getAttribute("data-href") === href) {
+							link = tag;
+							break;
+						}
+						if (tag.getAttribute("href") === href) {
+							link = tag;
+							break;
+						}
+					}
 				}
 				var existingStyleTags = doc.getElementsByTagName("style");
 				for (i = 0; i < existingStyleTags.length; i++) {
 					tag = existingStyleTags[i];
-					dataHref = tag.getAttribute("data-href");
-					if (dataHref === href) return resolve();
+					if (tag.getAttribute("data-href") === href) {
+						resolve();
+						return;
+					}
 				}
-				var link = doc.createElement("link");
-				link.rel = "stylesheet";
-				link.type = "text/css";
+				if (link) {
+					link.onerror = link.onload = onScriptComplete;
+				} else {
+					link = doc.createElement("link");
+					link.rel = "stylesheet";
+					link.type = "text/css";
+					link.onerror = link.onload = onScriptComplete;
+					link.href = href;
+					doc.head.appendChild(link);
+				}
 				var timeoutTimer = setTimeout(function() {
 					onScriptComplete({ type: "timeout", target: link });
 				}, timeout * 1000);
-				link.onerror = link.onload = onScriptComplete;
 				function onScriptComplete(event) {
 					// avoid mem leaks in IE.
 					link.onerror = link.onload = null;
@@ -240,8 +277,6 @@
 							resolve();
 					}
 				}
-				link.href = href;
-				doc.head.appendChild(link);
 			}
 			var rr = {};
 			var promise = new Promise(function(resolve, reject) {
