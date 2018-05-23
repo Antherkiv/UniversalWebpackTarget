@@ -2,10 +2,10 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const universalTarget = require('./webpack/universalTarget');
-const PluggablePlugin = require('./webpack/PluggablePlugin');
 const EntrySymlinkPlugin = require('./webpack/EntrySymlinkPlugin');
+const UniversalCssExtractPlugin = require('./webpack/UniversalCssExtractPlugin');
+const PluggablePlugin = require('./webpack/PluggablePlugin');
+const universalTarget = require('./webpack/universalTarget');
 
 const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 
@@ -47,7 +47,7 @@ function factory(options) {
         {
           test: /\.s?[ac]ss$/,
           use: [
-            development ? 'style-loader' : MiniCssExtractPlugin.loader,
+            development ? 'style-loader' : UniversalCssExtractPlugin.loader,
             'css-loader',
             'postcss-loader',
             'sass-loader',
@@ -64,7 +64,7 @@ function factory(options) {
     },
 
     plugins: [
-      new MiniCssExtractPlugin({
+      new UniversalCssExtractPlugin({
         filename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
       }),
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),

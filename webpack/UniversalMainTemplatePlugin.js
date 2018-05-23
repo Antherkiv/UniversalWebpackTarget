@@ -8,18 +8,12 @@
 */
 "use strict";
 
-const fs = require("fs");
-const path = require("path");
-
 const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
 
 const intersect = require("webpack/lib/util/SetHelpers").intersect;
 const Chunk = require("webpack/lib/Chunk");
-
-const NS = path.dirname(
-	fs.realpathSync(require("mini-css-extract-plugin").loader)
-);
+const MainTemplate = require("webpack/lib/MainTemplate");
 
 // from webpack/lib/Chunk.getAllAsyncChunks()
 // Monkey-patch so it also includes deferred chunks
@@ -50,75 +44,75 @@ function getAllAsyncChunks() {
 }
 Chunk.prototype.getAllAsyncChunks = getAllAsyncChunks;
 
+// from webpack/lib/web/JsonpMainTemplatePlugin
+// Monkey-patch MainTemplate so it has getAssetPathSrc() instead
+function getAssetPathSrc(
+	path,
+	hash,
+	chunk,
+	chunkIdExpression,
+	contentHashType
+) {
+	const chunkMaps = chunk.getChunkMaps();
+	return this.getAssetPath(path, {
+		hash: `" + ${this.renderCurrentHashCode(hash)} + "`,
+		hashWithLength: length =>
+			`" + ${this.renderCurrentHashCode(hash, length)} + "`,
+		chunk: {
+			id: `" + ${chunkIdExpression} + "`,
+			hash: `" + ${JSON.stringify(chunkMaps.hash)}[${chunkIdExpression}] + "`,
+			hashWithLength(length) {
+				const shortChunkHashMap = Object.create(null);
+				for (const chunkId of Object.keys(chunkMaps.hash)) {
+					if (typeof chunkMaps.hash[chunkId] === "string")
+						shortChunkHashMap[chunkId] = chunkMaps.hash[chunkId].substr(
+							0,
+							length
+						);
+				}
+				return `" + ${JSON.stringify(
+					shortChunkHashMap
+				)}[${chunkIdExpression}] + "`;
+			},
+			name: `" + (${JSON.stringify(
+				chunkMaps.name
+			)}[${chunkIdExpression}]||${chunkIdExpression}) + "`,
+			contentHash: {
+				[contentHashType]: `" + ${JSON.stringify(
+					chunkMaps.contentHash[contentHashType]
+				)}[${chunkIdExpression}] + "`
+			},
+			contentHashWithLength: {
+				[contentHashType]: length => {
+					const shortContentHashMap = {};
+					const contentHash = chunkMaps.contentHash[contentHashType];
+					for (const chunkId of Object.keys(contentHash)) {
+						if (typeof contentHash[chunkId] === "string") {
+							shortContentHashMap[chunkId] = contentHash[chunkId].substr(
+								0,
+								length
+							);
+						}
+					}
+					return `" + ${JSON.stringify(
+						shortContentHashMap
+					)}[${chunkIdExpression}] + "`;
+				}
+			}
+		},
+		contentHashType
+	});
+}
+MainTemplate.prototype.getAssetPathSrc = getAssetPathSrc;
+
 class UniversalMainTemplatePlugin {
 	constructor(options) {
 		this.universalName = options.universalName;
 		this.withRuntime = options.main;
-		this.cssFilename = options.cssFilename;
 	}
 
 	apply(mainTemplate) {
 		const withRuntime = this.withRuntime;
-		const cssFilename = this.cssFilename;
-		const getScriptSrc = (
-			contentHashType,
-			chunkFilename,
-			hash,
-			chunk,
-			chunkIdExpression
-		) => {
-			const chunkMaps = chunk.getChunkMaps();
-			return mainTemplate.getAssetPath(JSON.stringify(chunkFilename), {
-				hash: `" + ${mainTemplate.renderCurrentHashCode(hash)} + "`,
-				hashWithLength: length =>
-					`" + ${mainTemplate.renderCurrentHashCode(hash, length)} + "`,
-				chunk: {
-					id: `" + ${chunkIdExpression} + "`,
-					hash: `" + ${JSON.stringify(
-						chunkMaps.hash
-					)}[${chunkIdExpression}] + "`,
-					hashWithLength(length) {
-						const shortChunkHashMap = Object.create(null);
-						for (const chunkId of Object.keys(chunkMaps.hash)) {
-							if (typeof chunkMaps.hash[chunkId] === "string")
-								shortChunkHashMap[chunkId] = chunkMaps.hash[chunkId].substr(
-									0,
-									length
-								);
-						}
-						return `" + ${JSON.stringify(
-							shortChunkHashMap
-						)}[${chunkIdExpression}] + "`;
-					},
-					name: `" + (${JSON.stringify(
-						chunkMaps.name
-					)}[${chunkIdExpression}]||${chunkIdExpression}) + "`,
-					contentHash: {
-						[contentHashType]: `" + ${JSON.stringify(
-							chunkMaps.contentHash[contentHashType]
-						)}[${chunkIdExpression}] + "`
-					},
-					contentHashWithLength: {
-						[contentHashType]: length => {
-							const shortContentHashMap = {};
-							const contentHash = chunkMaps.contentHash[contentHashType];
-							for (const chunkId of Object.keys(contentHash)) {
-								if (typeof contentHash[chunkId] === "string") {
-									shortContentHashMap[chunkId] = contentHash[chunkId].substr(
-										0,
-										length
-									);
-								}
-							}
-							return `" + ${JSON.stringify(
-								shortContentHashMap
-							)}[${chunkIdExpression}] + "`;
-						}
-					}
-				},
-				contentHashType
-			});
-		};
 		mainTemplate.hooks.localVars.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
@@ -146,20 +140,11 @@ class UniversalMainTemplatePlugin {
 					)
 				);
 
-				const cssChunks = {};
-				for (const c of chunk.getAllAsyncChunks()) {
-					for (const module of c.modulesIterable) {
-						if (module.type === NS) {
-							cssChunks[c.id] = 1;
-							break;
-						}
-					}
-				}
-
 				const chunkMaps = chunk.getChildIdsByOrdersMap();
 				return Template.asString([
-					"// The module cache",
-					"var installedModules = {};",
+					source,
+					"",
+					"var webpackUniversalOptions = {};",
 					"",
 					"// object to store loaded and loading Javascript chunks",
 					"// undefined = chunk not loaded, null = chunk preloaded/prefetched",
@@ -170,29 +155,16 @@ class UniversalMainTemplatePlugin {
 					),
 					"};",
 					"",
-					"// object to store loaded CSS chunks",
-					"var installedCssChunks = {};",
-					"",
-					"// object with valid css chunks",
-					`var cssChunks = ${JSON.stringify(cssChunks)};`,
-					"",
 					"// script path function",
 					"function scriptSrc(chunkId) {",
 					Template.indent([
-						`return ${getScriptSrc(
-							"javascript",
-							mainTemplate.outputOptions.chunkFilename,
+						`return ${mainTemplate.getAssetPathSrc(
+							JSON.stringify(mainTemplate.outputOptions.chunkFilename),
 							hash,
 							chunk,
-							"chunkId"
+							"chunkId",
+							"javascript"
 						)}`
-					]),
-					"}",
-					"",
-					"// css path function",
-					"function cssSrc(chunkId) {",
-					Template.indent([
-						`return ${getScriptSrc(NS, cssFilename, hash, chunk, "chunkId")}`
 					]),
 					"}",
 					"",
@@ -226,14 +198,6 @@ class UniversalMainTemplatePlugin {
 				]);
 			}
 		);
-		mainTemplate.hooks.requireEnsure.tap(
-			"UniversalMainTemplatePlugin",
-			(source, chunk, hash) => {
-				// Remove any requireEnsure, in case it's needed, it has to go
-				// to UniversalMainTemplatePlugin.runtime.js
-				return "";
-			}
-		);
 		mainTemplate.hooks.requireExtensions.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
@@ -251,13 +215,13 @@ class UniversalMainTemplatePlugin {
 				]);
 			}
 		);
-		mainTemplate.hooks.startup.tap(
+		mainTemplate.hooks.beforeStartup.tap(
 			"UniversalMainTemplatePlugin",
 			(source, chunk, hash) => {
 				return Template.asString([
+					source,
 					"",
-					"global.webpackUniversal = global.webpackUniversal || [];",
-					"return global.webpackUniversal.push({",
+					"Object.assign(webpackUniversalOptions, {",
 					Template.indent(
 						[
 							"u: __universal__",
@@ -275,6 +239,16 @@ class UniversalMainTemplatePlugin {
 						].join(",\n")
 					),
 					"});"
+				]);
+			}
+		);
+		mainTemplate.hooks.startup.tap(
+			"UniversalMainTemplatePlugin",
+			(source, chunk, hash) => {
+				return Template.asString([
+					"",
+					"global.webpackUniversal = global.webpackUniversal || [];",
+					"return global.webpackUniversal.push(webpackUniversalOptions);"
 				]);
 			}
 		);
