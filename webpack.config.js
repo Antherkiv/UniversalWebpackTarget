@@ -19,14 +19,7 @@ function factory(options) {
       publicPath: 'libs/' + options.name + '/',
       path: path.resolve(__dirname, 'libs', options.name),
     },
-    target: universalTarget(
-      Object.assign(
-        {
-          cssFilename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
-        },
-        options,
-      ),
-    ),
+    target: universalTarget(options),
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.node'],
@@ -69,7 +62,15 @@ function factory(options) {
       }),
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
       new EntrySymlinkPlugin(),
-      new PluggablePlugin(options.main, path.resolve(__dirname, 'libs'), options.imports),
+      new PluggablePlugin(
+        Object.assign(
+          {
+            dll: !options.withRuntime,
+            libsPath: path.resolve(__dirname, 'libs'),
+          },
+          options,
+        ),
+      ),
     ],
 
     externals: {
@@ -109,7 +110,7 @@ module.exports = [
     entry: {
       client: ['./src/client'],
     },
-    main: true,
+    withRuntime: true,
     imports: ['Base', 'main'],
   }),
 
@@ -118,7 +119,7 @@ module.exports = [
     entry: {
       server: ['./src/server'],
     },
-    main: true,
+    withRuntime: true,
     server: true,
     imports: ['Base', 'main'],
   }),

@@ -108,7 +108,7 @@ MainTemplate.prototype.getAssetPathSrc = getAssetPathSrc;
 class UniversalMainTemplatePlugin {
 	constructor(options) {
 		this.universalName = options.universalName;
-		this.withRuntime = options.main;
+		this.withRuntime = options.withRuntime;
 	}
 
 	apply(mainTemplate) {

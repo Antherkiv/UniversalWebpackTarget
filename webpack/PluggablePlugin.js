@@ -25,14 +25,14 @@ reference.to = function(name) {
 };
 
 class PluggablePlugin {
-	constructor(main, libsPath, imports) {
-		this.main = main;
-		this.libsPath = libsPath;
-		this.imports = imports;
+	constructor(options) {
+		this.dll = options.dll;
+		this.libsPath = options.libsPath;
+		this.imports = options.imports;
 	}
 
 	apply(compiler) {
-		if (!this.main) {
+		if (this.dll) {
 			new DllPlugin({
 				name: `${compiler.options.output.publicPath}${
 					compiler.options.output.filename
