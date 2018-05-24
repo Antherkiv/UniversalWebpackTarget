@@ -313,7 +313,7 @@ class UniversalMainTemplatePlugin {
 					}
 				);
 				const runtimeSource = Template.getFunctionContent(
-					require("webpack/lib/web/JsonpMainTemplate.runtime.js")
+					require("./UniversalMainTemplate.runtime.js")
 				)
 					.replace(/\/\/\$semicolon/g, ";")
 					.replace(/\$require\$/g, mainTemplate.requireFn)
