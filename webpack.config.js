@@ -78,9 +78,19 @@ function factory(options) {
       development ? new webpack.HotModuleReplacementPlugin() : new DummyPlugin(),
     ],
 
-    externals: {
-      'unicode/category/So': '{}', // Ignore unicode/category/So used (only in the server side) by node-slug.
-    },
+    externals: [
+      function(context, request, callback) {
+        if (/^(webpack|mini-css-extract-plugin)\b/.test(request)) {
+          return callback(null, 'commonjs ' + request);
+        } else if (/^(\.\/webpack)\b/.test(request)) {
+          return callback(null, 'commonjs ../' + request);
+        }
+        callback();
+      },
+      {
+        'unicode/category/So': '{}', // Ignore unicode/category/So used (only in the server side) by node-slug.
+      },
+    ],
 
     optimization: {
       minimize: false,
