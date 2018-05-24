@@ -845,12 +845,12 @@
 			var loadDependencies;
 			var checkDeferredModules;
 			if (SERVER_SIDE) {
-				options.r.e = requireEnsureNode;
+				options.r.eu = requireEnsureNode;
 				options.r.oe = onErrorNode;
 				loadDependencies = loadDependenciesNode;
 				checkDeferredModules = checkDeferredModulesNode;
 			} else {
-				options.r.e = requireEnsureJsonp;
+				options.r.eu = requireEnsureJsonp;
 				options.r.oe = onErrorJsonp;
 				loadDependencies = loadDependenciesJsonp;
 				checkDeferredModules = checkDeferredModulesJsonp;
