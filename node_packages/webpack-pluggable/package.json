@@ -1,0 +1,26 @@
+{
+  "name": "webpack-pluggable",
+  "version": "0.1.0",
+  "description": "Webpack 4 pluggable plugins",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kronuz/UniversalWebpackTarget.git"
+  },
+  "keywords": [
+    "universal",
+    "isomorphic",
+    "webpack",
+    "pluggable",
+    "plugin"
+  ],
+  "author": "Germán Méndez Bravo (Kronuz)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Kronuz/UniversalWebpackTarget/issues"
+  },
+  "homepage": "https://github.com/Kronuz/UniversalWebpackTarget#readme"
+}

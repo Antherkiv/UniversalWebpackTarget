@@ -2,10 +2,7 @@
 
 const path = require('path');
 const webpack = require('webpack');
-const EntrySymlinkPlugin = require('./webpack/EntrySymlinkPlugin');
-const MiniCssExtractPlugin = require('./webpack/MiniCssExtractPlugin');
-const PluggablePlugin = require('./webpack/PluggablePlugin');
-const universalTarget = require('./webpack/universalTarget');
+const pluggable = require('webpack-pluggable');
 
 const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 
@@ -23,7 +20,7 @@ function factory(options) {
       publicPath: 'libs/' + options.name + '/',
       path: path.resolve(__dirname, 'libs', options.name),
     },
-    target: universalTarget(options),
+    target: pluggable.target(options),
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.node'],
@@ -44,7 +41,7 @@ function factory(options) {
         {
           test: /\.s?[ac]ss$/,
           use: [
-            development ? 'style-loader' : MiniCssExtractPlugin.loader,
+            development ? 'style-loader' : pluggable.MiniCssExtractPlugin.loader,
             'css-loader',
             'postcss-loader',
             'sass-loader',
@@ -61,12 +58,12 @@ function factory(options) {
     },
 
     plugins: [
-      new MiniCssExtractPlugin({
+      new pluggable.MiniCssExtractPlugin({
         filename: development ? '[name].css' : '[name].[contenthash].[chunkhash].css',
       }),
       development ? new webpack.NamedModulesPlugin() : new webpack.HashedModuleIdsPlugin(),
-      new EntrySymlinkPlugin(),
-      new PluggablePlugin(
+      new pluggable.EntrySymlinkPlugin(),
+      new pluggable.PluggablePlugin(
         Object.assign(
           {
             dll: options.dll,
@@ -80,10 +77,8 @@ function factory(options) {
 
     externals: [
       function(context, request, callback) {
-        if (/^(webpack|mini-css-extract-plugin)\b/.test(request)) {
+        if (/^webpack\b/.test(request)) {
           return callback(null, 'commonjs ' + request);
-        } else if (/^(\.\/webpack)\b/.test(request)) {
-          return callback(null, 'commonjs ../' + request);
         }
         callback();
       },
