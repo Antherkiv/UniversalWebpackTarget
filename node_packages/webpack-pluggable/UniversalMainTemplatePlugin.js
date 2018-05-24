@@ -268,9 +268,7 @@ class UniversalMainTemplatePlugin {
 				const runtimeSource = withRuntime
 					? Template.asString([
 							"var __debug_runtime__ = false;",
-							Template.getFunctionContent(
-								require("./UniversalMainTemplate.runtime.js")
-							)
+							Template.getFunctionContent(require("./Universal.runtime.js"))
 					  ])
 					: "";
 
