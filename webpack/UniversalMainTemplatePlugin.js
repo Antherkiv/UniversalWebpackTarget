@@ -256,9 +256,12 @@ class UniversalMainTemplatePlugin {
 			"UniversalMainTemplatePlugin",
 			(source, chunk) => {
 				const runtimeSource = withRuntime
-					? Template.getFunctionContent(
-							require("./UniversalMainTemplate.runtime.js")
-					  )
+					? Template.asString([
+							"var __debug_runtime__ = false;",
+							Template.getFunctionContent(
+								require("./UniversalMainTemplate.runtime.js")
+							)
+					  ])
 					: "";
 
 				return new ConcatSource(
