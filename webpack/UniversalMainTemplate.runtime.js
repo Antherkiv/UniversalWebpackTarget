@@ -22,7 +22,7 @@
 			glob = win.global = win.global || win;
 		}
 
-		var __jailbait__ = !__debug_runtime__ && SERVER_SIDE;
+		var __jailbait__ = !__debug_runtime__ && !SERVER_SIDE;
 		var log = __debug_runtime__ ? console.log : function() {};
 		log.group = __debug_runtime__ ? console.group : function() {};
 		log.groupEnd = __debug_runtime__ ? console.groupEnd : function() {};
@@ -119,6 +119,7 @@
 				});
 			} else {
 				stop = [
+					// Using Colossal font (http://www.figlet.org)
 					"",
 					" .d8888b.  888                       888",
 					"d88P  Y88b 888                       888",
@@ -195,29 +196,29 @@
 			return waitTime;
 		}
 
-		function loadScript(src, timeout, maxRetries) {
+		function loadScript(request, timeout, maxRetries) {
 			// This comes mainly from webpack/lib/web/JsonpMainTemplatePlugin.js
 			// [https://github.com/webpack/webpack/tree/v4.8.3]
-			log("🕸", "loadScript(", src, ")");
+			log("🕸", "loadScript(", request, ")");
 			timeout = timeout || DEFAULT_TIMEOUT;
 			maxRetries = maxRetries || DEFAULT_MAX_RETRIES;
 			function loader(resolve, reject, retryCount) {
-				var script;
-				var btldr = glob._btldr[src];
+				var target;
+				var btldr = glob._btldr[request];
 				var btldr_type = typeof btldr;
 				if (btldr_type === "undefined" || btldr_type === "boolean") {
-					var existingScriptTags = doc.getElementsByTagName("script");
-					for (var i = 0; i < existingScriptTags.length; i++) {
-						var tag = existingScriptTags[i];
-						if (tag.getAttribute("btldr") === src) {
-							script = tag;
+					var existingTags = doc.getElementsByTagName("script");
+					for (var i = 0; i < existingTags.length; i++) {
+						var tag = existingTags[i];
+						if (tag.getAttribute("btldr") === request) {
+							target = tag;
 							break;
 						}
 					}
 				}
-				function onScriptComplete(event) {
+				function onComplete(event) {
 					// avoid mem leaks in IE.
-					script.onerror = script.onload = null;
+					target.onerror = target.onload = null;
 					clearTimeout(timeoutTimer);
 					switch (event.type) {
 						case "error":
@@ -227,8 +228,8 @@
 									event && (event.type === "load" ? "missing" : event.type);
 								var realSrc = event && event.target && event.target.src;
 								var error = new Error(
-									"Loading script '" +
-										src +
+									"Loading Script '" +
+										request +
 										"' failed.\n(" +
 										errorType +
 										": " +
@@ -236,8 +237,8 @@
 										")"
 								);
 								error.type = errorType;
-								error.request = realSrc;
-								log("💥", "loadScript(", src, ")", "reject()", error);
+								error.request = request;
+								log("💥", "loadScript(", request, ")", "reject()", error);
 								reject(error);
 							} else {
 								setTimeout(function() {
@@ -246,31 +247,27 @@
 							}
 							break;
 						default:
-							log("👍", "loadScript(", src, ")", "resolve()");
+							log("👍", "loadScript(", request, ")", "resolve()");
 							resolve();
 					}
 				}
 				var timeoutTimer = setTimeout(function() {
-					log("⌛️", src, "timed out!");
-					onScriptComplete({ type: "timeout", target: script });
+					log("⌛️", request, "timed out!");
+					onComplete({ type: "timeout", target: target });
 				}, timeout * 1000);
-				if (script) {
-					glob._btldr[src] = function(s) {
-						log("", "btldr callback", src, s);
-						onScriptComplete({ type: s ? "load" : "error", target: script });
+				if (target) {
+					glob._btldr[request] = function(s) {
+						log("", "btldr callback", request, s);
+						onComplete({ type: s ? "load" : "error", target: target });
 					};
-					if (btldr_type === "boolean") glob._btldr[src](btldr);
+					if (btldr_type === "boolean") glob._btldr[request](btldr);
 				} else {
-					script = doc.createElement("script");
-					script.charset = "utf-8";
-					script.timeout = timeout;
-					if (loadScript.nonce) {
-						script.setAttribute("nonce", loadScript.nonce);
-					}
-					script.async = 1;
-					script.onerror = script.onload = onScriptComplete;
-					script.src = src;
-					doc.head.appendChild(script);
+					target = doc.createElement("script");
+					target.async = true;
+					target.timeout = timeout;
+					target.onerror = target.onload = onComplete;
+					target.src = request;
+					doc.head.appendChild(target);
 				}
 			}
 			var rr = {};
@@ -279,43 +276,43 @@
 				rr.reject = reject;
 				loader(resolve, reject, 0);
 			});
-			return wrapPromise(promise, rr.resolve, rr.reject, src);
+			return wrapPromise(promise, rr.resolve, rr.reject, request);
 		}
 
-		function loadCss(href, timeout, maxRetries) {
+		function loadCss(request, timeout, maxRetries) {
 			// This comes mainly from mini-css-extract-plugin/src/index.js
 			// and partially from webpack/lib/web/JsonpMainTemplatePlugin.js
 			// [https://github.com/webpack-contrib/mini-css-extract-plugin/tree/v0.4.0]
-			log("🕸 loadCss(", href, ")");
+			log("🕸", "loadCss(", request, ")");
 			timeout = timeout || DEFAULT_TIMEOUT;
 			maxRetries = maxRetries || DEFAULT_MAX_RETRIES;
 			function loader(resolve, reject, retryCount) {
-				var link;
-				var btldr = glob._btldr[href];
+				var target;
+				var btldr = glob._btldr[request];
 				var btldr_type = typeof btldr;
 				if (btldr_type === "undefined" || btldr_type === "boolean") {
-					var existingLinkTags = doc.getElementsByTagName("link");
-					for (var i = 0; i < existingLinkTags.length; i++) {
-						var tag = existingLinkTags[i];
+					var existingTags = doc.getElementsByTagName("link");
+					for (var i = 0; i < existingTags.length; i++) {
+						var tag = existingTags[i];
 						if (tag.rel === "stylesheet") {
-							if (tag.getAttribute("btldr") === href) {
-								link = tag;
+							if (tag.getAttribute("btldr") === request) {
+								target = tag;
 								break;
 							}
 						}
 					}
-				}
-				var existingStyleTags = doc.getElementsByTagName("style");
-				for (i = 0; i < existingStyleTags.length; i++) {
-					tag = existingStyleTags[i];
-					if (tag.getAttribute("btldr") === href) {
-						resolve();
-						return;
+					existingTags = doc.getElementsByTagName("style");
+					for (i = 0; i < existingTags.length; i++) {
+						tag = existingTags[i];
+						if (tag.getAttribute("btldr") === request) {
+							resolve();
+							return;
+						}
 					}
 				}
-				function onScriptComplete(event) {
+				function onComplete(event) {
 					// avoid mem leaks in IE.
-					link.onerror = link.onload = null;
+					target.onerror = target.onload = null;
 					clearTimeout(timeoutTimer);
 					switch (event.type) {
 						case "error":
@@ -326,7 +323,7 @@
 								var realSrc = event && event.target && event.target.href;
 								var error = new Error(
 									"Loading CSS '" +
-										href +
+										request +
 										"' failed.\n(" +
 										errorType +
 										": " +
@@ -334,8 +331,8 @@
 										")"
 								);
 								error.type = errorType;
-								error.request = realSrc;
-								log("💥", "loadScript(", href, ")", "reject()", error);
+								error.request = request;
+								log("💥", "loadCss(", request, ")", "reject()", error);
 								reject(error);
 							} else {
 								setTimeout(function() {
@@ -344,26 +341,27 @@
 							}
 							break;
 						default:
-							log("👍", "loadScript(", href, ")", "resolve()");
+							log("👍", "loadCss(", request, ")", "resolve()");
 							resolve();
 					}
 				}
 				var timeoutTimer = setTimeout(function() {
-					log("⌛️", href, "timed out!");
-					onScriptComplete({ type: "timeout", target: link });
+					log("⌛️", request, "timed out!");
+					onComplete({ type: "timeout", target: target });
 				}, timeout * 1000);
-				if (link) {
-					glob._btldr[href] = function(s) {
-						onScriptComplete({ type: s ? "load" : "error", target: link });
+				if (target) {
+					glob._btldr[request] = function(s) {
+						log("", "btldr callback", request, s);
+						onComplete({ type: s ? "load" : "error", target: target });
 					};
-					if (btldr_type === "boolean") glob._btldr[href](btldr);
+					if (btldr_type === "boolean") glob._btldr[request](btldr);
 				} else {
-					link = doc.createElement("link");
-					link.rel = "stylesheet";
-					link.type = "text/css";
-					link.onerror = link.onload = onScriptComplete;
-					link.href = href;
-					doc.head.appendChild(link);
+					target = doc.createElement("link");
+					target.rel = "stylesheet";
+					target.type = "text/css";
+					target.onerror = target.onload = onComplete;
+					target.href = request;
+					doc.head.appendChild(target);
 				}
 			}
 			var rr = {};
@@ -372,7 +370,7 @@
 				rr.reject = reject;
 				loader(resolve, reject, 0);
 			});
-			return wrapPromise(promise, rr.resolve, rr.reject, href);
+			return wrapPromise(promise, rr.resolve, rr.reject, request);
 		}
 
 		function isPromise(obj) {
@@ -669,10 +667,6 @@
 						if (typeof options.i[chunkId] === "undefined") {
 							options.i[chunkId] = null;
 							var link = doc.createElement("link");
-							link.charset = "utf-8";
-							if (options.r.nc) {
-								link.setAttribute("nonce", options.r.nc);
-							}
 							if (async) {
 								link.rel = "prefetch";
 							} else {
@@ -709,23 +703,23 @@
 						promise = installedChunkScript;
 					} else {
 						// setup Promise in chunk cache
-						promise = loadScript(scriptSrcJsonp(chunkId))
+						var request = scriptSrcJsonp(chunkId);
+						promise = loadScript(request)
 							.then(function() {
 								var chunk = options.i[chunkId];
 								if (chunk !== 0) {
 									var errorType = "missing";
-									var realSrc = event && event.target && event.target.src;
 									var error = new Error(
 										"Loading chunk '" +
 											chunkId +
 											"' failed.\n(" +
 											errorType +
 											": " +
-											realSrc +
+											request +
 											")"
 									);
 									error.type = errorType;
-									error.request = realSrc;
+									error.request = request;
 									throw error;
 								}
 							})
