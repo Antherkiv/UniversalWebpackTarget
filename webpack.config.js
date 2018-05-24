@@ -9,6 +9,10 @@ const universalTarget = require('./webpack/universalTarget');
 
 const development = !!process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
 
+class DummyPlugin {
+  apply(compiler) {}
+}
+
 function factory(options) {
   return {
     name: options.name,
@@ -71,6 +75,7 @@ function factory(options) {
           options,
         ),
       ),
+      development ? new webpack.HotModuleReplacementPlugin() : new DummyPlugin(),
     ],
 
     externals: {
