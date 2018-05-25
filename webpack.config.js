@@ -5,7 +5,8 @@ const webpack = require('webpack');
 const pluggable = require('webpack-pluggable');
 
 const development =
-  process.env.NODE_ENV === 'development' || process.env['npm_lifecycle_script'].match(/\bdevelopment\b/);
+  process.env.NODE_ENV === 'development' ||
+  (process.env['npm_lifecycle_script'] || '').match(/\bdevelopment\b/);
 
 class DummyPlugin {
   apply(compiler) {}
