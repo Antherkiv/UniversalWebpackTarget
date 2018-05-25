@@ -6,7 +6,7 @@ const pluggable = require('webpack-pluggable');
 
 const development =
   process.env.NODE_ENV === 'development' ||
-  (process.env['npm_lifecycle_script'] || '').match(/\bdevelopment\b/);
+  /\bdevelopment\b/.test(process.env['npm_lifecycle_script'] || '');
 
 class DummyPlugin {
   apply(compiler) {}
@@ -80,7 +80,9 @@ function factory(options) {
     externals: [
       function(context, request, callback) {
         if (/^webpack\b/.test(request)) {
-          return callback(null, 'commonjs ' + request);
+          if (!/^webpack-hot-middleware\/client\b/.test(request)) {
+            return callback(null, 'commonjs ' + request);
+          }
         }
         callback();
       },
