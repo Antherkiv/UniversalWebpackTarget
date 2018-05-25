@@ -6,7 +6,7 @@
 	and partially from webpack/lib/node/NodeMainTemplate.runtime.js
 	[https://github.com/webpack/webpack/tree/v4.8.3]
 */
-/*globals hotAddUpdateChunk parentHotUpdateCallback document XMLHttpRequest $require$ $hotChunkFilename$ $hotMainFilename$ $crossOriginLoading$ */
+/*globals hotAddUpdateChunk parentHotUpdateCallback document XMLHttpRequest __require $require$ $hotChunkFilename$ $hotMainFilename$ $crossOriginLoading$ */
 module.exports = function() {
 	// eslint-disable-next-line no-unused-vars
 	function webpackHotUpdateCallback(chunkId, moreModules) {
@@ -16,14 +16,16 @@ module.exports = function() {
 
 	// eslint-disable-next-line no-unused-vars
 	function hotDownloadUpdateChunk(chunkId) {
+		var requestPath =
+			"/" + $require$.p.replace(/^\/|\/$/g, "") + "/" + $hotChunkFilename$;
 		if (typeof window === "undefined") {
-			var chunk = require("./" + $hotChunkFilename$);
+			var chunk = __require(requestPath);
 			hotAddUpdateChunk(chunk.id, chunk.modules);
 		} else {
 			var head = document.getElementsByTagName("head")[0];
 			var script = document.createElement("script");
 			script.charset = "utf-8";
-			script.src = $require$.p + $hotChunkFilename$;
+			script.src = requestPath;
 			$crossOriginLoading$;
 			head.appendChild(script);
 		}
@@ -31,9 +33,11 @@ module.exports = function() {
 
 	// eslint-disable-next-line no-unused-vars
 	function hotDownloadManifest(requestTimeout) {
+		var requestPath =
+			"/" + $require$.p.replace(/^\/|\/$/g, "") + "/" + $hotMainFilename$;
 		if (typeof window === "undefined") {
 			try {
-				var update = require("./" + $hotMainFilename$);
+				var update = __require(requestPath);
 			} catch (e) {
 				return Promise.resolve();
 			}
@@ -45,7 +49,6 @@ module.exports = function() {
 					return reject(new Error("No browser support"));
 				try {
 					var request = new XMLHttpRequest();
-					var requestPath = $require$.p + $hotMainFilename$;
 					request.open("GET", requestPath, true);
 					request.timeout = requestTimeout;
 					request.send(null);
