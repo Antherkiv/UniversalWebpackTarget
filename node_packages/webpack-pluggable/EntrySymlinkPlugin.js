@@ -6,6 +6,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const MemoryFileSystem = require("memory-fs");
 
 class EntrySymlinkPlugin {
 	apply(compiler) {
@@ -40,11 +41,15 @@ class EntrySymlinkPlugin {
 		compiler.hooks.afterEmit.tapAsync(
 			"EntrySymlinkPlugin",
 			(compiler, callback) => {
+				const FS =
+					compiler.outputFileSystem instanceof MemoryFileSystem
+						? compiler.outputFileSystem
+						: fs;
 				for (const ln of symlinks) {
-					if (fs.existsSync(ln.symlink)) {
-						fs.unlinkSync(ln.symlink);
+					if (FS.existsSync(ln.symlink)) {
+						FS.unlinkSync(ln.symlink);
 					}
-					fs.symlinkSync(ln.filename, ln.symlink);
+					FS.symlinkSync(ln.filename, ln.symlink);
 				}
 				callback();
 			}

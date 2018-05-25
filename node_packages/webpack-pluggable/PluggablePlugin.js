@@ -6,7 +6,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const glob = require("glob");
+const MemoryFileSystem = require("memory-fs");
 
 const DllPlugin = require("./DllPlugin");
 const DllReferencePlugin = require("webpack/lib/DllReferencePlugin");
@@ -46,9 +46,8 @@ class PluggablePlugin {
 
 		const errors = [];
 
-		compiler.hooks.beforeRun.tapAsync(
-			"PluggablePlugin",
-			(compiler, callback) => {
+		[compiler.hooks.run, compiler.hooks.watchRun].forEach(hook => {
+			hook.tapAsync("PluggablePlugin", (compiler, callback) => {
 				const promises = [];
 				imports.forEach(name => {
 					promises.push(reference.to(name));
@@ -57,11 +56,19 @@ class PluggablePlugin {
 					.then(() => {
 						imports.forEach(function(name) {
 							const plugins = [];
-							for (const file of glob.sync(
-								path.resolve(libsPath, name, "*.json")
-							)) {
-								if (path.basename(file) !== "manifest.json") {
-									const lib = JSON.parse(fs.readFileSync(file, "utf8"));
+							const FS =
+								compiler.outputFileSystem instanceof MemoryFileSystem
+									? compiler.outputFileSystem
+									: fs;
+							for (const file of FS.readdirSync(path.resolve(libsPath, name))) {
+								if (
+									typeof file === "string" &&
+									/\.json$/.test(file) &&
+									path.basename(file) !== "manifest.json"
+								) {
+									const lib = JSON.parse(
+										FS.readFileSync(path.resolve(libsPath, name, file), "utf8")
+									);
 									plugins.push(
 										new DllReferencePlugin({
 											manifest: lib,
@@ -79,8 +86,8 @@ class PluggablePlugin {
 					.catch(error => {
 						callback(error);
 					});
-			}
-		);
+			});
+		});
 		compiler.hooks.thisCompilation.tap("PluggablePlugin", compilation => {
 			if (errors.length) {
 				for (const name of errors) {
