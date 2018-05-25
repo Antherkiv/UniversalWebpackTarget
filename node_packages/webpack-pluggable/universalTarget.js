@@ -17,6 +17,7 @@ const NodeTargetPlugin = require("webpack/lib/node/NodeTargetPlugin");
 const UniversalTemplatePlugin = require("./UniversalTemplatePlugin");
 
 const ContextModule = require("webpack/lib/ContextModule");
+const ExternalModule = require("webpack/lib/ExternalModule");
 
 // Monkey patch ContextModule so it emits require() and import() add
 // 'module.exprContextCritical = false' to your webpack config to prevent:
@@ -25,16 +26,32 @@ ContextModule.prototype.getSourceForEmptyContext = function(id) {
 	return `function webpackEmptyContext(req) {
 	// If you want to avoid seeing "Critical dependency" warnings,
 	// add 'module.exprContextCritical = false' to your webpack config.
-	return global.require(req);
+	return __require(req);
 }`;
 };
 ContextModule.prototype.getSourceForEmptyAsyncContext = function(id) {
 	return `function webpackEmptyAsyncContext(req) {
 	// If you want to avoid seeing "Critical dependency" warnings,
 	// add 'module.exprContextCritical = false' to your webpack config.
-	return global.import(req);
+	return __import(req);
 }`;
 };
+
+ExternalModule.prototype.getSourceForCommonJsExternal = function(
+	moduleAndSpecifiers
+) {
+	if (!Array.isArray(moduleAndSpecifiers)) {
+		return `module.exports = __require(${JSON.stringify(moduleAndSpecifiers)});`;
+	}
+
+	const moduleName = moduleAndSpecifiers[0];
+	const objectLookup = moduleAndSpecifiers
+		.slice(1)
+		.map(r => `[${JSON.stringify(r)}]`)
+		.join("");
+	return `module.exports = __require(${moduleName})${objectLookup};`;
+};
+
 
 function universalTarget(options) {
 	options = Object.assign(

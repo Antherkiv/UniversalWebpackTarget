@@ -19,7 +19,7 @@ function factory(options) {
     entry: options.entry,
     output: {
       filename: development ? '[name].js' : '[name].[chunkhash].js',
-      publicPath: 'libs/' + options.name + '/',
+      publicPath: '/libs/' + options.name + '/',
       path: path.resolve(__dirname, 'libs', options.name),
     },
     target: pluggable.target(options),

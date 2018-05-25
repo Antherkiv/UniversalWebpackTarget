@@ -158,6 +158,11 @@
 		//  | |_| | | | | |\ V /  __/ |  \__ \ (_| | | |  _ <| |_| | | | | |_| | | | | | |  __/
 		//   \___/|_| |_|_| \_/ \___|_|  |___/\__,_|_| |_| \_\\__,_|_| |_|\__|_|_| |_| |_|\___|
 		//
+
+		function strip(request) {
+			return request.replace(/^\/|\/$/g, "");
+		}
+
 		var handleError =
 			glob.showFailureMessage ||
 			function(error) {
@@ -381,8 +386,8 @@
 		// global universal require/import
 
 		function universalRequireJsonp() {
-			if (glob.require) {
-				if (!glob.require.__universalWebpack) {
+			if (glob.__require) {
+				if (!glob.__require.__universalWebpack) {
 					throw new Error("An unknown require() is already installed!");
 				}
 				return;
@@ -426,29 +431,44 @@
 				return wrapPromise(Promise.resolve(), function() {}, function() {});
 			};
 			r.__universalWebpack = true;
-			glob.require = r;
+			glob.__require = r;
 		}
 
 		function universalImportJsonp() {
-			if (glob.import) {
-				if (!glob.import.__universalWebpack) {
+			if (glob.__import) {
+				if (!glob.__import.__universalWebpack) {
 					throw new Error("An unknown import() is already installed!");
 				}
 				return;
 			}
 
 			i = function(request) {
-				return glob.require.load(request).then(function() {
-					return glob.require(request);
+				return glob.__require.load(request).then(function() {
+					return glob.__require(request);
 				});
 			};
 			i.__universalWebpack = true;
-			glob.import = i;
+			glob.__import = i;
+		}
+
+		function universalRequireNode() {
+			if (glob.__require) {
+				if (!glob.__require.__universalWebpack) {
+					throw new Error("An unknown import() is already installed!");
+				}
+				return;
+			}
+
+			i = function(request) {
+				return require(strip(request));
+			};
+			i.__universalWebpack = true;
+			glob.__require = i;
 		}
 
 		function universalImportNode() {
-			if (glob.import) {
-				if (!glob.import.__universalWebpack) {
+			if (glob.__import) {
+				if (!glob.__import.__universalWebpack) {
 					throw new Error("An unknown import() is already installed!");
 				}
 				return;
@@ -456,15 +476,16 @@
 
 			i = function(request) {
 				return Promise.resolve().then(function() {
-					return require(request);
+					return require(strip(request));
 				});
 			};
 			i.__universalWebpack = true;
-			glob.import = i;
+			glob.__import = i;
 		}
 
 		if (SERVER_SIDE) {
 			// install a global import() and require()
+			universalRequireNode();
 			universalImportNode();
 		} else {
 			// install a global import() and require()
@@ -590,7 +611,7 @@
 				// Load dependencies
 				log.group("Load dependencies");
 				for (i = 0; i < options.dp.length; i++) {
-					promises.push(glob.require.load(options.dp[i]));
+					promises.push(glob.__require.load(options.dp[i]));
 				}
 				log.groupEnd();
 
@@ -603,9 +624,9 @@
 					},
 					promises
 				);
-				var requiredModule = glob.require.cache[request];
+				var requiredModule = glob.__require.cache[request];
 				if (typeof requiredModule === "undefined") {
-					glob.require.cache[request] = promise;
+					glob.__require.cache[request] = promise;
 				}
 
 				// Pre-fetching chunks
@@ -623,13 +644,13 @@
 				promise
 					.then(function() {
 						log("✅", "dependencies of", request, "loaded!");
-						var requiredModule = glob.require.cache[request];
+						var requiredModule = glob.__require.cache[request];
 						if (isPromise(requiredModule)) {
 							try {
-								glob.require.cache[request] = callback();
+								glob.__require.cache[request] = callback();
 								requiredModule.resolve();
 							} catch (error) {
-								delete glob.require.cache[request];
+								delete glob.__require.cache[request];
 								requiredModule.reject(error);
 							}
 						} else {
@@ -637,20 +658,20 @@
 						}
 					})
 					.catch(function(error) {
-						delete glob.require.cache[request];
+						delete glob.__require.cache[request];
 						handleError(error);
 					});
-				return glob.require.cache[request];
+				return glob.__require.cache[request];
 			}
 
 			// script path function
 			function scriptSrcJsonp(chunkId) {
-				return "/" + options.r.p + "" + options.s(chunkId);
+				return "/" + strip(options.r.p) + "/" + options.s(chunkId);
 			}
 
 			// css path function
 			function cssSrcJsonp(chunkId) {
-				return "/" + options.r.p + "" + options.sc(chunkId);
+				return "/" + strip(options.r.p) + "/" + options.sc(chunkId);
 			}
 
 			/**
@@ -809,7 +830,7 @@
 
 			// script path function
 			function scriptSrcNode(chunkId) {
-				return options.r.p + "" + options.s(chunkId);
+				return strip(options.r.p) + "/" + options.s(chunkId);
 			}
 
 			// This file contains only the entry chunk.
