@@ -12,5 +12,19 @@ declare module "*.ttf";
 declare module "*.woff";
 declare module "*.woff2";
 
+
 declare module "express";
 declare module "hogan-xpress";
+
+
+interface DomainMap {
+  [domain: string]: string;
+}
+
+// Pluggable interfaces:
+interface PluggableEntry {
+  Main: React.ComponentClass<any>;
+}
+interface Pluggable {
+  (): PluggableEntry;
+}

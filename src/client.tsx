@@ -1,9 +1,9 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import { Main } from './main';
-import { Other } from './other';
+declare var app: string;
 
-ReactDOM.hydrate(<Main />, document.getElementById('main'));
-
-ReactDOM.hydrate(<Other />, document.getElementById('other'));
+import(app).then((entry: Pluggable) => {
+  const { Main } = entry();
+  ReactDOM.hydrate(<Main />, document.getElementById('main'));
+});

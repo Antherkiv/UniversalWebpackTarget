@@ -3,12 +3,7 @@ import * as ReactDOMServer from 'react-dom/server';
 import * as express from 'express';
 import * as hogan from 'hogan-xpress';
 
-import { Main } from './main';
-import { Other } from './other';
-
 import webpack from 'webpack';
-import webpackDevMiddleware from 'webpack-dev-middleware';
-import webpackHotMiddleware from 'webpack-hot-middleware';
 const webpackConfig = require('../webpack.config.js');
 
 // Express
@@ -21,12 +16,12 @@ if (process.env.NODE_ENV === 'development') {
     ),
   );
   app.use(
-    webpackDevMiddleware(compiler, {
+    require('webpack-dev-middleware')(compiler, {
       publicPath: '/',
       serverSideRender: true,
     }),
   );
-  app.use(webpackHotMiddleware(compiler));
+  app.use(require('webpack-hot-middleware')(compiler));
 }
 
 app.set('view engine', 'html');
@@ -34,14 +29,29 @@ app.set('views', './');
 app.engine('html', hogan);
 
 app.get('/', (req: any, res: any) => {
-  res.locals.main = ReactDOMServer.renderToString(<Main />);
-  res.locals.other = ReactDOMServer.renderToString(<Other />);
-  res.status(200).render('index.html');
+  const domains: DomainMap = {
+    localhost: '/libs/app1/first.js',
+    'first.off': '/libs/app1/first.js',
+    'second.off': '/libs/app2/second.js',
+    'third.off': '/libs/app2/third.js',
+  };
+  const app = domains[req.hostname];
+  import(app)
+    .then((entry: Pluggable) => {
+      const { Main } = entry();
+      res.locals.app = JSON.stringify(app);
+      res.locals.main = ReactDOMServer.renderToString(<Main />);
+      res.status(200).render('index.html');
+    })
+    .catch((err: Error) => {
+      console.error(err);
+      res.status(500);
+    });
 });
 
 app.use('/', express.static('.'));
-app.set('port', process.env.PORT || 3000);
 
+app.set('port', process.env.PORT || 3000);
 app.listen(app.get('port'));
 
 console.info(

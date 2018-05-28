@@ -1,9 +1,8 @@
 import * as React from 'react';
-
 import { Hello } from './components/Hello';
 
 import(/* webpackChunkName: "test3" */ './test3').then(({ test3 }) => {
-  test3('other');
+  test3('second');
 });
 
-export const Other = () => <Hello name="other" compiler="TypeScript" framework="React" />;
+export const Main = () => <Hello name="second" compiler="TypeScript" framework="React" />;
