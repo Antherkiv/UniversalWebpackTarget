@@ -264,8 +264,8 @@ function processMessage(obj) {
           reporter.success();
         }
       }
-      if (applyUpdate) {
-        processUpdate(obj.hash, obj.modules, options);
+      if (applyUpdate && obj.action === "built") {
+        processUpdate(obj.name, obj.hash, obj.modules, options);
       }
       break;
     default:

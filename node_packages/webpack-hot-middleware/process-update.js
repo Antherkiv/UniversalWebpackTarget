@@ -4,17 +4,14 @@
  * Original copyright Tobias Koppers @sokra (MIT license)
  */
 
-/* global window __webpack_hash__ */
-
 if (!module.hot) {
   throw new Error("[HMR] Hot Module Replacement is disabled.");
 }
 
 var hmrDocsUrl = "https://webpack.js.org/concepts/hot-module-replacement/"; // eslint-disable-line max-len
 
-var lastHash;
 var failureStatuses = { abort: 1, fail: 1 };
-var applyOptions = { 				
+var applyOptions = {
   ignoreUnaccepted: true,
   ignoreDeclined: true,
   ignoreErrored: true,
@@ -27,17 +24,19 @@ var applyOptions = {
   onErrored: function(data) {
     console.error(data.error);
     console.warn("Ignored an error while updating module " + data.moduleId + " (" + data.type + ")");
-  } 
+  }
 }
 
-function upToDate(hash) {
-  if (hash) lastHash = hash;
-  return lastHash == __webpack_hash__;
-}
-
-module.exports = function(hash, moduleMap, options) {
+module.exports = function(name, hash, moduleMap, options) {
+  var req = global.__webpack_hmr[name];
+  if (!req) return;
+  function upToDate(hash) {
+    if (hash) req.lh = hash;
+    return req.lh === req.h();
+  }
+  var me = req.c[Object.keys(req.c)[0]];
   var reload = options.reload;
-  if (!upToDate(hash) && module.hot.status() == "idle") {
+  if (!upToDate(hash) && me.hot.status() === "idle") {
     if (options.log) console.log("[HMR] Checking for updates on the server...");
     check();
   }
@@ -63,7 +62,7 @@ module.exports = function(hash, moduleMap, options) {
         logUpdates(updatedModules, renewedModules);
       };
 
-      var applyResult = module.hot.apply(applyOptions, applyCallback);
+      var applyResult = me.hot.apply(applyOptions, applyCallback);
       // webpack 2 promise
       if (applyResult && applyResult.then) {
         // HotModuleReplacement.runtime.js refers to the result as `outdatedModules`
@@ -75,7 +74,7 @@ module.exports = function(hash, moduleMap, options) {
 
     };
 
-    var result = module.hot.check(false, cb);
+    var result = me.hot.check(false, cb);
     // webpack 2 promise
     if (result && result.then) {
         result.then(function(updatedModules) {
@@ -124,7 +123,7 @@ module.exports = function(hash, moduleMap, options) {
   }
 
   function handleError(err) {
-    if (module.hot.status() in failureStatuses) {
+    if (me.hot.status() in failureStatuses) {
       if (options.warn) {
         console.warn("[HMR] Cannot check for update (Full reload needed)");
         console.warn("[HMR] " + err.stack || err.message);
