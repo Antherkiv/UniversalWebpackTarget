@@ -9,11 +9,12 @@
 */
 "use strict";
 
+const Template = require("webpack/lib/Template");
 const { ConcatSource } = require("webpack-sources");
 
 class UniversalChunkTemplatePlugin {
 	constructor(options) {
-		this.universalName = options.universalName;
+		this.name = options.name;
 	}
 
 	apply(chunkTemplate) {
@@ -37,6 +38,11 @@ class UniversalChunkTemplatePlugin {
 					source.add(`\n\te: ${JSON.stringify(entries)}`);
 				}
 				source.add("\n}");
+				const universalName =
+					"webpackUniversal" +
+					Template.toIdentifier(this.name)
+						.replace(/\b\w/g, l => l.toUpperCase())
+						.replace(/\//g, "");
 				return new ConcatSource(
 					'if (typeof window !== "undefined") window.global = window.global || window;\n',
 					"(function(__universal__) {\n",
@@ -45,14 +51,14 @@ class UniversalChunkTemplatePlugin {
 					";\n__universal__.chunks = __universal__.chunks || []",
 					";\n__universal__.chunks.push(__module__exports)",
 					';\nif (typeof module !== "undefined") module.exports = __module__exports',
-					`;\n})(global.${this.universalName} = global.${this.universalName} || {})`
+					`;\n})(global.${universalName} = global.${universalName} || {})`
 				);
 			}
 		);
 		chunkTemplate.hooks.hash.tap("UniversalChunkTemplatePlugin", hash => {
 			hash.update("UniversalChunkTemplatePlugin");
 			hash.update("1");
-			hash.update(this.universalName);
+			hash.update(this.name);
 		});
 	}
 }

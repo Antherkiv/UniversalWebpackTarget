@@ -107,7 +107,7 @@ MainTemplate.prototype.getAssetPathSrc = getAssetPathSrc;
 
 class UniversalMainTemplatePlugin {
 	constructor(options) {
-		this.universalName = options.universalName;
+		this.name = options.name;
 		this.withRuntime = options.withRuntime;
 	}
 
@@ -272,6 +272,11 @@ class UniversalMainTemplatePlugin {
 					  ])
 					: "";
 
+				const universalName =
+					"webpackUniversal" +
+					Template.toIdentifier(this.name)
+						.replace(/\b\w/g, l => l.toUpperCase())
+						.replace(/\//g, "");
 				return new ConcatSource(
 					'if (typeof window !== "undefined") window.global = window.global || window;\n',
 					"(function(__universal__) {\n",
@@ -279,7 +284,7 @@ class UniversalMainTemplatePlugin {
 					"var __module__exports =\n",
 					source,
 					`;\nif (typeof module !== "undefined") module.exports = __module__exports`,
-					`;\n})(global.${this.universalName} = global.${this.universalName} || {})`
+					`;\n})(global.${universalName} = global.${universalName} || {})`
 				);
 			}
 		);
@@ -337,7 +342,7 @@ global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}`;
 		mainTemplate.hooks.hash.tap("UniversalMainTemplatePlugin", hash => {
 			hash.update("universal");
 			hash.update("1");
-			hash.update(this.universalName);
+			hash.update(this.name);
 			hash.update(`${mainTemplate.outputOptions.chunkFilename}`);
 			hash.update(`${mainTemplate.outputOptions.hotUpdateFunction}`);
 		});
