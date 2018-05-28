@@ -19,6 +19,7 @@ class EntrySymlinkPlugin {
 					if (chunk.hasEntryModule()) {
 						chunk.files
 							.filter(f => f.endsWith(".js"))
+							.filter(f => !f.endsWith(".hot-update.js"))
 							.forEach(function(filename) {
 								let symlink = `${chunk.name}.js`;
 								if (symlink !== filename) {
