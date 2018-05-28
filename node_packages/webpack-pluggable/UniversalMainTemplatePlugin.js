@@ -336,7 +336,10 @@ function hotDisposeChunk(chunkId) {
 	delete installedChunks[chunkId];
 }
 var parentHotUpdateCallback = global[${JSON.stringify(hotUpdateFunction)}];
-global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}`;
+global[${JSON.stringify(hotUpdateFunction)}] = ${runtimeSource}
+(global.__webpack_hmr = (global.__webpack_hmr || {}))['${this.name}'] = ${
+					mainTemplate.requireFn
+				}`;
 			}
 		);
 		mainTemplate.hooks.hash.tap("UniversalMainTemplatePlugin", hash => {
