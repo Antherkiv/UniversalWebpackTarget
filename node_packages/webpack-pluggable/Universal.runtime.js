@@ -417,7 +417,7 @@
 						rr.reject = reject;
 					});
 					promise = wrapPromise(
-						Promise.all([loadScript("/" + request), promise]),
+						Promise.all([loadScript(request), promise]),
 						rr.resolve,
 						rr.reject,
 						request
