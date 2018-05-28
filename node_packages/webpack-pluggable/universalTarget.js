@@ -27,14 +27,22 @@ ContextModule.prototype.getSourceForEmptyContext = function(id) {
 	// If you want to avoid seeing "Critical dependency" warnings,
 	// add 'module.exprContextCritical = false' to your webpack config.
 	return __require(req);
-}`;
+}
+webpackEmptyContext.keys = function() { return []; };
+webpackEmptyContext.resolve = webpackEmptyContext;
+module.exports = webpackEmptyContext;
+webpackEmptyContext.id = ${JSON.stringify(id)};`;
 };
 ContextModule.prototype.getSourceForEmptyAsyncContext = function(id) {
 	return `function webpackEmptyAsyncContext(req) {
 	// If you want to avoid seeing "Critical dependency" warnings,
 	// add 'module.exprContextCritical = false' to your webpack config.
 	return __import(req);
-}`;
+}
+webpackEmptyAsyncContext.keys = function() { return []; };
+webpackEmptyAsyncContext.resolve = webpackEmptyAsyncContext;
+module.exports = webpackEmptyAsyncContext;
+webpackEmptyAsyncContext.id = ${JSON.stringify(id)};`;
 };
 
 ExternalModule.prototype.getSourceForCommonJsExternal = function(
