@@ -124,7 +124,7 @@ module.exports = [
   factory({
     name: 'client',
     entry: {
-      client: ['./src/client'],
+      client: development ? ['./src/client', 'webpack-hot-middleware/client'] : ['./src/client'],
     },
     // withRuntime: true,
     imports: ['Base', 'main'],

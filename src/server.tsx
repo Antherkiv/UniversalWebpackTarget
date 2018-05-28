@@ -6,8 +6,29 @@ import * as hogan from 'hogan-xpress';
 import { Main } from './main';
 import { Other } from './other';
 
+import webpack from 'webpack';
+import webpackDevMiddleware from 'webpack-dev-middleware';
+import webpackHotMiddleware from 'webpack-hot-middleware';
+const webpackConfig = require('../webpack.config.js');
+
 // Express
 const app = express();
+
+if (process.env.NODE_ENV === 'development') {
+  const compiler = webpack(
+    webpackConfig.map((options: webpack.Configuration) =>
+      Object.assign(options, { mode: 'development' }),
+    ),
+  );
+  app.use(
+    webpackDevMiddleware(compiler, {
+      publicPath: '/',
+      serverSideRender: true,
+    }),
+  );
+  app.use(webpackHotMiddleware(compiler));
+}
+
 app.set('view engine', 'html');
 app.set('views', './');
 app.engine('html', hogan);
