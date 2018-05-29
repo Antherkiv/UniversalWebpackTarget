@@ -23,13 +23,18 @@ if (process.env.NODE_ENV === 'development') {
   const glob: any = global;
   glob.__requireLib = (request: string) => {
     if (glob.__requireLib && /^libs\//.test(request)) {
-      const module = {
-        exports: undefined,
-      };
-      const fs = (compiler.compilers[0] as webpack.Compiler).outputFileSystem;
-      const content = fs.readFileSync('/' + request, 'utf-8');
-      vm.runInThisContext(`(function(module) {\n${content}\n})`, request)(module);
-      return module.exports;
+      return (
+        require.cache[request] ||
+        (() => {
+          // require file from outputFileSystem:
+          const module: any = {};
+          const fs = (compiler.compilers[0] as webpack.Compiler).outputFileSystem;
+          const content = fs.readFileSync('/' + request, 'utf-8');
+          vm.runInThisContext(`(function(module) {\n${content}\n})`, request)(module);
+          require.cache[request] = module.exports;
+          return module.exports;
+        })()
+      );
     }
     return require(request);
   };
