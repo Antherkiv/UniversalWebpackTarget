@@ -442,7 +442,7 @@
 				return;
 			}
 
-			i = function(request) {
+			var i = function(request) {
 				return glob.__require.load(request).then(function() {
 					return glob.__require(request);
 				});
@@ -459,11 +459,11 @@
 				return;
 			}
 
-			i = function(request) {
-				return require(strip(request));
+			var r = function(request) {
+				return (glob.__requireLib || require)(strip(request));
 			};
-			i.__universalWebpack = true;
-			glob.__require = i;
+			r.__universalWebpack = true;
+			glob.__require = r;
 		}
 
 		function universalImportNode() {
@@ -474,9 +474,9 @@
 				return;
 			}
 
-			i = function(request) {
+			var i = function(request) {
 				return Promise.resolve().then(function() {
-					return require(strip(request));
+					return glob.__require(request);
 				});
 			};
 			i.__universalWebpack = true;
@@ -843,7 +843,7 @@
 				var installedChunkScript = options.i[chunkId];
 				log(scriptSrcNode(chunkId));
 				if (installedChunkScript !== 0) {
-					var chunk = require(scriptSrcNode(chunkId));
+					var chunk = glob.__require(scriptSrcNode(chunkId));
 					options.u.chunks = options.u.chunks || [];
 					options.u.chunks.push(chunk);
 				}
