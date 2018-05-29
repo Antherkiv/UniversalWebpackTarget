@@ -3,6 +3,8 @@ import * as ReactDOMServer from 'react-dom/server';
 import * as express from 'express';
 import * as hogan from 'hogan-xpress';
 
+import vm from 'vm';
+import path from 'path';
 import webpack from 'webpack';
 import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
@@ -11,12 +13,27 @@ import webpackHotMiddleware from 'webpack-hot-middleware';
 const app = express();
 
 if (process.env.NODE_ENV === 'development') {
-  const webpackConfig = require('../webpack.config.js');
+  const webpackConfig = require('../webpack.config.js') as webpack.Configuration[];
   const compiler = webpack(
     webpackConfig.map((options: webpack.Configuration) =>
       Object.assign(options, { mode: 'development' }),
     ),
   );
+
+  const glob: any = global;
+  glob.__requireLib = (request: string) => {
+    if (glob.__requireLib && /^libs\//.test(request)) {
+      const module = {
+        exports: undefined,
+      };
+      const fs = (compiler.compilers[0] as webpack.Compiler).outputFileSystem;
+      const content = fs.readFileSync('/' + request, 'utf-8');
+      vm.runInThisContext(`(function(module) {\n${content}\n})`, request)(module);
+      return module.exports;
+    }
+    return require(request);
+  };
+
   app.use(
     webpackDevMiddleware(compiler, {
       publicPath: '/',
