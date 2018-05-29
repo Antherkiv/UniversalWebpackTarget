@@ -4,9 +4,10 @@
   "description": "Universal Webpack",
   "main": "index.js",
   "scripts": {
-    "server": "NODE_PATH=. node ./server.js",
     "start": "npm run build && npm run server",
-    "start:dev": "webpack --mode development --progress --verbose --config webpack.server.js && npm run server",
+    "server": "NODE_PATH=. node ./server.js",
+    "build:server:dev": "webpack --mode development --progress --verbose --config webpack.server.js",
+    "start:dev": "npm run build:server:dev && npm run server",
     "build": "webpack --mode production --progress",
     "build:dev": "webpack --mode development --progress --verbose",
     "debug:server": "NODE_PATH=. node --inspect ./server.js",
