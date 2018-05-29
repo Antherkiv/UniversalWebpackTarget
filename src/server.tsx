@@ -62,9 +62,9 @@ app.get('/', (req: any, res: any) => {
   const app = domains[req.hostname];
   import(app)
     .then((entry: Pluggable) => {
-      const { Main } = entry();
+      const { App } = entry();
       res.locals.app = JSON.stringify(app);
-      res.locals.main = ReactDOMServer.renderToString(<Main />);
+      res.locals.main = ReactDOMServer.renderToString(<App />);
       res.status(200).render('index.html');
     })
     .catch((err: Error) => {

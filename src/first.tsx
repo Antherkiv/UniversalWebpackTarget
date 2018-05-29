@@ -12,4 +12,4 @@ import(/* webpackChunkName: "test1", webpackPreload: true */ './test1').then(({ 
   });
 });
 
-export const Main = () => <Hello name="first" compiler="TypeScript" framework="React" />;
+export const App = () => <Hello name="first" compiler="TypeScript" framework="React" />;

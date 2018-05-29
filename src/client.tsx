@@ -4,6 +4,6 @@ import * as ReactDOM from 'react-dom';
 declare var app: string;
 
 import(app).then((entry: Pluggable) => {
-  const { Main } = entry();
-  ReactDOM.hydrate(<Main />, document.getElementById('main'));
+  const { App } = entry();
+  ReactDOM.hydrate(<App />, document.getElementById('main'));
 });
