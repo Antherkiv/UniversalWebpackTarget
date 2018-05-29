@@ -4,24 +4,26 @@ import * as express from 'express';
 import * as hogan from 'hogan-xpress';
 
 import webpack from 'webpack';
-const webpackConfig = require('../webpack.config.js');
+import webpackDevMiddleware from 'webpack-dev-middleware';
+import webpackHotMiddleware from 'webpack-hot-middleware';
 
 // Express
 const app = express();
 
 if (process.env.NODE_ENV === 'development') {
+  const webpackConfig = require('../webpack.config.js');
   const compiler = webpack(
     webpackConfig.map((options: webpack.Configuration) =>
       Object.assign(options, { mode: 'development' }),
     ),
   );
   app.use(
-    require('webpack-dev-middleware')(compiler, {
+    webpackDevMiddleware(compiler, {
       publicPath: '/',
       serverSideRender: true,
     }),
   );
-  app.use(require('webpack-hot-middleware')(compiler));
+  app.use(webpackHotMiddleware(compiler));
 }
 
 app.set('view engine', 'html');
