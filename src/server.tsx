@@ -3,6 +3,8 @@ import * as ReactDOMServer from 'react-dom/server';
 import * as express from 'express';
 import * as hogan from 'hogan-xpress';
 
+import helmet from 'helmet';
+
 import vm from 'vm';
 import path from 'path';
 import webpack from 'webpack';
@@ -46,6 +48,8 @@ if (process.env.NODE_ENV === 'development') {
     }),
   );
   app.use(webpackHotMiddleware(compiler));
+} else {
+  app.use(helmet());
 }
 
 app.set('view engine', 'html');
