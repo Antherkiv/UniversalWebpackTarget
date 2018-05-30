@@ -60,11 +60,13 @@ class PluggablePlugin {
 								compiler.outputFileSystem instanceof MemoryFileSystem
 									? compiler.outputFileSystem
 									: fs;
+
 							for (const file of FS.readdirSync(path.resolve(libsPath, name))) {
 								if (
 									typeof file === "string" &&
-									/\.json$/.test(file) &&
-									path.basename(file) !== "manifest.json"
+									path.basename(file) !== "manifest.json" &&
+									file.endsWith(".json") &&
+									!file.endsWith(".hot-update.json")
 								) {
 									const lib = JSON.parse(
 										FS.readFileSync(path.resolve(libsPath, name, file), "utf8")
