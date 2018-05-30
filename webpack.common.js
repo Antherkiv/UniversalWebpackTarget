@@ -4,6 +4,7 @@ const path = require('path');
 const webpack = require('webpack');
 const pluggable = require('webpack-pluggable');
 const WebpackVisualizerPlugin = require('webpack-visualizer-plugin');
+const AssetsWebpackPlugin = require('assets-webpack-plugin');
 
 const development =
   process.env.NODE_ENV === 'development' ||
@@ -76,6 +77,18 @@ function factory(options) {
         ),
       ),
       development ? new webpack.HotModuleReplacementPlugin() : new DummyPlugin(),
+      new AssetsWebpackPlugin({
+        filename: path.join('libs', options.name, 'manifest.json'),
+        fullPath: false,
+        update: true,
+        prettyPrint: true,
+        metadata: {
+          build: new Date()
+            .toISOString()
+            .replace(/[-.:T]/g, '')
+            .substring(0, 14),
+        },
+      }),
       new WebpackVisualizerPlugin({
         filename: 'webpack-visualizer.html',
       }),
