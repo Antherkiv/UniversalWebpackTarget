@@ -1,15 +1,47 @@
 import * as React from 'react';
+import { Switch, Route, Link } from 'react-router-dom';
 
 import { Hello } from './components/Hello';
 
-import(/* webpackChunkName: "test1", webpackPreload: true */ './test1').then(({ test1 }) => {
+import('./test1').then(({ test1 }) => {
   test1('first');
-  import(/* webpackChunkName: "test2", webpackPreload: true */ './test2').then(({ test2 }) => {
+  import('./test2').then(({ test2 }) => {
     test2('first');
-    import(/* webpackChunkName: "test3" */ './test3').then(({ test3 }) => {
+    import('./test3').then(({ test3 }) => {
       test3('first');
     });
   });
 });
 
-export const App = () => <Hello name="first" compiler="TypeScript" framework="React" />;
+const NoMatch = ({ location }: any) => (
+  <h3>
+    No match for <code>{location.pathname}</code>
+  </h3>
+);
+
+const Home = () => <h1>Welcome</h1>;
+
+const Test = ({ match }: any) => {
+  return <Hello name={match.params.name} compiler="TypeScript" framework="React" />;
+};
+
+export const App = () => (
+  <div>
+    <ul>
+      <li>
+        <Link to={`/`}>Home</Link>
+      </li>
+      <li>
+        <Link to={`/test/one`}>Test 1</Link>
+      </li>
+      <li>
+        <Link to={`/test/two`}>Test 2</Link>
+      </li>
+    </ul>
+    <Switch>
+      <Route exact path="/" component={Home}/>
+      <Route path="/test/:name" component={Test} />
+      <Route component={NoMatch}/>
+    </Switch>
+  </div>
+);

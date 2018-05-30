@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
 import * as express from 'express';
 import * as hogan from 'hogan-xpress';
+import { StaticRouter } from 'react-router';
 
 import helmet from 'helmet';
 
@@ -78,7 +79,7 @@ app.set('view engine', 'html');
 app.set('views', './');
 app.engine('html', hogan);
 
-app.get('/', (req: any, res: any) => {
+app.get(/^(.(?!\.(js|json|map|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (req: any, res: any) => {
   const domains: DomainMap = {
     localhost: '/libs/app1/first.js',
     'first.off': '/libs/app1/first.js',
@@ -90,7 +91,11 @@ app.get('/', (req: any, res: any) => {
     .then((entry: Pluggable) => {
       const { App } = entry();
       res.locals.app = JSON.stringify(app);
-      res.locals.main = ReactDOMServer.renderToString(<App />);
+      res.locals.main = ReactDOMServer.renderToString(
+        <StaticRouter location={req.url} context={{}}>
+          <App />
+        </StaticRouter>,
+      );
       res.status(200).render('index.html');
     })
     .catch((err: Error) => {
