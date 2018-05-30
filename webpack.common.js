@@ -3,6 +3,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const pluggable = require('webpack-pluggable');
+const WebpackVisualizerPlugin = require('webpack-visualizer-plugin');
 
 const development =
   process.env.NODE_ENV === 'development' ||
@@ -75,6 +76,9 @@ function factory(options) {
         ),
       ),
       development ? new webpack.HotModuleReplacementPlugin() : new DummyPlugin(),
+      new WebpackVisualizerPlugin({
+        filename: 'webpack-visualizer.html',
+      }),
     ],
 
     externals: [
