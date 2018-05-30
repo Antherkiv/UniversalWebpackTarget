@@ -78,7 +78,8 @@ function factory(options) {
       ),
       development ? new webpack.HotModuleReplacementPlugin() : new DummyPlugin(),
       new AssetsWebpackPlugin({
-        filename: path.join('libs', options.name, 'manifest.json'),
+        path: path.resolve(__dirname, 'libs', options.name),
+        filename: 'manifest.json',
         fullPath: false,
         update: true,
         prettyPrint: true,
