@@ -16,12 +16,34 @@ const app = express();
 
 if (process.env.NODE_ENV === 'development') {
   const webpackConfig = require('../webpack.config.js') as webpack.Configuration[];
+
+  // The following webpack plugin clears the require cache for built assets
+  class ClearRequireCache {
+    public apply(compiler: webpack.Compiler) {
+      compiler.hooks.done.tap('ClearRequireCache', (stats: any) => {
+        Object.keys(stats.compilation.assets)
+          .map(asset =>
+            path.join(stats.compilation.outputOptions.publicPath, asset).replace(/^\/|\/$/g, ''),
+          )
+          .forEach((request: string) => {
+            delete require.cache[request];
+          });
+      });
+    }
+  }
+
+  // Modify settings to add development mode and the cache cleanup plugin
   const compiler = webpack(
-    webpackConfig.map((options: webpack.Configuration) =>
-      Object.assign(options, { mode: 'development' }),
-    ),
+    webpackConfig.map((options: webpack.Configuration) => {
+      if (options.plugins) {
+        options.plugins.push(new ClearRequireCache());
+      }
+      return Object.assign(options, { mode: 'development' });
+    }),
   );
 
+  // Install global __requireLib() to load libs from the memory file system
+  // and put them in cache.
   const glob: any = global;
   glob.__requireLib = (request: string) => {
     if (glob.__requireLib && /^libs\//.test(request)) {
