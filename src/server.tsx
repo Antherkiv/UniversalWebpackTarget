@@ -1,8 +1,8 @@
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
-import * as express from 'express';
-import * as hogan from 'hogan-xpress';
-import { StaticRouter } from 'react-router';
+import hoganXpress from 'hogan-xpress';
+import express from 'express';
+import * as reactRouter from 'react-router';
 
 import helmet from 'helmet';
 
@@ -12,8 +12,10 @@ import webpack from 'webpack';
 import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
 
+const StaticRouter = reactRouter.StaticRouter;
+
 // Express
-const app = express();
+const app: express.Express = express();
 
 if (process.env.NODE_ENV === 'development') {
   const webpackConfig = require('../webpack.config.js') as webpack.Configuration[];
@@ -77,9 +79,9 @@ if (process.env.NODE_ENV === 'development') {
 
 app.set('view engine', 'html');
 app.set('views', './');
-app.engine('html', hogan);
+app.engine('html', hoganXpress);
 
-app.get(/^(.(?!\.(js|json|map|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (req: any, res: any) => {
+app.get(/^(.(?!\.(js|json|map|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (req, res) => {
   const domains: DomainMap = {
     localhost: '/libs/app1/first.js',
     'first.off': '/libs/app1/first.js',
@@ -90,13 +92,21 @@ app.get(/^(.(?!\.(js|json|map|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (r
   import(app)
     .then((entry: Pluggable) => {
       const { App } = entry();
+      // This context object contains the results of the render
+      const context = {} as reactRouter.match<any>;
       res.locals.app = JSON.stringify(app);
       res.locals.main = ReactDOMServer.renderToString(
-        <StaticRouter location={req.url} context={{}}>
+        <StaticRouter location={req.url} context={context}>
           <App />
         </StaticRouter>,
       );
-      res.status(200).render('index.html');
+      if (context.url) {
+        res.writeHead(302, {
+          Location: context.url,
+        });
+      } else {
+        res.status(200).render('index.html');
+      }
     })
     .catch((err: Error) => {
       console.error(err);

@@ -13,7 +13,6 @@ declare module "*.woff";
 declare module "*.woff2";
 
 
-declare module "express";
 declare module "hogan-xpress";
 
 
