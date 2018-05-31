@@ -8,8 +8,10 @@ export interface HelloProps {
   framework: string;
 }
 
-export const Hello = (props: HelloProps) => (
+const Hello = (props: HelloProps) => (
   <h1 className={styles.className}>
     Hello {props.name} from {props.compiler} and {props.framework}!
   </h1>
 );
+
+export default Hello;

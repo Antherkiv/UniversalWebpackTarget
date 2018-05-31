@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { Switch, Route, Link } from 'react-router-dom';
 
-import { Hello } from './components/Hello';
+import Hello from './components/Hello';
+import Async from './components/Async';
 
 import('./test1' /* webpackChunkName: "test1", webpackPreload: true */).then(({ test1 }) => {
   test1('first');
@@ -19,28 +20,7 @@ const NoMatch = ({ location }: any) => (
   </h3>
 );
 
-class Home extends React.Component<
-  {},
-  {
-    Component: React.ReactType | null;
-  }
-> {
-  constructor(props: any) {
-    super(props);
-    this.state = { Component: null };
-  }
-
-  public componentWillMount() {
-    import('./components/Home' /* webpackChunkName: "Home" */).then(({ Home }) => {
-      this.setState({ Component: Home });
-    });
-  }
-
-  public render() {
-    const { Component } = this.state;
-    return Component ? <Component {...this.props} /> : null;
-  }
-}
+const Home = () => <Async load={import('./components/Home' /* webpackChunkName: "Home" */)} />;
 
 const Test = ({ match }: any) => {
   return <Hello name={match.params.name} compiler="TypeScript" framework="React" />;
