@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Switch, Route, Link } from 'react-router-dom';
+import loadable from './loadable';
 
 import Hello from './components/Hello';
-import Async from './components/Async';
 
 import('./test1' /* webpackChunkName: "test1", webpackPreload: true */).then(({ test1 }) => {
   test1('first');
@@ -20,7 +20,7 @@ const NoMatch = ({ location }: any) => (
   </h3>
 );
 
-const Home = () => <Async load={import('./components/Home' /* webpackChunkName: "Home" */)} />;
+const Home = loadable(() => import('./components/Home' /* webpackChunkName: "Home" */));
 
 const Test = ({ match }: any) => {
   return <Hello name={match.params.name} compiler="TypeScript" framework="React" />;

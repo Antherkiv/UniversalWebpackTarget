@@ -1,8 +1,9 @@
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
+import * as reactRouter from 'react-router';
 import gaikan from 'gaikan';
 import express from 'express';
-import * as reactRouter from 'react-router';
+import { loadComponents } from './loadable/server';
 
 import helmet from 'helmet';
 
@@ -95,15 +96,16 @@ app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/
     const entry = await import(app);
     const { App } = entry();
     // This context object contains the results of the render
-    const context = {} as reactRouter.match<any>;
+    const routerContext = {} as reactRouter.match<any>;
     const main = (
-      <StaticRouter location={req.url} context={context}>
+      <StaticRouter location={req.url} context={routerContext}>
         <App />
       </StaticRouter>
     );
-    if (context.url) {
+    await loadComponents(main);
+    if (routerContext.url) {
       res.writeHead(302, {
-        Location: context.url,
+        Location: routerContext.url,
       });
     } else {
       res.status(200).render('index.html', {
