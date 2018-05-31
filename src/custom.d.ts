@@ -23,7 +23,7 @@ interface DomainMap {
 
 // Pluggable interfaces:
 interface PluggableEntry {
-  App: React.ComponentClass<any>;
+  App: React.ReactType;
 }
 interface Pluggable {
   (): PluggableEntry;
