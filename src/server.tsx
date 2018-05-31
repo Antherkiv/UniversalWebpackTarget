@@ -83,7 +83,7 @@ app.engine('html', gaikan);
 app.set('view engine', 'html');
 app.set('views', '.');
 
-app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (req, res) => {
+app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, async (req, res) => {
   const domains: DomainMap = {
     localhost: '/libs/app1/first.js',
     'first.off': '/libs/app1/first.js',
@@ -91,31 +91,30 @@ app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/
     'third.off': '/libs/app2/third.js',
   };
   const app = domains[req.hostname];
-  import(app)
-    .then((entry: Pluggable) => {
-      const { App } = entry();
-      // This context object contains the results of the render
-      const context = {} as reactRouter.match<any>;
-      const main = (
-        <StaticRouter location={req.url} context={context}>
-          <App />
-        </StaticRouter>
-      );
-      if (context.url) {
-        res.writeHead(302, {
-          Location: context.url,
-        });
-      } else {
-        res.status(200).render('index.html', {
-          main: ReactDOMServer.renderToString(main),
-          app: JSON.stringify(app),
-        });
-      }
-    })
-    .catch((err: Error) => {
-      console.error(err);
-      res.status(500);
-    });
+  try {
+    const entry = await import(app);
+    const { App } = entry();
+    // This context object contains the results of the render
+    const context = {} as reactRouter.match<any>;
+    const main = (
+      <StaticRouter location={req.url} context={context}>
+        <App />
+      </StaticRouter>
+    );
+    if (context.url) {
+      res.writeHead(302, {
+        Location: context.url,
+      });
+    } else {
+      res.status(200).render('index.html', {
+        main: ReactDOMServer.renderToString(main),
+        app: JSON.stringify(app),
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500);
+  }
 });
 
 app.use('/', express.static('.'));
