@@ -83,7 +83,7 @@ app.engine('html', gaikan);
 app.set('view engine', 'html');
 app.set('views', '.');
 
-app.get(/^(.(?!\.(js|json|map|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (req, res) => {
+app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (req, res) => {
   const domains: DomainMap = {
     localhost: '/libs/app1/first.js',
     'first.off': '/libs/app1/first.js',
