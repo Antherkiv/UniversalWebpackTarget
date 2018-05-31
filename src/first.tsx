@@ -19,7 +19,28 @@ const NoMatch = ({ location }: any) => (
   </h3>
 );
 
-const Home = () => <h1>Welcome</h1>;
+class Home extends React.Component<
+  {},
+  {
+    Component: React.ReactType | null;
+  }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { Component: null };
+  }
+
+  public componentWillMount() {
+    import('./components/Home' /* webpackChunkName: "Home" */).then(({ Home }) => {
+      this.setState({ Component: Home });
+    });
+  }
+
+  public render() {
+    const { Component } = this.state;
+    return Component ? <Component {...this.props} /> : null;
+  }
+}
 
 const Test = ({ match }: any) => {
   return <Hello name={match.params.name} compiler="TypeScript" framework="React" />;
