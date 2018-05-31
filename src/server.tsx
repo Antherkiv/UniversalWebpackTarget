@@ -64,7 +64,7 @@ if (process.env.NODE_ENV === 'development') {
         })()
       );
     }
-    return require(request);
+    return glob.__require__(request);
   };
 
   app.use(

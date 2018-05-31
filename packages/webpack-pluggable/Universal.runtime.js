@@ -460,10 +460,11 @@
 			}
 
 			var r = function(request) {
-				return (glob.__requireLib || require)(strip(request));
+				return (glob.__requireLib || glob.__require__)(strip(request));
 			};
 			r.__universalWebpack = true;
 			glob.__require = r;
+			glob.__require__ = require;
 		}
 
 		function universalImportNode() {
