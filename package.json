@@ -116,7 +116,7 @@
     "webpack-dev-middleware": "^3.1.3",
     "webpack-hot-middleware": "file:node_packages/webpack-hot-middleware",
     "webpack-node-externals": "^1.7.2",
-    "webpack-pluggable": "file:node_packages/webpack-pluggable",
+    "webpack-pluggable": "file:packages/webpack-pluggable",
     "webpack-visualizer-plugin": "^0.1.11"
   }
 }
