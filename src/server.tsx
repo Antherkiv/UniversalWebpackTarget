@@ -96,10 +96,10 @@ app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/
       const { App } = entry();
       // This context object contains the results of the render
       const context = {} as reactRouter.match<any>;
-      const main = ReactDOMServer.renderToString(
+      const main = (
         <StaticRouter location={req.url} context={context}>
           <App />
-        </StaticRouter>,
+        </StaticRouter>
       );
       if (context.url) {
         res.writeHead(302, {
@@ -107,7 +107,7 @@ app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/
         });
       } else {
         res.status(200).render('index.html', {
-          main,
+          main: ReactDOMServer.renderToString(main),
           app: JSON.stringify(app),
         });
       }
