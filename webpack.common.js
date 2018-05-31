@@ -99,7 +99,7 @@ function factory(options) {
 
     externals: [
       function(context, request, callback) {
-        if (/^webpack\b/.test(request)) {
+        if (/^(webpack|domains.json)\b/.test(request)) {
           if (!/^webpack-hot-middleware\/client\b/.test(request)) {
             return callback(null, 'commonjs ' + request);
           }

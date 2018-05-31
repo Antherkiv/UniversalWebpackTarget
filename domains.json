@@ -1,0 +1,6 @@
+{
+  "localhost": "/libs/app1/first.js",
+  "first.off": "/libs/app1/first.js",
+  "second.off": "/libs/app2/second.js",
+  "third.off": "/libs/app2/third.js"
+}

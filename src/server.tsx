@@ -84,13 +84,9 @@ app.engine('html', gaikan);
 app.set('view engine', 'html');
 app.set('views', '.');
 
+const domains: DomainMap = require('domains.json');
+
 app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, async (req, res) => {
-  const domains: DomainMap = {
-    localhost: '/libs/app1/first.js',
-    'first.off': '/libs/app1/first.js',
-    'second.off': '/libs/app2/second.js',
-    'third.off': '/libs/app2/third.js',
-  };
   const app = domains[req.hostname];
   try {
     const entry = await import(app);
