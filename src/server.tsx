@@ -3,7 +3,7 @@ import * as ReactDOMServer from 'react-dom/server';
 import * as reactRouter from 'react-router';
 import gaikan from 'gaikan';
 import express from 'express';
-import { loadComponents } from './loadable/server';
+import { loadComponents } from './loadable';
 
 import helmet from 'helmet';
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Switch, Route, Link } from 'react-router-dom';
-import loadable from './loadable';
+import { loadable } from './loadable';
 
 import Hello from './components/Hello';
 

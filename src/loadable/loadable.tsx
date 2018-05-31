@@ -19,7 +19,7 @@ interface LoadableState {
   error?: Error;
 }
 
-export interface LoadableOptions {
+interface LoadableOptions {
   ErrorComponent?: React.ComponentType<any>;
   LoadingComponent?: React.ComponentType<any>;
 }

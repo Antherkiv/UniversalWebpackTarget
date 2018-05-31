@@ -37,7 +37,7 @@ function getQueriesFromTree(rootElement: React.ReactNode, rootContext: {} = {}, 
   return queries;
 }
 
-export function loadComponents(rootElement: React.ReactNode, rootContext: {} = {}, fetchRoot = true) {
+function loadComponents(rootElement: React.ReactNode, rootContext: {} = {}, fetchRoot = true) {
   const queries = getQueriesFromTree(rootElement, rootContext, fetchRoot);
   // no queries found, nothing to do
   if (!queries.length) return Promise.resolve();
@@ -66,3 +66,5 @@ export function loadComponents(rootElement: React.ReactNode, rootContext: {} = {
     }
   });
 }
+
+export default loadComponents;
