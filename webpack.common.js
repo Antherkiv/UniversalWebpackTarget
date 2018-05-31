@@ -90,9 +90,11 @@ function factory(options) {
             .substring(0, 14),
         },
       }),
-      new WebpackVisualizerPlugin({
-        filename: 'webpack-visualizer.html',
-      }),
+      !development
+        ? new WebpackVisualizerPlugin({
+            filename: 'webpack-visualizer.html',
+          })
+        : new DummyPlugin(),
     ],
 
     externals: [
