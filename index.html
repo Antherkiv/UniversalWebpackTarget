@@ -6,7 +6,7 @@
         <meta http-equiv="x-ua-compatible" content="ie=edge" />
         <title>Hello React!</title>
 
-        <script>window.app = {{& app }}</script>
+        <script>window.app = !{root.app}</script>
         <script src="/Universal.runtime.js" onerror="_err()"></script>
         <script src="/libs/client/client.js" onerror="_err()"></script>
 
@@ -56,6 +56,6 @@
             </div>
         </div>
 
-        <div id="main">{{& main }}</div>
+        <div id="main">!{root.main}</div>
       </body>
 </html>

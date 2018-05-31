@@ -13,7 +13,7 @@ declare module "*.woff";
 declare module "*.woff2";
 
 
-declare module "hogan-xpress";
+declare module "gaikan";
 
 
 interface DomainMap {

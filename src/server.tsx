@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as ReactDOMServer from 'react-dom/server';
-import hoganXpress from 'hogan-xpress';
+import gaikan from 'gaikan';
 import express from 'express';
 import * as reactRouter from 'react-router';
 
@@ -77,9 +77,11 @@ if (process.env.NODE_ENV === 'development') {
   app.use(helmet());
 }
 
+gaikan.options.enableCache = true;
+gaikan.options.rootDir = __dirname;
+app.engine('html', gaikan);
 app.set('view engine', 'html');
-app.set('views', './');
-app.engine('html', hoganXpress);
+app.set('views', '.');
 
 app.get(/^(.(?!\.(js|json|map|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (req, res) => {
   const domains: DomainMap = {
@@ -94,18 +96,20 @@ app.get(/^(.(?!\.(js|json|map|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, (r
       const { App } = entry();
       // This context object contains the results of the render
       const context = {} as reactRouter.match<any>;
-      res.locals.app = JSON.stringify(app);
-      res.locals.main = ReactDOMServer.renderToString(
-        <StaticRouter location={req.url} context={context}>
-          <App />
-        </StaticRouter>,
-      );
+      const root = {
+        app: JSON.stringify(app),
+        main: ReactDOMServer.renderToString(
+          <StaticRouter location={req.url} context={context}>
+            <App />
+          </StaticRouter>,
+        ),
+      };
       if (context.url) {
         res.writeHead(302, {
           Location: context.url,
         });
       } else {
-        res.status(200).render('index.html');
+        res.status(200).render('index.html', root);
       }
     })
     .catch((err: Error) => {
