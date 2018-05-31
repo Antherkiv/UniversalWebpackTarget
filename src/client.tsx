@@ -6,10 +6,10 @@ declare var app: string;
 
 import(app).then((entry: Pluggable) => {
   const { App } = entry();
-  ReactDOM.hydrate(
+  const main = (
     <BrowserRouter>
       <App />
-    </BrowserRouter>,
-    document.getElementById('main'),
+    </BrowserRouter>
   );
+  ReactDOM.hydrate(main, document.getElementById('main'));
 });
