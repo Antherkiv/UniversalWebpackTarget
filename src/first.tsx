@@ -3,11 +3,11 @@ import { Switch, Route, Link } from 'react-router-dom';
 
 import { Hello } from './components/Hello';
 
-import('./test1').then(({ test1 }) => {
+import('./test1' /* webpackChunkName: "test1", webpackPreload: true */).then(({ test1 }) => {
   test1('first');
-  import('./test2').then(({ test2 }) => {
+  import('./test2' /* webpackChunkName: "test2", webpackPreload: true */).then(({ test2 }) => {
     test2('first');
-    import('./test3').then(({ test3 }) => {
+    import('./test3' /* webpackChunkName: "test3" */).then(({ test3 }) => {
       test3('first');
     });
   });
@@ -39,9 +39,9 @@ export const App = () => (
       </li>
     </ul>
     <Switch>
-      <Route exact path="/" component={Home}/>
+      <Route exact path="/" component={Home} />
       <Route path="/test/:name" component={Test} />
-      <Route component={NoMatch}/>
+      <Route component={NoMatch} />
     </Switch>
   </div>
 );
