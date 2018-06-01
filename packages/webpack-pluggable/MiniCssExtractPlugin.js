@@ -4,6 +4,8 @@
 
 		This comes mainly from mini-css-extract-plugin/src/index.js
 		[https://github.com/webpack-contrib/mini-css-extract-plugin/tree/v0.4.0]
+
+		This adds cssSrc() function and an empty installedCssChunks
 */
 "use strict";
 
