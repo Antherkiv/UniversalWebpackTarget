@@ -73,11 +73,8 @@ function universalTarget(options) {
 		new UniversalTemplatePlugin(options).apply(compiler);
 		new FetchCompileWasmTemplatePlugin().apply(compiler);
 		new FunctionModulePlugin().apply(compiler);
-		if (options.server) {
-			new NodeTargetPlugin().apply(compiler);
-		} else {
-			new NodeSourcePlugin(compiler.options.node).apply(compiler);
-		}
+		new NodeSourcePlugin(compiler.options.node).apply(compiler);
+		new NodeTargetPlugin().apply(compiler);
 		new LoaderTargetPlugin("node").apply(compiler);
 	}
 	return target;
