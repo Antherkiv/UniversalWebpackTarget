@@ -24,14 +24,14 @@ function factory(options) {
       publicPath: '/libs/' + options.name + '/',
       path: path.resolve(__dirname, 'libs', options.name),
     },
-    target: pluggable.target(options),
+    target: 'universal',
 
     resolve: {
       extensions: ['.ts', '.tsx', '.js', '.jsx', '.json', '.node'],
     },
 
     module: {
-      exprContextCritical: false,
+      exprContextCritical: false, // needed for universal __require and __import
       rules: [
         {
           test: /\.tsx?$/,

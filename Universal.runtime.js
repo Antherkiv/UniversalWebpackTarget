@@ -1,1 +1,1 @@
-node_modules/webpack-pluggable/Universal.runtime.js
+node_modules/webpack/lib/universal/Universal.runtime.js
