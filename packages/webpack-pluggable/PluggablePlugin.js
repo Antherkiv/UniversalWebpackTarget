@@ -34,6 +34,7 @@ class PluggablePlugin {
 	apply(compiler) {
 		if (this.dll) {
 			new DllPlugin({
+				entryOnly: true,
 				name: `${compiler.options.output.publicPath}${
 					compiler.options.output.filename
 				}`,

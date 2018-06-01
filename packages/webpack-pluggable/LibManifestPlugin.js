@@ -4,7 +4,7 @@
 	        Germán Méndez Bravo (Kronuz)
 
 	This comes mainly from webpack/lib/LibManifestPlugin.js
-	[https://github.com/webpack/webpack/tree/v4.8.3]
+	[https://github.com/webpack/webpack/tree/v4.10.2]
 
 	Problem was Dll manifests are of no use for initial chunks
 	which have no Main (which are no entry points)
@@ -16,6 +16,7 @@
 
 const path = require("path");
 const asyncLib = require("neo-async");
+const SingleEntryDependency = require("webpack/lib/dependencies/SingleEntryDependency");
 
 class LibManifestPlugin {
 	constructor(options) {
@@ -51,6 +52,14 @@ class LibManifestPlugin {
 								.reduce((obj, group) => {
 									return group.chunks.reduce((obj, chunk) => {
 										for (const module of chunk.modulesIterable) {
+											if (
+												this.options.entryOnly &&
+												!module.reasons.some(
+													r => r.dependency instanceof SingleEntryDependency
+												)
+											) {
+												continue;
+											}
 											if (module.libIdent) {
 												const ident = module.libIdent({
 													context:

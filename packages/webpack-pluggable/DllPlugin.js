@@ -7,13 +7,13 @@
 	Uses ./LibManifestPlugin.js instead of webpack/lib/LibManifestPlugin.js
 	Monkey-patches Dll main export to run entry point when called without parameters
 	or be __webpack_require__ otherwise
-	[https://github.com/webpack/webpack/tree/v4.8.3]
+	[https://github.com/webpack/webpack/tree/v4.10.2]
 */
 "use strict";
 
 const DllEntryPlugin = require("webpack/lib/DllEntryPlugin");
 const LibManifestPlugin = require("./LibManifestPlugin");
-// const FlagInitialModulesAsUsedPlugin = require("webpack/lib/FlagInitialModulesAsUsedPlugin");
+const FlagInitialModulesAsUsedPlugin = require("webpack/lib/FlagInitialModulesAsUsedPlugin");
 const { RawSource } = require("webpack-sources");
 
 const validateOptions = require("schema-utils");
@@ -64,8 +64,10 @@ class DllPlugin {
 	apply(compiler) {
 		compiler.hooks.entryOption.tap("DllPlugin", (context, entry) => {
 			const itemToPlugin = (item, name) => {
-				if (Array.isArray(item)) return new DllEntryPlugin(context, item, name);
-				else throw new Error("DllPlugin: supply an Array as entry");
+				if (Array.isArray(item)) {
+					return new DllEntryPlugin(context, item, name);
+				}
+				throw new Error("DllPlugin: supply an Array as entry");
 			};
 			if (typeof entry === "object" && !Array.isArray(entry)) {
 				Object.keys(entry).forEach(name => {
@@ -77,7 +79,9 @@ class DllPlugin {
 			return true;
 		});
 		new LibManifestPlugin(this.options).apply(compiler);
-		// new FlagInitialModulesAsUsedPlugin("DllPlugin").apply(compiler);
+		if (!this.options.entryOnly) {
+			new FlagInitialModulesAsUsedPlugin("DllPlugin").apply(compiler);
+		}
 	}
 }
 
