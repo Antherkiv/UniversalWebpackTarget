@@ -47,7 +47,6 @@ module.exports = [
     entry: {
       server: ['./src/server'],
     },
-    server: true,
     imports: ['Base'],
   }),
 ];
