@@ -5,6 +5,8 @@ import gaikan from 'gaikan';
 import express from 'express';
 import { loadComponents } from './loadable';
 
+import consoleColorizer from 'console-colorizer';
+
 import helmet from 'helmet';
 
 import vm from 'vm';
@@ -14,6 +16,9 @@ import webpackDevMiddleware from 'webpack-dev-middleware';
 import webpackHotMiddleware from 'webpack-hot-middleware';
 
 const StaticRouter = reactRouter.StaticRouter;
+
+// colorize console:
+consoleColorizer(console);
 
 // Express
 const app: express.Express = express();

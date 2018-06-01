@@ -4,6 +4,11 @@ import { BrowserRouter } from 'react-router-dom';
 
 import { loadComponents } from './loadable';
 
+import consoleColorizer from 'console-colorizer';
+
+// colorize console:
+consoleColorizer(console);
+
 declare var app: string;
 
 import(app).then((entry: Pluggable) => {
