@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { Switch, Route, Link } from 'react-router-dom';
+import { Navbar, NavbarBrand, Nav, NavItem } from 'reactstrap';
 import { loadable } from './loadable';
 
 import Hello from './components/Hello';
+import Login from './components/Login';
 
 import('./test1' /* webpackChunkName: "test1", webpackPreload: true */).then(({ test1 }) => {
   test1('first');
@@ -28,20 +30,36 @@ const Test = ({ match }: any) => {
 
 export const App = () => (
   <div>
-    <ul>
-      <li>
-        <Link to={`/`}>Home</Link>
-      </li>
-      <li>
-        <Link to={`/test/one`}>Test 1</Link>
-      </li>
-      <li>
-        <Link to={`/test/two`}>Test 2</Link>
-      </li>
-    </ul>
+    <Navbar color="light" light expand="md">
+      <Link className="navbar-brand" to="/">
+        first
+      </Link>
+      <Nav className="ml-auto" navbar>
+        <NavItem>
+          <Link className="nav-link" to="/test/one">
+            Test 1
+          </Link>
+        </NavItem>
+      </Nav>
+      <Nav className="ml-auto" navbar>
+        <NavItem>
+          <Link className="nav-link" to="/test/two">
+            Test 2
+          </Link>
+        </NavItem>
+      </Nav>
+      <Nav className="ml-auto" navbar>
+        <NavItem>
+          <Link className="nav-link" to="/login">
+            Login
+          </Link>
+        </NavItem>
+      </Nav>
+    </Navbar>
     <Switch>
       <Route exact path="/" component={Home} />
       <Route path="/test/:name" component={Test} />
+      <Route path="/login" component={Login} />
       <Route component={NoMatch} />
     </Switch>
   </div>
