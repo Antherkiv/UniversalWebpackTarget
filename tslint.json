@@ -17,7 +17,7 @@
             true,
             "never"
         ],
-        "max-line-length": [true, 105],
+        "max-line-length": [true, 100],
         "jsx-no-multiline-js": false,
         "member-access": true,
         "member-ordering": [
