@@ -1,0 +1,249 @@
+import qs from 'qs';
+
+class ApiError extends Error {
+  public response: any;
+
+  constructor(m: string, response: Promise<Response>) {
+    super(m);
+    this.response = response;
+  }
+}
+
+export const resolveResult = (response?: Response) => {
+  if (typeof response === 'undefined') {
+    return Promise.resolve(response);
+  }
+  const contentType = response.headers.get('Content-Type');
+  if (contentType && contentType.indexOf('application/json') !== -1) {
+    return response.json();
+  }
+  return response.text();
+};
+
+interface ApiInit extends RequestInit {
+  json?: {};
+  api?: string;
+  endpoint: string | string[];
+  query: any;
+}
+
+interface ApiCallback {
+  (): void;
+}
+
+interface AuthState {
+  site: {
+    protocol: string;
+    domain: string;
+  };
+  auth: {
+    meId: string;
+    keychain: {
+      [entity: string]: {
+        [api: string]: {
+          api_code: string;
+          app: string;
+          api: string;
+          base_url: string;
+          name: string;
+          client_id: string;
+          expires_in?: number;
+          token_type: 'Bearer';
+          access_token: string;
+          scope?: string;
+          available_scopes?: {
+            [scope: string]: string;
+          };
+          refresh_token?: string;
+          description?: string;
+          dependencies?: string[];
+        };
+      };
+    };
+  };
+  entities: {
+    [entity: string]: {
+      fullName?: string;
+      nickname?: string;
+    };
+  };
+}
+
+const getInKeychain = (state: AuthState) => state.auth.keychain[state.auth.meId || '!'];
+
+export const getApiInfo = (api: string, state: AuthState) => {
+  const keychain = getInKeychain(state);
+  if (!keychain) {
+    throw new Error('No APIs found!');
+  }
+
+  const obj = keychain[api];
+  if (!obj) {
+    throw new Error(
+      `Api ${api} not found as any of the listed APIs: [${Object.keys(keychain).join(', ')}]`,
+    );
+  }
+
+  return {
+    baseURL: obj.base_url,
+    authorization: obj.access_token
+      ? { Authorization: `${obj.token_type} ${obj.access_token}` } // prettier-ignore
+      : {},
+  };
+};
+
+export const callApi = async (
+  options: ApiInit,
+  onStart: ApiCallback,
+  onStop: ApiCallback,
+  state: AuthState,
+  ignoreErrors: boolean | number[],
+) => {
+  const { json, api, headers } = options;
+
+  let { body, method, endpoint, credentials, query } = options;
+
+  if (json) {
+    // Stringify json
+    body = JSON.stringify(json);
+  }
+
+  if (Array.isArray(endpoint)) {
+    // Join endpoint as a list with '/'
+    endpoint = endpoint.join('/');
+  }
+
+  // Trim and clean duplicated slashes
+  endpoint = endpoint.replace(/^\/+|\/+$|([^:]\/)\/+/g, '$1');
+  if (endpoint) {
+    endpoint = `${endpoint}/`;
+  }
+
+  const init: RequestInit = {};
+  const initHeaders: { [key: string]: string } = {};
+
+  if (api) {
+    const { baseURL, authorization } = getApiInfo(api, state);
+
+    // Add API base URL if url isn't full
+    if (!/^(?:https?:)?\/\//.test(endpoint)) {
+      endpoint = `${baseURL}/${endpoint}`;
+    }
+
+    Object.assign(initHeaders, headers, authorization);
+  } else {
+    if (!/^(?:https?:)?\/\//.test(endpoint)) {
+      const protocol = state.site.protocol;
+      const domain = state.site.domain;
+      endpoint = `${protocol}://${domain}/${endpoint}`;
+      if (!credentials) {
+        credentials = 'same-origin';
+      }
+    }
+    Object.assign(initHeaders, headers);
+  }
+
+  // Add Authorization and default headers
+  if (body) {
+    if (!initHeaders['Content-Type']) {
+      initHeaders['Content-Type'] = 'application/json';
+    }
+    init.body = body;
+  }
+  if (!initHeaders['Accept']) {
+    initHeaders['Accept'] = 'application/json';
+  }
+
+  init.headers = initHeaders;
+
+  if (query) {
+    // Stringify and add query string
+    if (typeof query === 'object') {
+      query = qs.stringify(query);
+    }
+    if (query) {
+      endpoint += `?${query}`;
+    }
+  }
+
+  if (!method) {
+    // Setup default method
+    if (init.body) {
+      method = 'POST';
+    } else {
+      method = 'GET';
+    }
+  }
+
+  if (credentials) {
+    init.credentials = credentials;
+  }
+
+  init.method = method;
+
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🕸  %cfetch ${endpoint}\n`, 'bold rgb(0, 136, 255)', init);
+  }
+
+  onStart(); // Show spinner
+  return fetch(endpoint, init)
+    .catch((error: Error) => {
+      onStop; // Hide spinner with error
+      if (ignoreErrors === true) {
+        return resolveResult().then(result => {
+          if (process.env.NODE_ENV === 'development') {
+            console.log(
+              `🔥  %c${method} ${endpoint} => [IGNORED EXCEPTION]\n`,
+              'bold rgb(68, 136, 68)',
+              error,
+            );
+          }
+          return result;
+        });
+      }
+      if (process.env.NODE_ENV === 'development') {
+        console.error(`🔥  %c${method} ${endpoint} => [EXCEPTION]\n`, 'bold rgb(255, 34, 0)', error);
+      }
+      throw error;
+    })
+    .then((response: Response) => {
+      onStop; // Hide spinner
+      if (!response.ok) {
+        if (ignoreErrors && (ignoreErrors === true || ignoreErrors.indexOf(response.status) !== -1)) {
+          return resolveResult().then(result => {
+            if (process.env.NODE_ENV === 'development') {
+              console.log(
+                `💥  %c${method} ${response.url} => [IGNORED ${response.status}]`,
+                'bold rgb(68, 136, 68)',
+              );
+            }
+            return result;
+          });
+        }
+        const error = new ApiError(
+          `${method} ${response.url} => [${response.status}] ${response.statusText}`,
+          resolveResult(response).then(result => {
+            if (process.env.NODE_ENV === 'development') {
+              console.error(
+                `💥  %c${method} ${response.url} => [${response.status}]\n`,
+                'bold rgb(255, 68, 0)',
+                result,
+              );
+            }
+            return result;
+          }),
+        );
+        throw error;
+      }
+      return resolveResult(response).then(result => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(
+            `💊  %c${method} ${response.url} => [${response.status}]\n`,
+            'bold rgb(68, 136, 68)',
+            result,
+          );
+        }
+        return result;
+      });
+    });
+};
