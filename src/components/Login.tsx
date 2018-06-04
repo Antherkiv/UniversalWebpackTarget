@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { withFormik, FieldProps } from 'formik';
-import { Container, Form, Input, Button } from 'reactstrap';
+import { Container, Form, Input, InputGroup, Button } from 'reactstrap';
 
 import 'bootstrap/dist/css/bootstrap.css';
 
@@ -14,27 +14,31 @@ const InnerForm = ({
   handleSubmit,
   isSubmitting,
 }: any) => (
-    <Form onSubmit={handleSubmit}>
-      <Input
-        type="email"
-        name="email"
-        onChange={handleChange}
-        onBlur={handleBlur}
-        value={values.email}
-      />
-      {touched.email && errors.email && <div>{errors.email}</div>}
-      <Input
-        type="password"
-        name="password"
-        onChange={handleChange}
-        onBlur={handleBlur}
-        value={values.password}
-      />
-      {touched.password && errors.password && <div>{errors.password}</div>}
-      <Button type="submit" disabled={isSubmitting}>
-        Submit
-      </Button>
-    </Form>
+  <Form onSubmit={handleSubmit} className="m-3">
+    <Input
+      type="email"
+      name="email"
+      placeholder="Email"
+      onChange={handleChange}
+      onBlur={handleBlur}
+      value={values.email}
+      className="mt-3"
+    />
+    {touched.email && errors.email && <div>{errors.email}</div>}
+    <Input
+      type="password"
+      name="password"
+      placeholder="Password"
+      onChange={handleChange}
+      onBlur={handleBlur}
+      value={values.password}
+      className="mt-3"
+    />
+    {touched.password && errors.password && <div>{errors.password}</div>}
+    <Button type="submit" disabled={isSubmitting} className="mt-3">
+      Submit
+    </Button>
+  </Form>
 );
 
 // Wrap our form with the using withFormik HoC
@@ -56,7 +60,7 @@ export default withFormik({
     values,
     { props, setSubmitting, setErrors /* setValues, setStatus, and other goodies */ },
   ) => {
-    new Promise((resolve: Function) => setTimeout(resolve, 1000)).then(
+    new Promise((resolve: Function) => setTimeout(resolve, 3000)).then(
       user => {
         setSubmitting(false);
         // do whatevs...
