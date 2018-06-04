@@ -1,10 +1,14 @@
 import * as React from 'react';
 import { Switch, Route, Link } from 'react-router-dom';
 import { Navbar, NavbarBrand, Nav, NavItem } from 'reactstrap';
+import 'bootstrap/dist/css/bootstrap.css';
+
 import { loadable } from './loadable';
 
 import Hello from './components/Hello';
 import Login from './components/Login';
+import Register from './components/Register';
+import Recover from './components/Recover';
 
 import('./test1' /* webpackChunkName: "test1", webpackPreload: true */).then(({ test1 }) => {
   test1('first');
@@ -60,6 +64,8 @@ export const App = () => (
       <Route exact path="/" component={Home} />
       <Route path="/test/:name" component={Test} />
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
+      <Route path="/recover" component={Recover} />
       <Route component={NoMatch} />
     </Switch>
   </div>

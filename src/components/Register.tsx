@@ -14,7 +14,7 @@ const InnerForm = ({
   isSubmitting,
 }: any) => (
   <Form onSubmit={handleSubmit} className="m-3">
-    <h1>Login</h1>
+    <h1>Register</h1>
     <Input
       type="email"
       name="email"
@@ -26,6 +26,15 @@ const InnerForm = ({
     />
     {touched.email && errors.email && <div>{errors.email}</div>}
     <Input
+      name="name"
+      placeholder="Full name"
+      onChange={handleChange}
+      onBlur={handleBlur}
+      value={values.name}
+      className="my-3"
+    />
+    {touched.name && errors.name && <div>{errors.name}</div>}
+    <Input
       type="password"
       name="password"
       placeholder="Password"
@@ -35,14 +44,21 @@ const InnerForm = ({
       className="my-3"
     />
     {touched.password && errors.password && <div>{errors.password}</div>}
+    <Input
+      type="password"
+      name="password2"
+      placeholder="Verify password"
+      onChange={handleChange}
+      onBlur={handleBlur}
+      value={values.password2}
+      className="my-3"
+    />
+    {touched.password2 && errors.password2 && <div>{errors.password2}</div>}
     <Button type="submit" disabled={isSubmitting} className="my-3">
       Submit
     </Button>
     <p>
-      Need a new account? <Link to="/register">Register</Link>
-    </p>
-    <p>
-      Forgot password? <Link to="/recover">Recover</Link>
+      Already registered? <Link to="/login">Login</Link>
     </p>
   </Form>
 );
@@ -61,6 +77,10 @@ export default withFormik({
     }
     if (!values.password) {
       errors.password = 'Required';
+    } else if (values.password !== values.password2) {
+      errors.password = 'Password mismatch!';
+    } else if (values.password.length < 6) {
+      errors.password = 'Password is too short!';
     }
     return errors;
   },
