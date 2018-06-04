@@ -30,7 +30,7 @@ const Test = ({ match }: any) => {
 
 export const App = () => (
   <div>
-    <Navbar color="light" light expand="md">
+    <Navbar color="dark" dark expand="md">
       <Link className="navbar-brand" to="/">
         first
       </Link>
