@@ -5,11 +5,6 @@
         <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,shrink-to-fit=no" />
         <meta http-equiv="x-ua-compatible" content="ie=edge" />
         <title>Hello React!</title>
-
-        <script>window.app = !{root.app}</script>
-
-        <script src="/Universal.runtime.js" onerror="_err()"></script>
-        <script src="/libs/client/client.js" onerror="_err()"></script>
     </head>
 <!--
 |          d8888                 8888          8888               888
@@ -45,5 +40,12 @@
         </div>
 
         <div id="main">!{root.main}</div>
+
+        <script>
+          window.APP = !{root.APP}
+          window.INITIAL_STATE = !{root.INITIAL_STATE}
+        </script>
+        <script src="/Universal.runtime.js" onerror="_err()"></script>
+        <script src="/libs/client/client.js" onerror="_err()"></script>
       </body>
 </html>
