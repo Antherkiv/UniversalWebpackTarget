@@ -33,7 +33,7 @@ const Test = ({ match }: any) => {
 };
 
 export const App = () => (
-  <div>
+  <React.Fragment>
     <Navbar color="dark" dark expand="md">
       <Link className="navbar-brand" to="/">
         first
@@ -68,5 +68,5 @@ export const App = () => (
       <Route path="/recover" component={Recover} />
       <Route component={NoMatch} />
     </Switch>
-  </div>
+  </React.Fragment>
 );
