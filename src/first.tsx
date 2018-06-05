@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Switch, Route, Link } from 'react-router-dom';
 import { Navbar, NavbarBrand, Nav, NavItem } from 'reactstrap';
-import 'bootstrap/dist/css/bootstrap.css';
+import 'bootstrap/scss/bootstrap.scss';
 
 import { loadable } from './loadable';
 
