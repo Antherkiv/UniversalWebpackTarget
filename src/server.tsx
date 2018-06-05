@@ -3,6 +3,9 @@ import * as ReactDOMServer from 'react-dom/server';
 import * as reactRouter from 'react-router';
 import gaikan from 'gaikan';
 import express from 'express';
+import { Provider } from 'react-redux';
+import configureStore from './store';
+
 import { loadComponents } from './loadable';
 
 import consoleColorizer from 'console-colorizer';

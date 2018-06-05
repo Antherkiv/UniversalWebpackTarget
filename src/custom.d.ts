@@ -28,3 +28,16 @@ interface PluggableEntry {
 interface Pluggable {
   (): PluggableEntry;
 }
+
+declare var APP: string;
+declare var INITIAL_STATE: {};
+
+declare interface Window {
+  __REDUX_DEVTOOLS_EXTENSION__: any;
+  __REDUX_DEVTOOLS_EXTENSION_COMPOSE__: any;
+}
+
+declare namespace NodeJS {
+  interface Global {
+  }
+}
