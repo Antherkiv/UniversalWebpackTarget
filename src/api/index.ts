@@ -24,7 +24,9 @@ interface ApiInit extends RequestInit {
   json?: {};
   api?: string;
   endpoint: string | string[];
-  query: any;
+  query?: any;
+  onStart?: ApiCallback;
+  onStop?: ApiCallback;
 }
 
 interface ApiCallback {
@@ -32,46 +34,28 @@ interface ApiCallback {
 }
 
 interface AuthState {
-  site: {
+  site?: {
     protocol: string;
     domain: string;
   };
-  auth: {
+  auth?: {
     meId: string;
     keychain: {
       [entity: string]: {
         [api: string]: {
-          api_code: string;
-          app: string;
-          api: string;
           base_url: string;
-          name: string;
-          client_id: string;
-          expires_in?: number;
-          token_type: 'Bearer';
+          token_type?: 'Bearer';
           access_token: string;
-          scope?: string;
-          available_scopes?: {
-            [scope: string]: string;
-          };
-          refresh_token?: string;
-          description?: string;
-          dependencies?: string[];
         };
       };
     };
   };
-  entities: {
-    [entity: string]: {
-      fullName?: string;
-      nickname?: string;
-    };
-  };
 }
 
-const getInKeychain = (state: AuthState) => state.auth.keychain[state.auth.meId || '!'];
+const getInKeychain = (state?: AuthState) =>
+  state && state.auth && state.auth.keychain[state.auth.meId];
 
-export const getApiInfo = (api: string, state: AuthState) => {
+export const getApiInfo = (api: string, state?: AuthState) => {
   const keychain = getInKeychain(state);
   if (!keychain) {
     throw new Error('No APIs found!');
@@ -87,21 +71,15 @@ export const getApiInfo = (api: string, state: AuthState) => {
   return {
     baseURL: obj.base_url,
     authorization: obj.access_token
-      ? { Authorization: `${obj.token_type} ${obj.access_token}` } // prettier-ignore
+      ? { Authorization: `${obj.token_type || 'Bearer'} ${obj.access_token}` } // prettier-ignore
       : {},
   };
 };
 
-export const callApi = async (
-  options: ApiInit,
-  onStart: ApiCallback,
-  onStop: ApiCallback,
-  state: AuthState,
-  ignoreErrors: boolean | number[],
-) => {
-  const { json, api, headers } = options;
-
-  let { body, method, endpoint, credentials, query } = options;
+export const callApi = (options: ApiInit, state?: AuthState, ignoreErrors?: boolean | number[]) => {
+  const { json, api, headers, onStart, onStop, ..._ } = options;
+  let { body, method, endpoint, credentials, query, ...__ } = _;
+  const init: RequestInit = __;
 
   if (json) {
     // Stringify json
@@ -119,7 +97,6 @@ export const callApi = async (
     endpoint = `${endpoint}/`;
   }
 
-  const init: RequestInit = {};
   const initHeaders: { [key: string]: string } = {};
 
   if (api) {
@@ -132,7 +109,7 @@ export const callApi = async (
 
     Object.assign(initHeaders, headers, authorization);
   } else {
-    if (!/^(?:https?:)?\/\//.test(endpoint)) {
+    if (!/^(?:https?:)?\/\//.test(endpoint) && state && state.site) {
       const protocol = state.site.protocol;
       const domain = state.site.domain;
       endpoint = `${protocol}://${domain}/${endpoint}`;
@@ -185,10 +162,10 @@ export const callApi = async (
     console.log(`🕸  %cfetch ${endpoint}\n`, 'bold rgb(0, 136, 255)', init);
   }
 
-  onStart(); // Show spinner
+  onStart && onStart(); // Show spinner
   return fetch(endpoint, init)
     .catch((error: Error) => {
-      onStop; // Hide spinner with error
+      onStop && onStop(); // Hide spinner with error
       if (ignoreErrors === true) {
         return resolveResult().then(result => {
           if (process.env.NODE_ENV === 'development') {
@@ -202,14 +179,21 @@ export const callApi = async (
         });
       }
       if (process.env.NODE_ENV === 'development') {
-        console.error(`🔥  %c${method} ${endpoint} => [EXCEPTION]\n`, 'bold rgb(255, 34, 0)', error);
+        console.error(
+          `🔥  %c${method} ${endpoint} => [EXCEPTION]\n`,
+          'bold rgb(255, 34, 0)',
+          error,
+        );
       }
       throw error;
     })
     .then((response: Response) => {
-      onStop; // Hide spinner
+      onStop && onStop(); // Hide spinner
       if (!response.ok) {
-        if (ignoreErrors && (ignoreErrors === true || ignoreErrors.indexOf(response.status) !== -1)) {
+        if (
+          ignoreErrors &&
+          (ignoreErrors === true || ignoreErrors.indexOf(response.status) !== -1)
+        ) {
           return resolveResult().then(result => {
             if (process.env.NODE_ENV === 'development') {
               console.log(
