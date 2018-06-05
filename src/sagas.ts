@@ -11,13 +11,14 @@ const config = {
 };
 
 function* auth(action: Actions) {
-  try {
-    switch (action.type) {
-      case ActionTypes.LOGIN:
+  switch (action.type) {
+    case ActionTypes.LOGIN: {
+      const { resetForm, setErrors, setSubmitting } = action.meta;
+      try {
         const auth = yield callApi({
           endpoint: `${config.authUrl}/token`,
           json: {
-            username: action.payload.user,
+            username: action.payload.email,
             password: action.payload.password,
             scope: 'terms privacy',
             client_id: config.authClientId,
@@ -63,20 +64,23 @@ function* auth(action: Actions) {
           },
         };
         yield put(Actions.keychain(keychain));
-        break;
-      case ActionTypes.LOGOUT:
-      case ActionTypes.RECOVER:
-      case ActionTypes.REGISTER:
-        break;
+        // Reset the form just to be clean, then send the user to our
+        // Dashboard which "requires" authentication.
+        yield call(resetForm);
+        yield call(setSubmitting, false);
+        // yield call([history, 'navigate'], 'dashboard')
+      } catch (e) {
+        // If our API throws an error we will leverage Formik's existing error system to
+        // pass it along to the view layer, as well as clearing the loading indicator.
+        yield call(setErrors, { message: e.message });
+        yield call(setSubmitting, false);
+      }
+      break;
     }
-    // const keychain: Keychain = {
-    //   entity,
-    //   keychain,
-    // };
-    // yield put(Actions.keychain(keychain));
-  } catch (e) {
-    console.error(e);
-    // yield put(Actions.conversionError(e.message));
+    case ActionTypes.LOGOUT:
+    case ActionTypes.RECOVER:
+    case ActionTypes.REGISTER:
+      break;
   }
 }
 

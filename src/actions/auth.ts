@@ -1,3 +1,4 @@
+import { FormikActions } from 'formik';
 import { createAction, ActionsUnion } from '.';
 
 export enum ActionTypes {
@@ -28,18 +29,42 @@ export interface ApiKey {
 }
 
 export interface Login {
-  user: string;
+  email: string;
   password: string;
+}
+
+export interface LoginValues extends Login {
+  message?: string;
+}
+
+export interface LoginParams extends Login {
+  formikActions: FormikActions<LoginValues>;
+}
+
+export interface LogoutParams {
+  formikActions: FormikActions<{}>;
 }
 
 export interface Recover {
-  user: string;
+  email: string;
+}
+export interface RecoverValues extends Recover {
+  message?: string;
+}
+export interface RecoverParams extends Recover {
+  formikActions: FormikActions<RecoverValues>;
 }
 
 export interface Register {
-  user: string;
+  email: string;
   password: string;
   name: string;
+}
+export interface RegisterValues extends Register {
+  message?: string;
+}
+export interface RegisterParams extends Register {
+  formikActions: FormikActions<RegisterValues>;
 }
 
 export interface Keychain {
@@ -50,10 +75,14 @@ export interface Keychain {
 }
 
 export const Actions = {
-  login: (login: Login) => createAction(ActionTypes.LOGIN, login),
-  logout: () => createAction(ActionTypes.LOGOUT),
-  recover: (recover: Recover) => createAction(ActionTypes.RECOVER, recover),
-  register: (register: Register) => createAction(ActionTypes.REGISTER, register),
+  login: ({ email, password, formikActions }: LoginParams) =>
+    createAction(ActionTypes.LOGIN, { email, password }, formikActions),
+  logout: ({ formikActions }: LogoutParams) =>
+    createAction(ActionTypes.LOGOUT, undefined, formikActions),
+  recover: ({ email, formikActions }: RecoverParams) =>
+    createAction(ActionTypes.RECOVER, { email }, formikActions),
+  register: ({ email, password, name, formikActions }: RegisterParams) =>
+    createAction(ActionTypes.REGISTER, { email, password, name }, formikActions),
   keychain: (keychain: Keychain) => createAction(ActionTypes.KEYCHAIN, keychain),
 };
 
