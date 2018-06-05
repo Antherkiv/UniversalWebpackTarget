@@ -1,15 +1,13 @@
 import * as React from 'react';
-import { connect, Dispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
+import { connect, Dispatch } from 'react-redux';
+import { Container, Form, Input, FormFeedback, Button, Alert } from 'reactstrap';
 import { Formik, InjectedFormikProps, FieldProps, FormikActions } from 'formik';
 import * as yup from 'yup';
-import { Container, Form, Input, FormFeedback, Button, Alert } from 'reactstrap';
 
 import { Actions, LoginValues } from '../actions/auth';
 
-interface LoginProps {
-  onSubmit(values: LoginValues, formikActions: FormikActions<LoginValues>): any;
-}
+interface LoginProps {}
 
 // Our inner form component which receives our form's state and updater methods as props
 const LoginForm: React.SFC<InjectedFormikProps<LoginProps, LoginValues>> = ({
@@ -84,7 +82,11 @@ const validationSchema = yup.object().shape({
 
 // LOGIN CONTAINER
 
-const mapDispatchToProps = (dispatch: Dispatch): LoginProps => ({
+interface LoginFormikProps {
+  onSubmit(values: LoginValues, formikActions: FormikActions<LoginValues>): any;
+}
+
+const mapDispatchToProps = (dispatch: Dispatch): LoginFormikProps => ({
   onSubmit: (values, formikActions) =>
     dispatch(
       Actions.login({
@@ -95,7 +97,7 @@ const mapDispatchToProps = (dispatch: Dispatch): LoginProps => ({
     ),
 });
 
-const LoginFormik = ({ onSubmit }: LoginProps) => (
+const LoginFormik = ({ onSubmit }: LoginFormikProps) => (
   <Formik
     initialValues={initialValues}
     validationSchema={validationSchema}
