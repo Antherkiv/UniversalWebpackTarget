@@ -94,34 +94,42 @@ app.set('views', '.');
 
 const domains: DomainMap = require('domains.json');
 
-app.get(/^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/, async (req, res) => {
-  const app = domains[req.hostname];
-  try {
-    const entry = await import(app);
-    const { App } = entry();
-    // This context object contains the results of the render
-    const routerContext = {} as reactRouter.match<any>;
-    const main = (
-      <StaticRouter location={req.url} context={routerContext}>
-        <App />
-      </StaticRouter>
-    );
-    await loadComponents(main);
-    if (routerContext.url) {
-      res.writeHead(302, {
-        Location: routerContext.url,
-      });
-    } else {
-      res.status(200).render('index.html', {
-        main: ReactDOMServer.renderToString(main),
-        app: JSON.stringify(app),
-      });
+app.get(
+  /^(.(?!\.(js|json|map|ico|png|jpg|jpeg|gif|svg|eot|ttf|woff|woff2)$))+$/,
+  async (req, res) => {
+    const app = domains[req.hostname];
+    try {
+      const entry = await import(app);
+      const { App } = entry();
+      // This context object contains the results of the render
+      const routerContext = {} as reactRouter.match<any>;
+      const store = configureStore();
+      const main = (
+        <Provider store={store}>
+          <StaticRouter location={req.url} context={routerContext}>
+            <App />
+          </StaticRouter>
+        </Provider>
+      );
+      await loadComponents(main);
+      const mainStr = ReactDOMServer.renderToString(main);
+      if (routerContext.url) {
+        res.writeHead(302, {
+          Location: routerContext.url,
+        });
+      } else {
+        res.status(200).render('index.html', {
+          main: mainStr,
+          APP: JSON.stringify(app),
+          INITIAL_STATE: JSON.stringify(store.getState()),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500);
     }
-  } catch (err) {
-    console.error(err);
-    res.status(500);
-  }
-});
+  },
+);
 
 app.use('/', express.static('.'));
 
