@@ -50,8 +50,7 @@ export function walkTree(element: React.ReactNode, context: {}, visitor: TreeVis
       let child: React.ReactNode;
 
       // Are we are a react class?
-      // tslint:disable-next-line:max-line-length
-      //   https://github.com/facebook/react/blob/master/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js#L66
+      //   https://github.com/facebook/react/blob/v15.4.0/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js#L66
       const componentClass = isComponentClass(Component);
       if (componentClass) {
         const instance = new componentClass(props, context);
@@ -78,9 +77,8 @@ export function walkTree(element: React.ReactNode, context: {}, visitor: TreeVis
           );
         };
 
-        // this is a poor man's version of
-        // tslint:disable-next-line:max-line-length
-        //   https://github.com/facebook/react/blob/master/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js#L181
+        // this is a poor man's version of _mountClassComponent()
+        //   https://github.com/facebook/react/blob/v16.3.0/packages/react-test-renderer/src/ReactShallowRenderer.js#L130
         if (typeof instance.componentWillMount === 'function') {
           instance.componentWillMount();
         }
@@ -98,6 +96,8 @@ export function walkTree(element: React.ReactNode, context: {}, visitor: TreeVis
 
         child = instance.render();
 
+        // this is from unmount()
+        //   https://github.com/facebook/react/blob/v16.3.0/packages/react-test-renderer/src/ReactShallowRenderer.js#L130
         if (typeof instance.componentWillUnmount === 'function') {
           instance.componentWillUnmount();
         }
