@@ -81,8 +81,11 @@ export function walkTree(element: React.ReactNode, context: {}, visitor: TreeVis
         // this is a poor man's version of
         // tslint:disable-next-line:max-line-length
         //   https://github.com/facebook/react/blob/master/src/renderers/shared/stack/reconciler/ReactCompositeComponent.js#L181
-        if (instance.componentWillMount) {
+        if (typeof instance.componentWillMount === 'function') {
           instance.componentWillMount();
+        }
+        if (typeof instance.UNSAFE_componentWillMount === 'function') {
+          instance.UNSAFE_componentWillMount();
         }
 
         if (providesChildContext(instance)) {
@@ -94,6 +97,10 @@ export function walkTree(element: React.ReactNode, context: {}, visitor: TreeVis
         }
 
         child = instance.render();
+
+        if (typeof instance.componentWillUnmount === 'function') {
+          instance.componentWillUnmount();
+        }
       } else {
         // just a stateless functional
         if (visitor(reactElement, null, context) === false) {
