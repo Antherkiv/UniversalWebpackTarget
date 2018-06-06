@@ -103,7 +103,12 @@ app.get(
       const { App } = entry();
       // This context object contains the results of the render
       const routerContext = {} as reactRouter.match<any>;
-      const store = configureStore();
+      const staticRouter = new StaticRouter({
+        location: req.url,
+        context: routerContext,
+      });
+      const history = (staticRouter.render() as any).props.history;
+      const store = configureStore(history);
       const main = (
         <Provider store={store}>
           <StaticRouter location={req.url} context={routerContext}>

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { BrowserRouter } from 'react-router-dom';
+import { ConnectedRouter } from 'connected-react-router';
+import { createBrowserHistory } from 'history';
 import { Provider } from 'react-redux';
 import configureStore from './store';
 
@@ -13,11 +14,13 @@ consoleColorizer(console);
 
 import(APP).then((entry: Pluggable) => {
   const { App } = entry();
+  const history = createBrowserHistory();
+  const store = configureStore(history, INITIAL_STATE || {});
   const main = (
-    <Provider store={configureStore(INITIAL_STATE || {})}>
-      <BrowserRouter>
+    <Provider store={store}>
+      <ConnectedRouter history={history}>
         <App />
-      </BrowserRouter>
+      </ConnectedRouter>
     </Provider>
   );
   loadComponents(main).then(() => {
