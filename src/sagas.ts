@@ -74,7 +74,7 @@ function* auth(action: Actions) {
         // Dashboard which "requires" authentication.
         yield call(resetForm);
         yield call(setSubmitting, false);
-        yield put(push('/'));
+        yield put(push('/dashboard'));
       } catch (e) {
         // If our API throws an error we will leverage Formik's existing error system to
         // pass it along to the view layer, as well as clearing the loading indicator.

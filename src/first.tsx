@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { Switch, Route, Link } from 'react-router-dom';
-import { Navbar, Nav, NavItem } from 'reactstrap';
+import { Switch, Route } from 'react-router-dom';
 import 'bootstrap/scss/bootstrap.scss';
 
 import { loadable } from './loadable';
 
+import Navigation from './components/Navigation';
 import Hello from './components/Hello';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -34,32 +34,7 @@ const Test = ({ match }: any) => {
 
 export const App = () => (
   <React.Fragment>
-    <Navbar color="dark" dark expand="md">
-      <Link className="navbar-brand" to="/">
-        first
-      </Link>
-      <Nav className="ml-auto" navbar>
-        <NavItem>
-          <Link className="nav-link" to="/test/one">
-            Test 1
-          </Link>
-        </NavItem>
-      </Nav>
-      <Nav className="ml-auto" navbar>
-        <NavItem>
-          <Link className="nav-link" to="/test/two">
-            Test 2
-          </Link>
-        </NavItem>
-      </Nav>
-      <Nav className="ml-auto" navbar>
-        <NavItem>
-          <Link className="nav-link" to="/login">
-            Login
-          </Link>
-        </NavItem>
-      </Nav>
-    </Navbar>
+    <Navigation />
     <Switch>
       <Route exact path="/" component={Home} />
       <Route path="/test/:name" component={Test} />

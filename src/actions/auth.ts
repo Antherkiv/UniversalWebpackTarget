@@ -56,8 +56,7 @@ export interface Keychain {
 export const Actions = {
   login: (email: string, password: string, formikActions: FormikActions<LoginValues>) =>
     createAction(ActionTypes.LOGIN, { email, password }, formikActions),
-  logout: (formikActions: FormikActions<{}>) =>
-    createAction(ActionTypes.LOGOUT, undefined, formikActions),
+  logout: () => createAction(ActionTypes.LOGOUT),
   recover: (email: string, formikActions: FormikActions<RecoverValues>) =>
     createAction(ActionTypes.RECOVER, { email }, formikActions),
   register: (
