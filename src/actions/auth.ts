@@ -28,43 +28,22 @@ export interface ApiKey {
   dependencies?: string[];
 }
 
-export interface Login {
+export interface LoginValues {
   email: string;
   password: string;
-}
-
-export interface LoginValues extends Login {
   message?: string;
 }
 
-export interface LoginParams extends Login {
-  formikActions: FormikActions<LoginValues>;
-}
-
-export interface LogoutParams {
-  formikActions: FormikActions<{}>;
-}
-
-export interface Recover {
+export interface RecoverValues {
   email: string;
-}
-export interface RecoverValues extends Recover {
   message?: string;
 }
-export interface RecoverParams extends Recover {
-  formikActions: FormikActions<RecoverValues>;
-}
 
-export interface Register {
+export interface RegisterValues {
   email: string;
   password: string;
   name: string;
-}
-export interface RegisterValues extends Register {
   message?: string;
-}
-export interface RegisterParams extends Register {
-  formikActions: FormikActions<RegisterValues>;
 }
 
 export interface Keychain {
@@ -75,14 +54,18 @@ export interface Keychain {
 }
 
 export const Actions = {
-  login: ({ email, password, formikActions }: LoginParams) =>
+  login: (email: string, password: string, formikActions: FormikActions<LoginValues>) =>
     createAction(ActionTypes.LOGIN, { email, password }, formikActions),
-  logout: ({ formikActions }: LogoutParams) =>
+  logout: (formikActions: FormikActions<{}>) =>
     createAction(ActionTypes.LOGOUT, undefined, formikActions),
-  recover: ({ email, formikActions }: RecoverParams) =>
+  recover: (email: string, formikActions: FormikActions<RecoverValues>) =>
     createAction(ActionTypes.RECOVER, { email }, formikActions),
-  register: ({ email, password, name, formikActions }: RegisterParams) =>
-    createAction(ActionTypes.REGISTER, { email, password, name }, formikActions),
+  register: (
+    email: string,
+    password: string,
+    name: string,
+    formikActions: FormikActions<RecoverValues>,
+  ) => createAction(ActionTypes.REGISTER, { email, password, name }, formikActions),
   keychain: (keychain: Keychain) => createAction(ActionTypes.KEYCHAIN, keychain),
 };
 export type Actions = ActionsUnion<typeof Actions>;

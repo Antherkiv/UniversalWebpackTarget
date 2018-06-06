@@ -52,11 +52,11 @@ interface AuthState {
   };
 }
 
-const getInKeychain = (state?: AuthState) =>
+export const selectKeychain = (state?: AuthState) =>
   state && state.auth && state.auth.keychain[state.auth.meId];
 
-export const getApiInfo = (api: string, state?: AuthState) => {
-  const keychain = getInKeychain(state);
+export const selectApiInfo = (api: string, state?: AuthState) => {
+  const keychain = selectKeychain(state);
   if (!keychain) {
     throw new Error('No APIs found!');
   }
@@ -68,10 +68,15 @@ export const getApiInfo = (api: string, state?: AuthState) => {
     );
   }
 
+  const { base_url, access_token } = obj;
+  const token_type = obj.token_type || 'Bearer'; // tslint:disable-line:variable-name
+
   return {
-    baseURL: obj.base_url,
-    authorization: obj.access_token
-      ? { Authorization: `${obj.token_type || 'Bearer'} ${obj.access_token}` } // prettier-ignore
+    base_url,
+    token_type,
+    access_token,
+    authorization: access_token
+      ? { Authorization: `${token_type} ${access_token}` } // prettier-ignore
       : {},
   };
 };
@@ -101,11 +106,11 @@ export const callApi = (options: ApiInit, state?: AuthState, ignoreErrors?: bool
   const initHeaders: { [key: string]: string } = {};
 
   if (api) {
-    const { baseURL, authorization } = getApiInfo(api, state);
+    const { base_url, authorization } = selectApiInfo(api, state);
 
     // Add API base URL if url isn't full
     if (!/^(?:https?:)?\/\//.test(endpoint)) {
-      endpoint = `${baseURL}/${endpoint}`;
+      endpoint = `${base_url}/${endpoint}`;
     }
 
     Object.assign(initHeaders, headers, authorization);

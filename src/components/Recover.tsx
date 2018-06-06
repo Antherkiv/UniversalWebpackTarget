@@ -1,10 +1,16 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { withFormik, FieldProps } from 'formik';
-import { Container, Form, Input, InputGroup, Button } from 'reactstrap';
+import { connect, Dispatch } from 'react-redux';
+import { Form, Input, FormFeedback, Button, Alert } from 'reactstrap';
+import { Formik, InjectedFormikProps, FormikActions } from 'formik';
+import * as yup from 'yup';
+
+import { Actions, RecoverValues } from '../actions/auth';
+
+interface RecoverProps {}
 
 // Our inner form component which receives our form's state and updater methods as props
-const InnerForm = ({
+const RecoverForm: React.SFC<InjectedFormikProps<RecoverProps, RecoverValues>> = ({
   values,
   errors,
   touched,
@@ -12,9 +18,14 @@ const InnerForm = ({
   handleBlur,
   handleSubmit,
   isSubmitting,
-}: any) => (
+}) => (
   <Form onSubmit={handleSubmit} className="m-3">
     <h1>Recover Password</h1>
+    {errors.message && (
+      <p>
+        <Alert color="danger">{errors.message}</Alert>
+      </p>
+    )}
     <Input
       type="email"
       name="email"
@@ -22,9 +33,10 @@ const InnerForm = ({
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.email}
+      invalid={touched.email && errors.email}
       className="my-3"
     />
-    {touched.email && errors.email && <div>{errors.email}</div>}
+    <FormFeedback valid={!touched.email || !errors.email}>{errors.email}</FormFeedback>
     <Button type="submit" disabled={isSubmitting} className="my-3">
       Submit
     </Button>
@@ -34,37 +46,44 @@ const InnerForm = ({
   </Form>
 );
 
-// Wrap our form with the using withFormik HoC
-export default withFormik({
-  // Transform outer props into form values
-  mapPropsToValues: props => ({ email: '', password: '' }),
-  // Add a custom validation function (this can be async too!)
-  validate: (values: any, props) => {
-    const errors: any = {};
-    if (!values.email) {
-      errors.email = 'Required';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
-      errors.email = 'Invalid email address';
-    }
-    return errors;
-  },
-  // Submission handler
-  handleSubmit: (
-    values,
-    { props, setSubmitting, setErrors /* setValues, setStatus, and other goodies */ },
-  ) => {
-    console.log(values);
-    new Promise((resolve: Function) => setTimeout(resolve, 3000)).then(
-      user => {
-        setSubmitting(false);
-        // do whatevs...
-        // props.updateUser(user)
-      },
-      errors => {
-        setSubmitting(false);
-        // Maybe even transform your API's errors into the same shape as Formik's!
-        setErrors(errors);
-      },
-    );
-  },
-})(InnerForm);
+// FORM CONFIGURATION
+
+const initialValues = {
+  email: '',
+};
+
+const validationSchema = yup.object().shape({
+  email: yup
+    .string()
+    .required('Email is required!')
+    .email('Invalid email address')
+    .label('Email'),
+});
+
+// CONTAINER
+
+interface RecoverFormikProps {
+  onSubmit(values: RecoverValues, formikActions: FormikActions<RecoverValues>): any;
+}
+
+const mapDispatchToProps = (dispatch: Dispatch): RecoverFormikProps => ({
+  onSubmit: (values, formikActions) =>
+    dispatch(
+      Actions.recover(values.email, formikActions),
+    ),
+});
+
+const RecoverFormik = ({ onSubmit }: RecoverFormikProps) => (
+  <Formik
+    initialValues={initialValues}
+    validationSchema={validationSchema}
+    validateOnBlur={false}
+    validateOnChange={false}
+    onSubmit={onSubmit}
+    component={RecoverForm}
+  />
+);
+
+const Recover = connect(null, mapDispatchToProps)(RecoverFormik);
+
+export default Recover;

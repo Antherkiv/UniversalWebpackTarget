@@ -80,7 +80,7 @@ const validationSchema = yup.object().shape({
     .label('Password'),
 });
 
-// LOGIN CONTAINER
+// CONTAINER
 
 interface LoginFormikProps {
   onSubmit(values: LoginValues, formikActions: FormikActions<LoginValues>): any;
@@ -89,11 +89,7 @@ interface LoginFormikProps {
 const mapDispatchToProps = (dispatch: Dispatch): LoginFormikProps => ({
   onSubmit: (values, formikActions) =>
     dispatch(
-      Actions.login({
-        formikActions,
-        email: values.email,
-        password: values.password,
-      }),
+      Actions.login(values.email, values.password, formikActions),
     ),
 });
 

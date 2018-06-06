@@ -1,10 +1,16 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
-import { withFormik, FieldProps } from 'formik';
-import { Container, Form, Input, InputGroup, Button } from 'reactstrap';
+import { connect, Dispatch } from 'react-redux';
+import { Form, Input, FormFeedback, Button, Alert } from 'reactstrap';
+import { Formik, InjectedFormikProps, FormikActions } from 'formik';
+import * as yup from 'yup';
+
+import { Actions, RegisterValues } from '../actions/auth';
+
+interface RegisterProps {}
 
 // Our inner form component which receives our form's state and updater methods as props
-const InnerForm = ({
+const RegisterForm: React.SFC<InjectedFormikProps<RegisterProps, RegisterValues>> = ({
   values,
   errors,
   touched,
@@ -12,9 +18,24 @@ const InnerForm = ({
   handleBlur,
   handleSubmit,
   isSubmitting,
-}: any) => (
+}) => (
   <Form onSubmit={handleSubmit} className="m-3">
     <h1>Register</h1>
+    {errors.message && (
+      <p>
+        <Alert color="danger">{errors.message}</Alert>
+      </p>
+    )}
+    <Input
+      name="name"
+      placeholder="Name"
+      onChange={handleChange}
+      onBlur={handleBlur}
+      value={values.name}
+      invalid={touched.name && errors.name}
+      className="my-3"
+    />
+    <FormFeedback valid={!touched.name || !errors.name}>{errors.name}</FormFeedback>
     <Input
       type="email"
       name="email"
@@ -22,18 +43,10 @@ const InnerForm = ({
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.email}
+      invalid={touched.email && errors.email}
       className="my-3"
     />
-    {touched.email && errors.email && <div>{errors.email}</div>}
-    <Input
-      name="name"
-      placeholder="Full name"
-      onChange={handleChange}
-      onBlur={handleBlur}
-      value={values.name}
-      className="my-3"
-    />
-    {touched.name && errors.name && <div>{errors.name}</div>}
+    <FormFeedback valid={!touched.email || !errors.email}>{errors.email}</FormFeedback>
     <Input
       type="password"
       name="password"
@@ -41,66 +54,71 @@ const InnerForm = ({
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.password}
+      invalid={touched.password && errors.password}
       className="my-3"
     />
-    {touched.password && errors.password && <div>{errors.password}</div>}
-    <Input
-      type="password"
-      name="password2"
-      placeholder="Verify password"
-      onChange={handleChange}
-      onBlur={handleBlur}
-      value={values.password2}
-      className="my-3"
-    />
-    {touched.password2 && errors.password2 && <div>{errors.password2}</div>}
+    <FormFeedback valid={!touched.password || !errors.password}>{errors.password}</FormFeedback>
     <Button type="submit" disabled={isSubmitting} className="my-3">
       Submit
     </Button>
     <p>
-      Already registered? <Link to="/login">Login</Link>
+      Need a new account? <Link to="/register">Register</Link>
+    </p>
+    <p>
+      Forgot password? <Link to="/recover">Recover</Link>
     </p>
   </Form>
 );
 
-// Wrap our form with the using withFormik HoC
-export default withFormik({
-  // Transform outer props into form values
-  mapPropsToValues: props => ({ email: '', password: '' }),
-  // Add a custom validation function (this can be async too!)
-  validate: (values: any, props) => {
-    const errors: any = {};
-    if (!values.email) {
-      errors.email = 'Required';
-    } else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
-      errors.email = 'Invalid email address';
-    }
-    if (!values.password) {
-      errors.password = 'Required';
-    } else if (values.password !== values.password2) {
-      errors.password = 'Password mismatch!';
-    } else if (values.password.length < 6) {
-      errors.password = 'Password is too short!';
-    }
-    return errors;
-  },
-  // Submission handler
-  handleSubmit: (
-    values,
-    { props, setSubmitting, setErrors /* setValues, setStatus, and other goodies */ },
-  ) => {
-    console.log(values);
-    new Promise((resolve: Function) => setTimeout(resolve, 3000)).then(
-      user => {
-        setSubmitting(false);
-        // do whatevs...
-        // props.updateUser(user)
-      },
-      errors => {
-        setSubmitting(false);
-        // Maybe even transform your API's errors into the same shape as Formik's!
-        setErrors(errors);
-      },
-    );
-  },
-})(InnerForm);
+// FORM CONFIGURATION
+
+const initialValues = {
+  name: '',
+  email: '',
+  password: '',
+};
+
+const validationSchema = yup.object().shape({
+  name: yup
+    .string()
+    .required('Name is required!')
+    .label('Name'),
+  email: yup
+    .string()
+    .required('Email is required!')
+    .email('Invalid email address')
+    .label('Email'),
+  password: yup
+    .string()
+    .required('Password is required!')
+    .min(6, 'Password has to be longer than 6 characters!')
+    .label('Password'),
+});
+
+// CONTAINER
+
+interface RegisterFormikProps {
+  onSubmit(values: RegisterValues, formikActions: FormikActions<RegisterValues>): any;
+}
+
+const mapDispatchToProps = (dispatch: Dispatch): RegisterFormikProps => ({
+  onSubmit: (values, formikActions) =>
+    dispatch(
+      Actions.register(values.email, values.password, values.name, formikActions),
+    ),
+});
+
+const RegisterFormik = ({ onSubmit }: RegisterFormikProps) => (
+  <Formik
+    initialValues={initialValues}
+    validationSchema={validationSchema}
+    validateOnBlur={false}
+    validateOnChange={false}
+    onSubmit={onSubmit}
+    component={RegisterForm}
+  />
+);
+
+const Register = connect(null, mapDispatchToProps)(RegisterFormik);
+
+export default Register;
