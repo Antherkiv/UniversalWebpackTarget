@@ -78,6 +78,7 @@ export const getApiInfo = (api: string, state?: AuthState) => {
 
 export const callApi = (options: ApiInit, state?: AuthState, ignoreErrors?: boolean | number[]) => {
   const { json, api, headers, onStart, onStop, ..._ } = options;
+  // tslint:disable-next-line:prefer-const
   let { body, method, endpoint, credentials, query, ...__ } = _;
   const init: RequestInit = __;
 

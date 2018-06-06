@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { connect, Dispatch } from 'react-redux';
-import { Container, Form, Input, FormFeedback, Button, Alert } from 'reactstrap';
-import { Formik, InjectedFormikProps, FieldProps, FormikActions } from 'formik';
+import { Form, Input, FormFeedback, Button, Alert } from 'reactstrap';
+import { Formik, InjectedFormikProps, FormikActions } from 'formik';
 import * as yup from 'yup';
 
 import { Actions, LoginValues } from '../actions/auth';

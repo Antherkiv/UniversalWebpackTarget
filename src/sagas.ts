@@ -1,6 +1,5 @@
-import { call, put, select, takeLatest } from 'redux-saga/effects';
-import { Actions, ActionTypes, Keychain } from './actions/auth';
-import { State } from './reducers';
+import { call, put, takeLatest } from 'redux-saga/effects';
+import { Actions, ActionTypes } from './actions/auth';
 
 import { callApi } from './api';
 
