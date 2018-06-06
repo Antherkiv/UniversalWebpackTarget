@@ -1,6 +1,6 @@
 import { call, put, select, takeLatest } from 'redux-saga/effects';
 import { Actions, ActionTypes } from './actions/auth';
-
+import { push } from 'connected-react-router';
 import { callApi, selectApiInfo } from './api';
 
 const config = {
@@ -74,7 +74,7 @@ function* auth(action: Actions) {
         // Dashboard which "requires" authentication.
         yield call(resetForm);
         yield call(setSubmitting, false);
-        // yield call([history, 'navigate'], 'dashboard')
+        yield put(push('/'));
       } catch (e) {
         // If our API throws an error we will leverage Formik's existing error system to
         // pass it along to the view layer, as well as clearing the loading indicator.
@@ -127,7 +127,7 @@ function* auth(action: Actions) {
         // Dashboard which "requires" authentication.
         yield call(resetForm);
         yield call(setSubmitting, false);
-        // yield call([history, 'navigate'], 'dashboard')
+        yield put(push('/recover/email'));
       } catch (e) {
         // If our API throws an error we will leverage Formik's existing error system to
         // pass it along to the view layer, as well as clearing the loading indicator.
@@ -161,7 +161,7 @@ function* auth(action: Actions) {
         // Dashboard which "requires" authentication.
         yield call(resetForm);
         yield call(setSubmitting, false);
-        // yield call([history, 'navigate'], 'dashboard')
+        yield put(push('/register/email'));
       } catch (e) {
         // If our API throws an error we will leverage Formik's existing error system to
         // pass it along to the view layer, as well as clearing the loading indicator.

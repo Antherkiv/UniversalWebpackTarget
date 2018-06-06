@@ -62,10 +62,7 @@ const RegisterForm: React.SFC<InjectedFormikProps<RegisterProps, RegisterValues>
       Submit
     </Button>
     <p>
-      Need a new account? <Link to="/register">Register</Link>
-    </p>
-    <p>
-      Forgot password? <Link to="/recover">Recover</Link>
+      Already registered? <Link to="/login">Login</Link>
     </p>
   </Form>
 );
