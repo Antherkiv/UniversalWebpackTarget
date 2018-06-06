@@ -85,7 +85,4 @@ export const Actions = {
     createAction(ActionTypes.REGISTER, { email, password, name }, formikActions),
   keychain: (keychain: Keychain) => createAction(ActionTypes.KEYCHAIN, keychain),
 };
-
-typeof Actions;
-
 export type Actions = ActionsUnion<typeof Actions>;
