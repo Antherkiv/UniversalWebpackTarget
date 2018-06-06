@@ -26,7 +26,7 @@ export function createAction<T extends string, P, M>(
   type: T,
   payload: undefined,
   meta: M,
-): TypedActionWithMeta<T, P>;
+): TypedActionWithMeta<T, M>;
 export function createAction<T extends string, P, M>(
   type: T,
   payload: P,
