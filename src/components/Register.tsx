@@ -29,6 +29,7 @@ const RegisterForm: React.SFC<InjectedFormikProps<RegisterProps, RegisterValues>
     <Input
       name="name"
       placeholder="Name"
+      autoComplete="name"
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.name}
@@ -40,6 +41,7 @@ const RegisterForm: React.SFC<InjectedFormikProps<RegisterProps, RegisterValues>
       type="email"
       name="email"
       placeholder="Email"
+      autoComplete="email"
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.email}
@@ -51,6 +53,7 @@ const RegisterForm: React.SFC<InjectedFormikProps<RegisterProps, RegisterValues>
       type="password"
       name="password"
       placeholder="Password"
+      autoComplete="new-password"
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.password}

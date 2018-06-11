@@ -30,6 +30,7 @@ const RecoverForm: React.SFC<InjectedFormikProps<RecoverProps, RecoverValues>> =
       type="email"
       name="email"
       placeholder="Email"
+      autoComplete="email"
       onChange={handleChange}
       onBlur={handleBlur}
       value={values.email}
