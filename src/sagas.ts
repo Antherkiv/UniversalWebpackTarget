@@ -4,9 +4,9 @@ import { push } from 'connected-react-router';
 import { callApi, selectApiInfo } from './api';
 
 const config = {
-  authUrl: 'http://auth-sandbox-api.dubalu.off',
-  authClientId: '_EZLqxMLY6guF1dLQWsLg0g~rLhyzN6lggu7nQ-RTQ0TMNQFQ6M',
-  mashupId: '~3pZyPcFqGq',
+  authUrl: 'https://auth-sandbox-api.dubalu.off',
+  authClientId: '_iaFT-zv6b7ePPgLwrmDlWlkrXPiCAvCuYOVaWStc-II~MyRfaw8TudiAfnwx3bu3pC2E2Ss',
+  mashupId: '~2RtpU94f9CnoO5a',
 };
 
 function* auth(action: Actions) {
@@ -147,12 +147,12 @@ function* auth(action: Actions) {
       const { resetForm, setErrors, setSubmitting } = action.meta;
       try {
         yield callApi({
-          endpoint: `${config.authUrl}/token`,
+          endpoint: `${config.authUrl}/authorize`,
           json: {
             full_name: action.payload.name,
             username: action.payload.email,
             password: action.payload.password,
-            grant_type: 'registration',
+            response_type: 'registration',
             client_id: config.authClientId,
             scope: 'terms privacy',
           },
