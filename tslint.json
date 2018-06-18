@@ -5,6 +5,9 @@
         "tslint-config-airbnb",
         "tslint-plugin-prettier"
     ],
+    "jsRules": {
+        "no-empty": true
+    },
     "rules": {
         "import-name": false,
         "ter-arrow-parens": [true, "as-needed"],
@@ -44,6 +47,17 @@
                 "property-declaration": "nospace",
                 "variable-declaration": "nospace"
             }
+        ],
+        "whitespace": [
+            true,
+            "check-branch",
+            "check-operator",
+            "check-module",
+            "check-separator",
+            "check-rest-spread",
+            "check-type",
+            "check-type-operator",
+            "check-preblock"
         ],
         "variable-name": [
             true,
