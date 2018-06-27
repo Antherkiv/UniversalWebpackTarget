@@ -81,7 +81,11 @@ export const selectApiInfo = (api: string, state?: AuthState) => {
   };
 };
 
-export const callApi = (options: ApiInit, state?: AuthState, ignoreErrors?: boolean | number[]) => {
+export function callApi<T>(
+  options: ApiInit,
+  state?: AuthState,
+  ignoreErrors?: boolean | number[],
+): Promise<T> {
   const { json, api, headers, onStart, onStop, ..._ } = options;
   // tslint:disable-next-line:prefer-const
   let { body, method, endpoint, credentials, query, ...__ } = _;
