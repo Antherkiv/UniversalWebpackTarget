@@ -10,7 +10,7 @@ class ApiError extends Error {
 }
 
 export const resolveResult = (response?: Response) => {
-  if (typeof response === 'undefined') {
+  if (typeof response === "undefined") {
     return Promise.resolve(response);
   }
   const contentType = response.headers.get('Content-Type');
