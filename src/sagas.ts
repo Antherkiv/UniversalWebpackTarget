@@ -9,6 +9,11 @@ const config = {
   mashupId: '~2RtpU94f9CnoO5a',
 };
 
+interface AuthApiResponse {
+  entity: string;
+  access_token: string;
+}
+
 function* auth(action: Actions) {
   switch (action.type) {
     ////////////////////////////////////////////////////////////////////////////
@@ -21,7 +26,7 @@ function* auth(action: Actions) {
     case ActionTypes.LOGIN: {
       const { resetForm, setErrors, setSubmitting } = action.meta;
       try {
-        const auth = yield callApi({
+        const auth: AuthApiResponse = yield callApi<AuthApiResponse>({
           endpoint: `${config.authUrl}/token`,
           json: {
             username: action.payload.email,
