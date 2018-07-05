@@ -3,10 +3,31 @@ const { development, factory } = require('./webpack.common');
 module.exports = [
   // Dependencies and libraries:
   factory({
-    name: 'Base',
+    name: 'Libs',
     entry: {
-      React: ['react'],
-      ReactDom: ['react-dom'],
+      Common: [
+        'ansi-html',
+        'color-name',
+        'connected-react-router',
+        'fbjs',
+        'history',
+        'hoist-non-react-statics',
+        'html-entities',
+        'prop-types',
+        'qs',
+        'react-dom',
+        'react',
+        'react-router',
+        'react-router-dom',
+        'reactstrap',
+        'redux-saga',
+        'redux',
+        'react-redux',
+        'redux-logger',
+        'invariant',
+        'object-assign',
+      ],
+      Dubalu: ['console-colorizer'],
       Logger: ['./src/logger'],
     },
     dll: true,
@@ -19,7 +40,7 @@ module.exports = [
       first: ['./src/first'],
     },
     dll: true,
-    imports: ['Base'],
+    imports: ['Libs'],
   }),
 
   factory({
@@ -29,7 +50,7 @@ module.exports = [
       third: ['./src/third'],
     },
     dll: true,
-    imports: ['Base'],
+    imports: ['Libs'],
   }),
 
   // Client:
@@ -38,7 +59,7 @@ module.exports = [
     entry: {
       client: development ? ['./src/client', 'webpack-hot-middleware/client'] : ['./src/client'],
     },
-    imports: ['Base'],
+    imports: ['Libs'],
   }),
 
   // Server:
@@ -47,6 +68,6 @@ module.exports = [
     entry: {
       server: ['./src/server'],
     },
-    imports: ['Base'],
+    imports: ['Libs'],
   }),
 ];
